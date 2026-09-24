@@ -89,7 +89,6 @@ export function OrdersTable({
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       {!isPhone && (
         <div
-          role="row"
           className={cn(
             "grid items-center gap-2 border-b border-border bg-muted/60 px-3 text-xs font-medium text-muted-foreground",
             COLS,
@@ -119,8 +118,6 @@ export function OrdersTable({
           height: isPhone ? "calc(100dvh - 17rem)" : "calc(100dvh - 15.5rem)",
           minHeight: 320,
         }}
-        role="grid"
-        aria-rowcount={orders.length}
       >
         {isLoading ? (
           <div className="flex flex-col gap-2 p-3">
@@ -142,8 +139,7 @@ export function OrdersTable({
               const isActive = v.index === activeIndex;
               const isSelected = selected.has(o.id);
               const common: React.HTMLAttributes<HTMLDivElement> = {
-                role: "row",
-                "aria-selected": isSelected,
+                "aria-current": isActive ? "true" : undefined,
                 onClick: () => {
                   onActiveIndexChange(v.index);
                   onOpen(o);

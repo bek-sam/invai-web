@@ -1,4 +1,4 @@
-import type { GangSheetDetail, SheetPlacement } from "@invai/contracts";
+import type { GangSheetDetail } from "@invai/contracts";
 import {
   Badge,
   Button,

@@ -110,6 +110,7 @@ function OrdersPage() {
     [list.data],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset selection whenever the filters change
   useEffect(() => {
     setSelected(new Set());
     setActiveIndex(-1);
