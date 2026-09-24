@@ -12,20 +12,22 @@ function guessContentType(file: File): string {
   return "application/octet-stream";
 }
 
-/** Presign, PUT straight to S3/MinIO, return the file key to use in other calls. */
-export async function uploadFile(
-  kind: FileKind,
+class UploadError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+function put(
+  presigned: { method: string; uploadUrl: string; headers: Record<string, string> },
   file: File,
+  contentType: string,
   onProgress?: (ratio: number) => void,
-): Promise<string> {
-  const contentType = guessContentType(file);
-  const presigned = await client.files.presignUpload({
-    kind,
-    filename: file.name,
-    contentType,
-    sizeBytes: file.size,
-  });
-  await new Promise<void>((resolve, reject) => {
+) {
+  return new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open(presigned.method, presigned.uploadUrl);
     for (const [k, v] of Object.entries(presigned.headers)) xhr.setRequestHeader(k, v);
@@ -38,12 +40,38 @@ export async function uploadFile(
     xhr.onload = () =>
       xhr.status >= 200 && xhr.status < 300
         ? resolve()
-        : reject(new Error(`Upload failed (${xhr.status})`));
-    xhr.onerror = () => reject(new Error("Upload failed: storage unreachable"));
+        : reject(new UploadError(`Upload failed (${xhr.status})`, xhr.status));
+    xhr.onerror = () => reject(new UploadError("Upload failed: storage unreachable", 0));
     xhr.send(file);
   });
-  onProgress?.(1);
-  return presigned.fileKey;
+}
+
+/**
+ * Presign, PUT straight to S3/MinIO, return the file key to use in other calls.
+ * A 403 from storage (seen intermittently from browsers as SignatureDoesNotMatch) gets one retry
+ * with a freshly signed URL; the signature keeps binding content type and size.
+ */
+export async function uploadFile(
+  kind: FileKind,
+  file: File,
+  onProgress?: (ratio: number) => void,
+): Promise<string> {
+  const contentType = guessContentType(file);
+  for (let attempt = 1; ; attempt++) {
+    const presigned = await client.files.presignUpload({
+      kind,
+      filename: file.name,
+      contentType,
+      sizeBytes: file.size,
+    });
+    try {
+      await put(presigned, file, contentType, onProgress);
+      onProgress?.(1);
+      return presigned.fileKey;
+    } catch (err) {
+      if (attempt >= 2 || !(err instanceof UploadError) || err.status !== 403) throw err;
+    }
+  }
 }
 
 /** Opens a signed URL in a new tab (labels PDF, sheet downloads). */
