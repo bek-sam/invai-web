@@ -3,9 +3,10 @@ import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import type { ContractRouterClient } from "@orpc/contract";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
+import { API_URL } from "./env";
 
 const link = new RPCLink({
-  url: `${import.meta.env.VITE_API_URL}/rpc`,
+  url: `${API_URL}/rpc`,
   fetch: (req, init) => fetch(req, { ...init, credentials: "include" }),
 });
 

@@ -9,243 +9,823 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AnalyticsRouteImport } from './routes/analytics'
-import { Route as AssistantRouteImport } from './routes/assistant'
-import { Route as GangSheetsRouteImport } from './routes/gang-sheets'
-import { Route as InventoryRouteImport } from './routes/inventory'
-import { Route as ListingsRouteImport } from './routes/listings'
-import { Route as OrdersRouteImport } from './routes/orders'
-import { Route as ProductionRouteImport } from './routes/production'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ShippingRouteImport } from './routes/shipping'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppAssistantRouteImport } from './routes/_app/assistant'
+import { Route as AppShippingRouteImport } from './routes/_app/shipping'
+import { Route as AcceptInviteInvitationIdRouteImport } from './routes/accept-invite.$invitationId'
+import { Route as AppAnalyticsProfitRouteImport } from './routes/_app/analytics/profit'
+import { Route as AppCatalogBlanksRouteImport } from './routes/_app/catalog/blanks'
+import { Route as AppCatalogProductsRouteImport } from './routes/_app/catalog/products'
+import { Route as AppCatalogSkuMappingRouteImport } from './routes/_app/catalog/sku-mapping'
+import { Route as AppInventoryStockRouteImport } from './routes/_app/inventory/stock'
+import { Route as AppListingsTrademarkRouteImport } from './routes/_app/listings/trademark'
+import { Route as AppOrdersIndexRouteImport } from './routes/_app/orders/index'
+import { Route as AppOrdersOrderIdRouteImport } from './routes/_app/orders/$orderId'
+import { Route as AppProductionStationsRouteImport } from './routes/_app/production/stations'
+import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/audit'
+import { Route as AppSettingsBillingRouteImport } from './routes/_app/settings/billing'
+import { Route as AppSettingsChannelsRouteImport } from './routes/_app/settings/channels'
+import { Route as AppSettingsCompanyRouteImport } from './routes/_app/settings/company'
+import { Route as AppSettingsCostsRouteImport } from './routes/_app/settings/costs'
+import { Route as AppSettingsStationsRouteImport } from './routes/_app/settings/stations'
+import { Route as AppSettingsTeamRouteImport } from './routes/_app/settings/team'
+import { Route as AppSettingsVendorsRouteImport } from './routes/_app/settings/vendors'
+import { Route as AppVendorIndexRouteImport } from './routes/_app/vendor/index'
+import { Route as AppVendorShopsRouteImport } from './routes/_app/vendor/shops'
+import { Route as AppCatalogDesignsIndexRouteImport } from './routes/_app/catalog/designs.index'
+import { Route as AppCatalogDesignsDesignIdRouteImport } from './routes/_app/catalog/designs.$designId'
+import { Route as AppCatalogPersonalizationIndexRouteImport } from './routes/_app/catalog/personalization.index'
+import { Route as AppCatalogPersonalizationTemplateIdRouteImport } from './routes/_app/catalog/personalization.$templateId'
+import { Route as AppInventoryPurchaseOrdersIndexRouteImport } from './routes/_app/inventory/purchase-orders.index'
+import { Route as AppInventoryPurchaseOrdersPoIdRouteImport } from './routes/_app/inventory/purchase-orders.$poId'
+import { Route as AppListingsDraftsIndexRouteImport } from './routes/_app/listings/drafts.index'
+import { Route as AppListingsDraftsDraftIdRouteImport } from './routes/_app/listings/drafts.$draftId'
+import { Route as AppProductionSheetsIndexRouteImport } from './routes/_app/production/sheets.index'
+import { Route as AppProductionSheetsSheetIdRouteImport } from './routes/_app/production/sheets.$sheetId'
+import { Route as AppVendorSheetsSheetIdRouteImport } from './routes/_app/vendor/sheets.$sheetId'
 
-const IndexRoute = IndexRouteImport.update({
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const AnalyticsRoute = AnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AssistantRoute = AssistantRouteImport.update({
+const AppAssistantRoute = AppAssistantRouteImport.update({
   id: '/assistant',
   path: '/assistant',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const GangSheetsRoute = GangSheetsRouteImport.update({
-  id: '/gang-sheets',
-  path: '/gang-sheets',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InventoryRoute = InventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListingsRoute = ListingsRouteImport.update({
-  id: '/listings',
-  path: '/listings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrdersRoute = OrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductionRoute = ProductionRouteImport.update({
-  id: '/production',
-  path: '/production',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShippingRoute = ShippingRouteImport.update({
+const AppShippingRoute = AppShippingRouteImport.update({
   id: '/shipping',
   path: '/shipping',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
+} as any)
+const AcceptInviteInvitationIdRoute =
+  AcceptInviteInvitationIdRouteImport.update({
+    id: '/accept-invite/$invitationId',
+    path: '/accept-invite/$invitationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppAnalyticsProfitRoute = AppAnalyticsProfitRouteImport.update({
+  id: '/analytics/profit',
+  path: '/analytics/profit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCatalogBlanksRoute = AppCatalogBlanksRouteImport.update({
+  id: '/catalog/blanks',
+  path: '/catalog/blanks',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCatalogProductsRoute = AppCatalogProductsRouteImport.update({
+  id: '/catalog/products',
+  path: '/catalog/products',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCatalogSkuMappingRoute = AppCatalogSkuMappingRouteImport.update({
+  id: '/catalog/sku-mapping',
+  path: '/catalog/sku-mapping',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInventoryStockRoute = AppInventoryStockRouteImport.update({
+  id: '/inventory/stock',
+  path: '/inventory/stock',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppListingsTrademarkRoute = AppListingsTrademarkRouteImport.update({
+  id: '/listings/trademark',
+  path: '/listings/trademark',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOrdersIndexRoute = AppOrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOrdersOrderIdRoute = AppOrdersOrderIdRouteImport.update({
+  id: '/orders/$orderId',
+  path: '/orders/$orderId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProductionStationsRoute = AppProductionStationsRouteImport.update({
+  id: '/production/stations',
+  path: '/production/stations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsAuditRoute = AppSettingsAuditRouteImport.update({
+  id: '/settings/audit',
+  path: '/settings/audit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsBillingRoute = AppSettingsBillingRouteImport.update({
+  id: '/settings/billing',
+  path: '/settings/billing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsChannelsRoute = AppSettingsChannelsRouteImport.update({
+  id: '/settings/channels',
+  path: '/settings/channels',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsCompanyRoute = AppSettingsCompanyRouteImport.update({
+  id: '/settings/company',
+  path: '/settings/company',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsCostsRoute = AppSettingsCostsRouteImport.update({
+  id: '/settings/costs',
+  path: '/settings/costs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsStationsRoute = AppSettingsStationsRouteImport.update({
+  id: '/settings/stations',
+  path: '/settings/stations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsTeamRoute = AppSettingsTeamRouteImport.update({
+  id: '/settings/team',
+  path: '/settings/team',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsVendorsRoute = AppSettingsVendorsRouteImport.update({
+  id: '/settings/vendors',
+  path: '/settings/vendors',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppVendorIndexRoute = AppVendorIndexRouteImport.update({
+  id: '/vendor/',
+  path: '/vendor/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppVendorShopsRoute = AppVendorShopsRouteImport.update({
+  id: '/vendor/shops',
+  path: '/vendor/shops',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCatalogDesignsIndexRoute = AppCatalogDesignsIndexRouteImport.update({
+  id: '/catalog/designs/',
+  path: '/catalog/designs/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCatalogDesignsDesignIdRoute =
+  AppCatalogDesignsDesignIdRouteImport.update({
+    id: '/catalog/designs/$designId',
+    path: '/catalog/designs/$designId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppCatalogPersonalizationIndexRoute =
+  AppCatalogPersonalizationIndexRouteImport.update({
+    id: '/catalog/personalization/',
+    path: '/catalog/personalization/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppCatalogPersonalizationTemplateIdRoute =
+  AppCatalogPersonalizationTemplateIdRouteImport.update({
+    id: '/catalog/personalization/$templateId',
+    path: '/catalog/personalization/$templateId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppInventoryPurchaseOrdersIndexRoute =
+  AppInventoryPurchaseOrdersIndexRouteImport.update({
+    id: '/inventory/purchase-orders/',
+    path: '/inventory/purchase-orders/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppInventoryPurchaseOrdersPoIdRoute =
+  AppInventoryPurchaseOrdersPoIdRouteImport.update({
+    id: '/inventory/purchase-orders/$poId',
+    path: '/inventory/purchase-orders/$poId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppListingsDraftsIndexRoute = AppListingsDraftsIndexRouteImport.update({
+  id: '/listings/drafts/',
+  path: '/listings/drafts/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppListingsDraftsDraftIdRoute =
+  AppListingsDraftsDraftIdRouteImport.update({
+    id: '/listings/drafts/$draftId',
+    path: '/listings/drafts/$draftId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppProductionSheetsIndexRoute =
+  AppProductionSheetsIndexRouteImport.update({
+    id: '/production/sheets/',
+    path: '/production/sheets/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppProductionSheetsSheetIdRoute =
+  AppProductionSheetsSheetIdRouteImport.update({
+    id: '/production/sheets/$sheetId',
+    path: '/production/sheets/$sheetId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppVendorSheetsSheetIdRoute = AppVendorSheetsSheetIdRouteImport.update({
+  id: '/vendor/sheets/$sheetId',
+  path: '/vendor/sheets/$sheetId',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/analytics': typeof AnalyticsRoute
-  '/assistant': typeof AssistantRoute
-  '/gang-sheets': typeof GangSheetsRoute
-  '/inventory': typeof InventoryRoute
-  '/listings': typeof ListingsRoute
-  '/orders': typeof OrdersRoute
-  '/production': typeof ProductionRoute
-  '/settings': typeof SettingsRoute
-  '/shipping': typeof ShippingRoute
+  '/': typeof AppIndexRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/assistant': typeof AppAssistantRoute
+  '/shipping': typeof AppShippingRoute
+  '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
+  '/analytics/profit': typeof AppAnalyticsProfitRoute
+  '/catalog/blanks': typeof AppCatalogBlanksRoute
+  '/catalog/products': typeof AppCatalogProductsRoute
+  '/catalog/sku-mapping': typeof AppCatalogSkuMappingRoute
+  '/inventory/stock': typeof AppInventoryStockRoute
+  '/listings/trademark': typeof AppListingsTrademarkRoute
+  '/orders/$orderId': typeof AppOrdersOrderIdRoute
+  '/production/stations': typeof AppProductionStationsRoute
+  '/settings/audit': typeof AppSettingsAuditRoute
+  '/settings/billing': typeof AppSettingsBillingRoute
+  '/settings/channels': typeof AppSettingsChannelsRoute
+  '/settings/company': typeof AppSettingsCompanyRoute
+  '/settings/costs': typeof AppSettingsCostsRoute
+  '/settings/stations': typeof AppSettingsStationsRoute
+  '/settings/team': typeof AppSettingsTeamRoute
+  '/settings/vendors': typeof AppSettingsVendorsRoute
+  '/vendor/shops': typeof AppVendorShopsRoute
+  '/orders/': typeof AppOrdersIndexRoute
+  '/vendor/': typeof AppVendorIndexRoute
+  '/catalog/designs/$designId': typeof AppCatalogDesignsDesignIdRoute
+  '/catalog/personalization/$templateId': typeof AppCatalogPersonalizationTemplateIdRoute
+  '/inventory/purchase-orders/$poId': typeof AppInventoryPurchaseOrdersPoIdRoute
+  '/listings/drafts/$draftId': typeof AppListingsDraftsDraftIdRoute
+  '/production/sheets/$sheetId': typeof AppProductionSheetsSheetIdRoute
+  '/vendor/sheets/$sheetId': typeof AppVendorSheetsSheetIdRoute
+  '/catalog/designs/': typeof AppCatalogDesignsIndexRoute
+  '/catalog/personalization/': typeof AppCatalogPersonalizationIndexRoute
+  '/inventory/purchase-orders/': typeof AppInventoryPurchaseOrdersIndexRoute
+  '/listings/drafts/': typeof AppListingsDraftsIndexRoute
+  '/production/sheets/': typeof AppProductionSheetsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/analytics': typeof AnalyticsRoute
-  '/assistant': typeof AssistantRoute
-  '/gang-sheets': typeof GangSheetsRoute
-  '/inventory': typeof InventoryRoute
-  '/listings': typeof ListingsRoute
-  '/orders': typeof OrdersRoute
-  '/production': typeof ProductionRoute
-  '/settings': typeof SettingsRoute
-  '/shipping': typeof ShippingRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/assistant': typeof AppAssistantRoute
+  '/shipping': typeof AppShippingRoute
+  '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
+  '/': typeof AppIndexRoute
+  '/analytics/profit': typeof AppAnalyticsProfitRoute
+  '/catalog/blanks': typeof AppCatalogBlanksRoute
+  '/catalog/products': typeof AppCatalogProductsRoute
+  '/catalog/sku-mapping': typeof AppCatalogSkuMappingRoute
+  '/inventory/stock': typeof AppInventoryStockRoute
+  '/listings/trademark': typeof AppListingsTrademarkRoute
+  '/orders/$orderId': typeof AppOrdersOrderIdRoute
+  '/production/stations': typeof AppProductionStationsRoute
+  '/settings/audit': typeof AppSettingsAuditRoute
+  '/settings/billing': typeof AppSettingsBillingRoute
+  '/settings/channels': typeof AppSettingsChannelsRoute
+  '/settings/company': typeof AppSettingsCompanyRoute
+  '/settings/costs': typeof AppSettingsCostsRoute
+  '/settings/stations': typeof AppSettingsStationsRoute
+  '/settings/team': typeof AppSettingsTeamRoute
+  '/settings/vendors': typeof AppSettingsVendorsRoute
+  '/vendor/shops': typeof AppVendorShopsRoute
+  '/orders': typeof AppOrdersIndexRoute
+  '/vendor': typeof AppVendorIndexRoute
+  '/catalog/designs/$designId': typeof AppCatalogDesignsDesignIdRoute
+  '/catalog/personalization/$templateId': typeof AppCatalogPersonalizationTemplateIdRoute
+  '/inventory/purchase-orders/$poId': typeof AppInventoryPurchaseOrdersPoIdRoute
+  '/listings/drafts/$draftId': typeof AppListingsDraftsDraftIdRoute
+  '/production/sheets/$sheetId': typeof AppProductionSheetsSheetIdRoute
+  '/vendor/sheets/$sheetId': typeof AppVendorSheetsSheetIdRoute
+  '/catalog/designs': typeof AppCatalogDesignsIndexRoute
+  '/catalog/personalization': typeof AppCatalogPersonalizationIndexRoute
+  '/inventory/purchase-orders': typeof AppInventoryPurchaseOrdersIndexRoute
+  '/listings/drafts': typeof AppListingsDraftsIndexRoute
+  '/production/sheets': typeof AppProductionSheetsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/analytics': typeof AnalyticsRoute
-  '/assistant': typeof AssistantRoute
-  '/gang-sheets': typeof GangSheetsRoute
-  '/inventory': typeof InventoryRoute
-  '/listings': typeof ListingsRoute
-  '/orders': typeof OrdersRoute
-  '/production': typeof ProductionRoute
-  '/settings': typeof SettingsRoute
-  '/shipping': typeof ShippingRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/_app/assistant': typeof AppAssistantRoute
+  '/_app/shipping': typeof AppShippingRoute
+  '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
+  '/_app/': typeof AppIndexRoute
+  '/_app/analytics/profit': typeof AppAnalyticsProfitRoute
+  '/_app/catalog/blanks': typeof AppCatalogBlanksRoute
+  '/_app/catalog/products': typeof AppCatalogProductsRoute
+  '/_app/catalog/sku-mapping': typeof AppCatalogSkuMappingRoute
+  '/_app/inventory/stock': typeof AppInventoryStockRoute
+  '/_app/listings/trademark': typeof AppListingsTrademarkRoute
+  '/_app/orders/$orderId': typeof AppOrdersOrderIdRoute
+  '/_app/production/stations': typeof AppProductionStationsRoute
+  '/_app/settings/audit': typeof AppSettingsAuditRoute
+  '/_app/settings/billing': typeof AppSettingsBillingRoute
+  '/_app/settings/channels': typeof AppSettingsChannelsRoute
+  '/_app/settings/company': typeof AppSettingsCompanyRoute
+  '/_app/settings/costs': typeof AppSettingsCostsRoute
+  '/_app/settings/stations': typeof AppSettingsStationsRoute
+  '/_app/settings/team': typeof AppSettingsTeamRoute
+  '/_app/settings/vendors': typeof AppSettingsVendorsRoute
+  '/_app/vendor/shops': typeof AppVendorShopsRoute
+  '/_app/orders/': typeof AppOrdersIndexRoute
+  '/_app/vendor/': typeof AppVendorIndexRoute
+  '/_app/catalog/designs/$designId': typeof AppCatalogDesignsDesignIdRoute
+  '/_app/catalog/personalization/$templateId': typeof AppCatalogPersonalizationTemplateIdRoute
+  '/_app/inventory/purchase-orders/$poId': typeof AppInventoryPurchaseOrdersPoIdRoute
+  '/_app/listings/drafts/$draftId': typeof AppListingsDraftsDraftIdRoute
+  '/_app/production/sheets/$sheetId': typeof AppProductionSheetsSheetIdRoute
+  '/_app/vendor/sheets/$sheetId': typeof AppVendorSheetsSheetIdRoute
+  '/_app/catalog/designs/': typeof AppCatalogDesignsIndexRoute
+  '/_app/catalog/personalization/': typeof AppCatalogPersonalizationIndexRoute
+  '/_app/inventory/purchase-orders/': typeof AppInventoryPurchaseOrdersIndexRoute
+  '/_app/listings/drafts/': typeof AppListingsDraftsIndexRoute
+  '/_app/production/sheets/': typeof AppProductionSheetsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/analytics'
+    | '/login'
+    | '/signup'
     | '/assistant'
-    | '/gang-sheets'
-    | '/inventory'
-    | '/listings'
-    | '/orders'
-    | '/production'
-    | '/settings'
     | '/shipping'
+    | '/accept-invite/$invitationId'
+    | '/analytics/profit'
+    | '/catalog/blanks'
+    | '/catalog/products'
+    | '/catalog/sku-mapping'
+    | '/inventory/stock'
+    | '/listings/trademark'
+    | '/orders/$orderId'
+    | '/production/stations'
+    | '/settings/audit'
+    | '/settings/billing'
+    | '/settings/channels'
+    | '/settings/company'
+    | '/settings/costs'
+    | '/settings/stations'
+    | '/settings/team'
+    | '/settings/vendors'
+    | '/vendor/shops'
+    | '/orders/'
+    | '/vendor/'
+    | '/catalog/designs/$designId'
+    | '/catalog/personalization/$templateId'
+    | '/inventory/purchase-orders/$poId'
+    | '/listings/drafts/$draftId'
+    | '/production/sheets/$sheetId'
+    | '/vendor/sheets/$sheetId'
+    | '/catalog/designs/'
+    | '/catalog/personalization/'
+    | '/inventory/purchase-orders/'
+    | '/listings/drafts/'
+    | '/production/sheets/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/analytics'
+    | '/login'
+    | '/signup'
     | '/assistant'
-    | '/gang-sheets'
-    | '/inventory'
-    | '/listings'
-    | '/orders'
-    | '/production'
-    | '/settings'
     | '/shipping'
+    | '/accept-invite/$invitationId'
+    | '/'
+    | '/analytics/profit'
+    | '/catalog/blanks'
+    | '/catalog/products'
+    | '/catalog/sku-mapping'
+    | '/inventory/stock'
+    | '/listings/trademark'
+    | '/orders/$orderId'
+    | '/production/stations'
+    | '/settings/audit'
+    | '/settings/billing'
+    | '/settings/channels'
+    | '/settings/company'
+    | '/settings/costs'
+    | '/settings/stations'
+    | '/settings/team'
+    | '/settings/vendors'
+    | '/vendor/shops'
+    | '/orders'
+    | '/vendor'
+    | '/catalog/designs/$designId'
+    | '/catalog/personalization/$templateId'
+    | '/inventory/purchase-orders/$poId'
+    | '/listings/drafts/$draftId'
+    | '/production/sheets/$sheetId'
+    | '/vendor/sheets/$sheetId'
+    | '/catalog/designs'
+    | '/catalog/personalization'
+    | '/inventory/purchase-orders'
+    | '/listings/drafts'
+    | '/production/sheets'
   id:
     | '__root__'
-    | '/'
-    | '/analytics'
-    | '/assistant'
-    | '/gang-sheets'
-    | '/inventory'
-    | '/listings'
-    | '/orders'
-    | '/production'
-    | '/settings'
-    | '/shipping'
+    | '/_app'
+    | '/login'
+    | '/signup'
+    | '/_app/assistant'
+    | '/_app/shipping'
+    | '/accept-invite/$invitationId'
+    | '/_app/'
+    | '/_app/analytics/profit'
+    | '/_app/catalog/blanks'
+    | '/_app/catalog/products'
+    | '/_app/catalog/sku-mapping'
+    | '/_app/inventory/stock'
+    | '/_app/listings/trademark'
+    | '/_app/orders/$orderId'
+    | '/_app/production/stations'
+    | '/_app/settings/audit'
+    | '/_app/settings/billing'
+    | '/_app/settings/channels'
+    | '/_app/settings/company'
+    | '/_app/settings/costs'
+    | '/_app/settings/stations'
+    | '/_app/settings/team'
+    | '/_app/settings/vendors'
+    | '/_app/vendor/shops'
+    | '/_app/orders/'
+    | '/_app/vendor/'
+    | '/_app/catalog/designs/$designId'
+    | '/_app/catalog/personalization/$templateId'
+    | '/_app/inventory/purchase-orders/$poId'
+    | '/_app/listings/drafts/$draftId'
+    | '/_app/production/sheets/$sheetId'
+    | '/_app/vendor/sheets/$sheetId'
+    | '/_app/catalog/designs/'
+    | '/_app/catalog/personalization/'
+    | '/_app/inventory/purchase-orders/'
+    | '/_app/listings/drafts/'
+    | '/_app/production/sheets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AnalyticsRoute: typeof AnalyticsRoute
-  AssistantRoute: typeof AssistantRoute
-  GangSheetsRoute: typeof GangSheetsRoute
-  InventoryRoute: typeof InventoryRoute
-  ListingsRoute: typeof ListingsRoute
-  OrdersRoute: typeof OrdersRoute
-  ProductionRoute: typeof ProductionRoute
-  SettingsRoute: typeof SettingsRoute
-  ShippingRoute: typeof ShippingRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
+  AcceptInviteInvitationIdRoute: typeof AcceptInviteInvitationIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/analytics': {
-      id: '/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AnalyticsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/assistant': {
-      id: '/assistant'
+    '/_app/assistant': {
+      id: '/_app/assistant'
       path: '/assistant'
       fullPath: '/assistant'
-      preLoaderRoute: typeof AssistantRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppAssistantRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/gang-sheets': {
-      id: '/gang-sheets'
-      path: '/gang-sheets'
-      fullPath: '/gang-sheets'
-      preLoaderRoute: typeof GangSheetsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventory': {
-      id: '/inventory'
-      path: '/inventory'
-      fullPath: '/inventory'
-      preLoaderRoute: typeof InventoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/listings': {
-      id: '/listings'
-      path: '/listings'
-      fullPath: '/listings'
-      preLoaderRoute: typeof ListingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/orders': {
-      id: '/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof OrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/production': {
-      id: '/production'
-      path: '/production'
-      fullPath: '/production'
-      preLoaderRoute: typeof ProductionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/shipping': {
-      id: '/shipping'
+    '/_app/shipping': {
+      id: '/_app/shipping'
       path: '/shipping'
       fullPath: '/shipping'
-      preLoaderRoute: typeof ShippingRouteImport
+      preLoaderRoute: typeof AppShippingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/accept-invite/$invitationId': {
+      id: '/accept-invite/$invitationId'
+      path: '/accept-invite/$invitationId'
+      fullPath: '/accept-invite/$invitationId'
+      preLoaderRoute: typeof AcceptInviteInvitationIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/analytics/profit': {
+      id: '/_app/analytics/profit'
+      path: '/analytics/profit'
+      fullPath: '/analytics/profit'
+      preLoaderRoute: typeof AppAnalyticsProfitRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/catalog/blanks': {
+      id: '/_app/catalog/blanks'
+      path: '/catalog/blanks'
+      fullPath: '/catalog/blanks'
+      preLoaderRoute: typeof AppCatalogBlanksRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/catalog/products': {
+      id: '/_app/catalog/products'
+      path: '/catalog/products'
+      fullPath: '/catalog/products'
+      preLoaderRoute: typeof AppCatalogProductsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/catalog/sku-mapping': {
+      id: '/_app/catalog/sku-mapping'
+      path: '/catalog/sku-mapping'
+      fullPath: '/catalog/sku-mapping'
+      preLoaderRoute: typeof AppCatalogSkuMappingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/inventory/stock': {
+      id: '/_app/inventory/stock'
+      path: '/inventory/stock'
+      fullPath: '/inventory/stock'
+      preLoaderRoute: typeof AppInventoryStockRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/listings/trademark': {
+      id: '/_app/listings/trademark'
+      path: '/listings/trademark'
+      fullPath: '/listings/trademark'
+      preLoaderRoute: typeof AppListingsTrademarkRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/orders/': {
+      id: '/_app/orders/'
+      path: '/orders'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof AppOrdersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/orders/$orderId': {
+      id: '/_app/orders/$orderId'
+      path: '/orders/$orderId'
+      fullPath: '/orders/$orderId'
+      preLoaderRoute: typeof AppOrdersOrderIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/production/stations': {
+      id: '/_app/production/stations'
+      path: '/production/stations'
+      fullPath: '/production/stations'
+      preLoaderRoute: typeof AppProductionStationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/audit': {
+      id: '/_app/settings/audit'
+      path: '/settings/audit'
+      fullPath: '/settings/audit'
+      preLoaderRoute: typeof AppSettingsAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/billing': {
+      id: '/_app/settings/billing'
+      path: '/settings/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof AppSettingsBillingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/channels': {
+      id: '/_app/settings/channels'
+      path: '/settings/channels'
+      fullPath: '/settings/channels'
+      preLoaderRoute: typeof AppSettingsChannelsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/company': {
+      id: '/_app/settings/company'
+      path: '/settings/company'
+      fullPath: '/settings/company'
+      preLoaderRoute: typeof AppSettingsCompanyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/costs': {
+      id: '/_app/settings/costs'
+      path: '/settings/costs'
+      fullPath: '/settings/costs'
+      preLoaderRoute: typeof AppSettingsCostsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/stations': {
+      id: '/_app/settings/stations'
+      path: '/settings/stations'
+      fullPath: '/settings/stations'
+      preLoaderRoute: typeof AppSettingsStationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/team': {
+      id: '/_app/settings/team'
+      path: '/settings/team'
+      fullPath: '/settings/team'
+      preLoaderRoute: typeof AppSettingsTeamRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/vendors': {
+      id: '/_app/settings/vendors'
+      path: '/settings/vendors'
+      fullPath: '/settings/vendors'
+      preLoaderRoute: typeof AppSettingsVendorsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/vendor/': {
+      id: '/_app/vendor/'
+      path: '/vendor'
+      fullPath: '/vendor/'
+      preLoaderRoute: typeof AppVendorIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/vendor/shops': {
+      id: '/_app/vendor/shops'
+      path: '/vendor/shops'
+      fullPath: '/vendor/shops'
+      preLoaderRoute: typeof AppVendorShopsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/catalog/designs/': {
+      id: '/_app/catalog/designs/'
+      path: '/catalog/designs'
+      fullPath: '/catalog/designs/'
+      preLoaderRoute: typeof AppCatalogDesignsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/catalog/designs/$designId': {
+      id: '/_app/catalog/designs/$designId'
+      path: '/catalog/designs/$designId'
+      fullPath: '/catalog/designs/$designId'
+      preLoaderRoute: typeof AppCatalogDesignsDesignIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/catalog/personalization/': {
+      id: '/_app/catalog/personalization/'
+      path: '/catalog/personalization'
+      fullPath: '/catalog/personalization/'
+      preLoaderRoute: typeof AppCatalogPersonalizationIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/catalog/personalization/$templateId': {
+      id: '/_app/catalog/personalization/$templateId'
+      path: '/catalog/personalization/$templateId'
+      fullPath: '/catalog/personalization/$templateId'
+      preLoaderRoute: typeof AppCatalogPersonalizationTemplateIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/inventory/purchase-orders/': {
+      id: '/_app/inventory/purchase-orders/'
+      path: '/inventory/purchase-orders'
+      fullPath: '/inventory/purchase-orders/'
+      preLoaderRoute: typeof AppInventoryPurchaseOrdersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/inventory/purchase-orders/$poId': {
+      id: '/_app/inventory/purchase-orders/$poId'
+      path: '/inventory/purchase-orders/$poId'
+      fullPath: '/inventory/purchase-orders/$poId'
+      preLoaderRoute: typeof AppInventoryPurchaseOrdersPoIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/listings/drafts/': {
+      id: '/_app/listings/drafts/'
+      path: '/listings/drafts'
+      fullPath: '/listings/drafts/'
+      preLoaderRoute: typeof AppListingsDraftsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/listings/drafts/$draftId': {
+      id: '/_app/listings/drafts/$draftId'
+      path: '/listings/drafts/$draftId'
+      fullPath: '/listings/drafts/$draftId'
+      preLoaderRoute: typeof AppListingsDraftsDraftIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/production/sheets/': {
+      id: '/_app/production/sheets/'
+      path: '/production/sheets'
+      fullPath: '/production/sheets/'
+      preLoaderRoute: typeof AppProductionSheetsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/production/sheets/$sheetId': {
+      id: '/_app/production/sheets/$sheetId'
+      path: '/production/sheets/$sheetId'
+      fullPath: '/production/sheets/$sheetId'
+      preLoaderRoute: typeof AppProductionSheetsSheetIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/vendor/sheets/$sheetId': {
+      id: '/_app/vendor/sheets/$sheetId'
+      path: '/vendor/sheets/$sheetId'
+      fullPath: '/vendor/sheets/$sheetId'
+      preLoaderRoute: typeof AppVendorSheetsSheetIdRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
 
+interface AppRouteChildren {
+  AppAssistantRoute: typeof AppAssistantRoute
+  AppShippingRoute: typeof AppShippingRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppAnalyticsProfitRoute: typeof AppAnalyticsProfitRoute
+  AppCatalogBlanksRoute: typeof AppCatalogBlanksRoute
+  AppCatalogProductsRoute: typeof AppCatalogProductsRoute
+  AppCatalogSkuMappingRoute: typeof AppCatalogSkuMappingRoute
+  AppInventoryStockRoute: typeof AppInventoryStockRoute
+  AppListingsTrademarkRoute: typeof AppListingsTrademarkRoute
+  AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
+  AppProductionStationsRoute: typeof AppProductionStationsRoute
+  AppSettingsAuditRoute: typeof AppSettingsAuditRoute
+  AppSettingsBillingRoute: typeof AppSettingsBillingRoute
+  AppSettingsChannelsRoute: typeof AppSettingsChannelsRoute
+  AppSettingsCompanyRoute: typeof AppSettingsCompanyRoute
+  AppSettingsCostsRoute: typeof AppSettingsCostsRoute
+  AppSettingsStationsRoute: typeof AppSettingsStationsRoute
+  AppSettingsTeamRoute: typeof AppSettingsTeamRoute
+  AppSettingsVendorsRoute: typeof AppSettingsVendorsRoute
+  AppVendorShopsRoute: typeof AppVendorShopsRoute
+  AppOrdersIndexRoute: typeof AppOrdersIndexRoute
+  AppVendorIndexRoute: typeof AppVendorIndexRoute
+  AppCatalogDesignsDesignIdRoute: typeof AppCatalogDesignsDesignIdRoute
+  AppCatalogPersonalizationTemplateIdRoute: typeof AppCatalogPersonalizationTemplateIdRoute
+  AppInventoryPurchaseOrdersPoIdRoute: typeof AppInventoryPurchaseOrdersPoIdRoute
+  AppListingsDraftsDraftIdRoute: typeof AppListingsDraftsDraftIdRoute
+  AppProductionSheetsSheetIdRoute: typeof AppProductionSheetsSheetIdRoute
+  AppVendorSheetsSheetIdRoute: typeof AppVendorSheetsSheetIdRoute
+  AppCatalogDesignsIndexRoute: typeof AppCatalogDesignsIndexRoute
+  AppCatalogPersonalizationIndexRoute: typeof AppCatalogPersonalizationIndexRoute
+  AppInventoryPurchaseOrdersIndexRoute: typeof AppInventoryPurchaseOrdersIndexRoute
+  AppListingsDraftsIndexRoute: typeof AppListingsDraftsIndexRoute
+  AppProductionSheetsIndexRoute: typeof AppProductionSheetsIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAssistantRoute: AppAssistantRoute,
+  AppShippingRoute: AppShippingRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppAnalyticsProfitRoute: AppAnalyticsProfitRoute,
+  AppCatalogBlanksRoute: AppCatalogBlanksRoute,
+  AppCatalogProductsRoute: AppCatalogProductsRoute,
+  AppCatalogSkuMappingRoute: AppCatalogSkuMappingRoute,
+  AppInventoryStockRoute: AppInventoryStockRoute,
+  AppListingsTrademarkRoute: AppListingsTrademarkRoute,
+  AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
+  AppProductionStationsRoute: AppProductionStationsRoute,
+  AppSettingsAuditRoute: AppSettingsAuditRoute,
+  AppSettingsBillingRoute: AppSettingsBillingRoute,
+  AppSettingsChannelsRoute: AppSettingsChannelsRoute,
+  AppSettingsCompanyRoute: AppSettingsCompanyRoute,
+  AppSettingsCostsRoute: AppSettingsCostsRoute,
+  AppSettingsStationsRoute: AppSettingsStationsRoute,
+  AppSettingsTeamRoute: AppSettingsTeamRoute,
+  AppSettingsVendorsRoute: AppSettingsVendorsRoute,
+  AppVendorShopsRoute: AppVendorShopsRoute,
+  AppOrdersIndexRoute: AppOrdersIndexRoute,
+  AppVendorIndexRoute: AppVendorIndexRoute,
+  AppCatalogDesignsDesignIdRoute: AppCatalogDesignsDesignIdRoute,
+  AppCatalogPersonalizationTemplateIdRoute:
+    AppCatalogPersonalizationTemplateIdRoute,
+  AppInventoryPurchaseOrdersPoIdRoute: AppInventoryPurchaseOrdersPoIdRoute,
+  AppListingsDraftsDraftIdRoute: AppListingsDraftsDraftIdRoute,
+  AppProductionSheetsSheetIdRoute: AppProductionSheetsSheetIdRoute,
+  AppVendorSheetsSheetIdRoute: AppVendorSheetsSheetIdRoute,
+  AppCatalogDesignsIndexRoute: AppCatalogDesignsIndexRoute,
+  AppCatalogPersonalizationIndexRoute: AppCatalogPersonalizationIndexRoute,
+  AppInventoryPurchaseOrdersIndexRoute: AppInventoryPurchaseOrdersIndexRoute,
+  AppListingsDraftsIndexRoute: AppListingsDraftsIndexRoute,
+  AppProductionSheetsIndexRoute: AppProductionSheetsIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AnalyticsRoute: AnalyticsRoute,
-  AssistantRoute: AssistantRoute,
-  GangSheetsRoute: GangSheetsRoute,
-  InventoryRoute: InventoryRoute,
-  ListingsRoute: ListingsRoute,
-  OrdersRoute: OrdersRoute,
-  ProductionRoute: ProductionRoute,
-  SettingsRoute: SettingsRoute,
-  ShippingRoute: ShippingRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
+  AcceptInviteInvitationIdRoute: AcceptInviteInvitationIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

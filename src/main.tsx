@@ -1,13 +1,49 @@
-import { initI18n } from "@invai/ui";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { toast } from "@invai/ui";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { ErrorState } from "./components/states";
+import { initAppI18n } from "./i18n";
+import { errorInfo, shouldRetry } from "./lib/errors";
+import { initTheme } from "./lib/theme";
 import { routeTree } from "./routeTree.gen";
 import "./styles.css";
 
-const queryClient = new QueryClient();
-const router = createRouter({ routeTree, context: { queryClient } });
+declare module "@tanstack/react-query" {
+  interface Register {
+    mutationMeta: { silent?: boolean; errorTitle?: string };
+  }
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 30_000, retry: shouldRetry, refetchOnWindowFocus: true },
+  },
+  // Every failed mutation gets a toast unless it opts out and shows the error inline.
+  mutationCache: new MutationCache({
+    onError: (error, _vars, _ctx, mutation) => {
+      if (mutation.meta?.silent) return;
+      const info = errorInfo(error);
+      toast.error(mutation.meta?.errorTitle ?? info.message, {
+        description: mutation.meta?.errorTitle ? info.message : undefined,
+      });
+    },
+  }),
+});
+
+const router = createRouter({
+  routeTree,
+  context: { queryClient },
+  defaultPreload: "intent",
+  defaultPreloadStaleTime: 0,
+  defaultErrorComponent: ({ error, reset }) => (
+    <div className="p-6">
+      <ErrorState error={error} onRetry={reset} />
+    </div>
+  ),
+  scrollRestoration: true,
+});
 
 declare module "@tanstack/react-router" {
   interface Register {
@@ -15,15 +51,17 @@ declare module "@tanstack/react-router" {
   }
 }
 
-void initI18n("en");
+initTheme();
 
-const root = document.getElementById("root");
-if (root) {
-  createRoot(root).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
-    </StrictMode>,
-  );
-}
+void initAppI18n().then(() => {
+  const root = document.getElementById("root");
+  if (root) {
+    createRoot(root).render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </StrictMode>,
+    );
+  }
+});
