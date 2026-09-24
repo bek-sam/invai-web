@@ -2,7 +2,7 @@ import type { SheetPlacement } from "@invai/contracts";
 import { Badge } from "@invai/ui";
 import { useTranslation } from "react-i18next";
 import { Section } from "../../components/page";
-import { formatInches } from "../../lib/format";
+import { formatInches, orderLabel } from "../../lib/format";
 
 export function PlacementList({
   placements,
@@ -35,7 +35,7 @@ export function PlacementList({
                 className={p.scrapped ? "text-muted-foreground line-through" : "hover:bg-muted/50"}
               >
                 <td className="border-t border-border px-4 py-1.5 font-medium">
-                  #{p.orderNo}
+                  {orderLabel(p.orderNo)}
                   {p.isReprint && (
                     <Badge variant="warning" className="ml-1.5 px-1.5">
                       {t("orders.reprint", "Reprint")}

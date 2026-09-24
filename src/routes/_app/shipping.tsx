@@ -39,7 +39,7 @@ import { z } from "zod";
 import { ShipmentStatusBadge } from "../../components/badges";
 import { Field, NativeSelect, Page, Section } from "../../components/page";
 import { ErrorState, SkeletonRows } from "../../components/states";
-import { formatDate } from "../../lib/format";
+import { formatDate, orderLabel } from "../../lib/format";
 import { useCan } from "../../lib/me";
 import { client, orpc } from "../../lib/rpc";
 import { openInNewTab } from "../../lib/upload";
@@ -162,7 +162,7 @@ function Queue() {
             className="font-medium hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
-            #{row.original.orderNo}
+            {orderLabel(row.original.orderNo)}
           </Link>
           {row.original.isRush && <Zap className="size-3.5 text-danger" />}
         </span>
@@ -449,7 +449,7 @@ function Shipments() {
     {
       accessorKey: "orderNo",
       header: t("orders.order", "Order"),
-      cell: ({ row }) => <span className="font-medium">#{row.original.orderNo}</span>,
+      cell: ({ row }) => <span className="font-medium">{orderLabel(row.original.orderNo)}</span>,
     },
     {
       accessorKey: "status",
@@ -607,7 +607,7 @@ function TrackingPush() {
         <tbody>
           {q.data.items.map((p) => (
             <tr key={p.shipmentId} className="border-t border-border">
-              <td className="px-3 py-2 font-medium">#{p.orderNo}</td>
+              <td className="px-3 py-2 font-medium">{orderLabel(p.orderNo)}</td>
               <td className="px-3 py-2">
                 <ChannelBadge channel={p.channel} />
               </td>

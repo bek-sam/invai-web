@@ -34,7 +34,7 @@ import { DefList, Section } from "../../components/page";
 import { blankLabel } from "../../components/pickers";
 import { SignedImage } from "../../components/signed-image";
 import { ErrorState, SkeletonRows } from "../../components/states";
-import { formatDateTime } from "../../lib/format";
+import { formatDateTime, orderLabel } from "../../lib/format";
 import { useCan } from "../../lib/me";
 import { orpc } from "../../lib/rpc";
 import { OrderProfitBreakdown } from "../finance/order-profit";
@@ -159,7 +159,7 @@ function OrderHeader({ order, inDrawer }: { order: OrderWithItems; inDrawer: boo
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-xl font-semibold tracking-tight">#{order.orderNo}</h2>
+        <h2 className="text-xl font-semibold tracking-tight">{orderLabel(order.orderNo)}</h2>
         <ChannelBadge channel={order.channel} />
         <OrderStatusBadge status={order.status} />
         {order.status !== "shipped" &&

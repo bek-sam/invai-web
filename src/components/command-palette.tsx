@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounced } from "../hooks/use-debounced";
 import { setLang } from "../i18n";
+import { orderLabel } from "../lib/format";
 import { useCan, useMe } from "../lib/me";
 import { navFor } from "../lib/nav";
 import { orpc } from "../lib/rpc";
@@ -75,7 +76,7 @@ export function CommandPalette({
                 onSelect={() => go("/orders", { order: o.id })}
               >
                 <ShoppingCart />
-                <span className="font-medium">#{o.orderNo}</span>
+                <span className="font-medium">{orderLabel(o.orderNo)}</span>
                 <span className="truncate text-muted-foreground">{o.buyerName.split(" ")[0]}</span>
                 <span className="ml-auto text-xs text-muted-foreground">
                   {o.status.replace(/_/g, " ")}

@@ -29,7 +29,7 @@ import { SheetStatusBadge } from "../../../components/badges";
 import { Field, NativeSelect, Page, Section } from "../../../components/page";
 import { ErrorState } from "../../../components/states";
 import { JobProgress } from "../../../features/production/job-progress";
-import { endOfDayIso, formatInches, formatPct, toDateInput } from "../../../lib/format";
+import { endOfDayIso, formatInches, formatPct, orderLabel, toDateInput } from "../../../lib/format";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
 
@@ -386,7 +386,7 @@ function BuildPanel({ onClose }: { onClose: () => void }) {
                   {preview.items.map((i) => (
                     <li key={i.orderItemId} className="flex justify-between gap-2 py-0.5">
                       <span className="truncate">
-                        #{i.orderNo} · {i.designName}
+                        {orderLabel(i.orderNo)} · {i.designName}
                         {i.isRush && (
                           <span className="ml-1 text-danger">{t("orders.rush", "Rush")}</span>
                         )}

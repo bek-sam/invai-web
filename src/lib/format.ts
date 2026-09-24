@@ -249,3 +249,8 @@ export function formatMoneyShort(dollars: number): string {
   if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(abs >= 10_000 ? 0 : 1)}k`;
   return `${sign}$${abs.toFixed(0)}`;
 }
+
+/** Order numbers as "#1548"; channel numbers that already carry a "#" (Shopify) keep one. */
+export function orderLabel(orderNo: string): string {
+  return `#${orderNo.replace(/^#+/, "")}`;
+}

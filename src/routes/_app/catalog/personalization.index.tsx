@@ -21,7 +21,7 @@ import { useTranslation } from "react-i18next";
 import { NativeSelect, Page } from "../../../components/page";
 import { SignedImage } from "../../../components/signed-image";
 import { ErrorState, SkeletonRows } from "../../../components/states";
-import { formatInches } from "../../../lib/format";
+import { formatInches, orderLabel } from "../../../lib/format";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
 
@@ -201,7 +201,7 @@ function ArtworkCard({ artwork: a }: { artwork: ItemArtwork }) {
     <Card className="flex flex-col gap-3 p-3">
       <div className="flex items-center gap-2">
         <Link to="/orders" search={{ order: a.orderId }} className="font-medium hover:underline">
-          #{a.orderNo}
+          {orderLabel(a.orderNo)}
         </Link>
         <span className="truncate text-sm text-muted-foreground">{a.designName}</span>
         <Badge

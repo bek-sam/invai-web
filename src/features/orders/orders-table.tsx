@@ -16,7 +16,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { OrderStatusBadge } from "../../components/badges";
 import { useMediaQuery } from "../../hooks/use-media";
-import { firstName } from "../../lib/format";
+import { firstName, orderLabel } from "../../lib/format";
 
 const COLS =
   "grid-cols-[2.25rem_6.5rem_minmax(7rem,1fr)_minmax(6rem,1fr)_4rem_7.5rem_minmax(8rem,1fr)_6rem]";
@@ -174,7 +174,7 @@ export function OrdersTable({
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">#{o.orderNo}</span>
+                          <span className="font-medium">{orderLabel(o.orderNo)}</span>
                           {o.isRush && <Zap className="size-3.5 text-danger" />}
                           <span className="truncate text-muted-foreground">
                             {firstName(o.buyerName)}
@@ -202,7 +202,7 @@ export function OrdersTable({
                         <ChannelBadge channel={o.channel} className="max-w-full" />
                       </span>
                       <span className="flex min-w-0 items-center gap-1.5">
-                        <span className="truncate font-medium">#{o.orderNo}</span>
+                        <span className="truncate font-medium">{orderLabel(o.orderNo)}</span>
                         {o.isRush && (
                           <Zap
                             className="size-3.5 shrink-0 text-danger"

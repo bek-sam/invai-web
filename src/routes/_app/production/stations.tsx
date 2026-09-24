@@ -7,7 +7,7 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Page, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
-import { lastNDays } from "../../../lib/format";
+import { lastNDays, orderLabel } from "../../../lib/format";
 import {
   type RealtimeMessage,
   useRealtimeListener,
@@ -114,7 +114,7 @@ function StationsBoard() {
                             search={{ order: it.orderId }}
                             className="truncate font-medium hover:underline"
                           >
-                            #{it.orderNo}
+                            {orderLabel(it.orderNo)}
                           </Link>
                           <span className="truncate text-muted-foreground">{it.design.name}</span>
                           {it.isRush && (
@@ -155,7 +155,7 @@ function StationsBoard() {
                     <XCircle className="size-4 text-danger" />
                   )}
                   <span className="w-16 text-muted-foreground">{t(`station.${e.station}`)}</span>
-                  <span className="font-medium">{e.orderNo ? `#${e.orderNo}` : "—"}</span>
+                  <span className="font-medium">{e.orderNo ? orderLabel(e.orderNo) : "—"}</span>
                   {!e.ok && e.mismatch && (
                     <span className="text-danger">
                       {t(`mismatch.${e.mismatch}`, e.mismatch.replace(/_/g, " "))}
