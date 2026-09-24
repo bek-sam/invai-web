@@ -683,6 +683,7 @@ export const es: Messages = {
     partially_received: "Recibida en parte",
     received: "Recibida",
     submitted: "Enviada",
+    submitting: "Enviando…",
   },
   products: {
     edit: "Editar producto",

@@ -675,6 +675,7 @@ export const en = {
     partially_received: "Partly received",
     received: "Received",
     submitted: "Submitted",
+    submitting: "Submitting…",
   },
   products: {
     edit: "Edit product",
