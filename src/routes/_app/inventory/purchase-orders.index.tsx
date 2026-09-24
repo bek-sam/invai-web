@@ -21,24 +21,58 @@ function PurchaseOrdersPage() {
   const [status, setStatus] = useState("");
   const q = useInfiniteQuery(
     orpc.inventory.purchaseOrders.list.infiniteOptions({
-      input: (cursor: string | undefined) => ({ status: status ? [status as never] : undefined, cursor, limit: 100 }),
+      input: (cursor: string | undefined) => ({
+        status: status ? [status as never] : undefined,
+        cursor,
+        limit: 100,
+      }),
       initialPageParam: undefined,
       getNextPageParam: (last) => last.nextCursor ?? undefined,
     }),
   );
   const rows = useMemo(() => q.data?.pages.flatMap((p) => p.items) ?? [], [q.data]);
   const columns: DataTableColumn<PurchaseOrder>[] = [
-    { accessorKey: "poNo", header: t("po.no", "PO"), cell: ({ row }) => <span className="font-medium">{row.original.poNo}</span> },
-    { accessorKey: "supplier", header: t("blanks.supplier", "Supplier"), cell: ({ row }) => t(`supplier.${row.original.supplier}`, row.original.supplier) },
-    { accessorKey: "status", header: t("sheets.status", "Status"), cell: ({ row }) => <PoStatusBadge status={row.original.status} /> },
-    { id: "units", header: t("po.units", "Units"), cell: ({ row }) => {
-      const qty = row.original.lines.reduce((s, l) => s + l.qty, 0);
-      const rec = row.original.lines.reduce((s, l) => s + l.receivedQty, 0);
-      return <span className="tabular-nums">{rec > 0 ? `${rec}/${qty}` : qty}</span>;
-    } },
-    { accessorKey: "total", header: t("orders.total", "Total"), cell: ({ row }) => <Money cents={row.original.total} /> },
-    { accessorKey: "expectedAt", header: t("po.expected", "Expected"), cell: ({ row }) => formatDate(row.original.expectedAt) },
-    { accessorKey: "createdAt", header: t("sheets.created", "Created"), cell: ({ row }) => <RelativeTime value={row.original.createdAt} className="text-muted-foreground" /> },
+    {
+      accessorKey: "poNo",
+      header: t("po.no", "PO"),
+      cell: ({ row }) => <span className="font-medium">{row.original.poNo}</span>,
+    },
+    {
+      accessorKey: "supplier",
+      header: t("blanks.supplier", "Supplier"),
+      cell: ({ row }) => t(`supplier.${row.original.supplier}`, row.original.supplier),
+    },
+    {
+      accessorKey: "status",
+      header: t("sheets.status", "Status"),
+      cell: ({ row }) => <PoStatusBadge status={row.original.status} />,
+    },
+    {
+      id: "units",
+      header: t("po.units", "Units"),
+      cell: ({ row }) => {
+        const qty = row.original.lines.reduce((s, l) => s + l.qty, 0);
+        const rec = row.original.lines.reduce((s, l) => s + l.receivedQty, 0);
+        return <span className="tabular-nums">{rec > 0 ? `${rec}/${qty}` : qty}</span>;
+      },
+    },
+    {
+      accessorKey: "total",
+      header: t("orders.total", "Total"),
+      cell: ({ row }) => <Money cents={row.original.total} />,
+    },
+    {
+      accessorKey: "expectedAt",
+      header: t("po.expected", "Expected"),
+      cell: ({ row }) => formatDate(row.original.expectedAt),
+    },
+    {
+      accessorKey: "createdAt",
+      header: t("sheets.created", "Created"),
+      cell: ({ row }) => (
+        <RelativeTime value={row.original.createdAt} className="text-muted-foreground" />
+      ),
+    },
   ];
   return (
     <Page
@@ -53,7 +87,12 @@ function PurchaseOrdersPage() {
         </Button>
       }
     >
-      <NativeSelect className="mb-3 w-fit" aria-label={t("sheets.status", "Status")} value={status} onChange={(e) => setStatus(e.target.value)}>
+      <NativeSelect
+        className="mb-3 w-fit"
+        aria-label={t("sheets.status", "Status")}
+        value={status}
+        onChange={(e) => setStatus(e.target.value)}
+      >
         <option value="">{t("po.allStatuses", "All statuses")}</option>
         {PO_STATES.map((s) => (
           <option key={s} value={s}>
@@ -72,7 +111,9 @@ function PurchaseOrdersPage() {
           hasMore={!!q.hasNextPage}
           isLoadingMore={q.isFetchingNextPage}
           onLoadMore={() => void q.fetchNextPage()}
-          onRowClick={(r) => void navigate({ to: "/inventory/purchase-orders/$poId", params: { poId: r.id } })}
+          onRowClick={(r) =>
+            void navigate({ to: "/inventory/purchase-orders/$poId", params: { poId: r.id } })
+          }
           emptyTitle={t("po.empty", "No purchase orders")}
           emptyDescription={t("po.emptyHint", "Create one from the reorder suggestions.")}
           maxHeight="calc(100dvh - 15rem)"

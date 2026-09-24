@@ -30,7 +30,13 @@ function PoPage() {
           {t("nav.purchaseOrders")}
         </Link>
       </Button>
-      {q.isPending ? <Skeleton className="h-96" /> : q.isError ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : <PoView key={q.data.updatedAt} po={q.data} />}
+      {q.isPending ? (
+        <Skeleton className="h-96" />
+      ) : q.isError ? (
+        <ErrorState error={q.error} onRetry={() => void q.refetch()} />
+      ) : (
+        <PoView key={q.data.updatedAt} po={q.data} />
+      )}
     </div>
   );
 }
@@ -67,7 +73,8 @@ function PoView({ po }: { po: PurchaseOrder }) {
       },
     }),
   );
-  const canReceive = can("purchasing.receive") && (po.status === "submitted" || po.status === "partially_received");
+  const canReceive =
+    can("purchasing.receive") && (po.status === "submitted" || po.status === "partially_received");
   const lines = Object.entries(receive)
     .map(([lineId, v]) => ({ lineId, qty: Number.parseInt(v, 10) }))
     .filter((l) => l.qty > 0);
@@ -88,7 +95,13 @@ function PoView({ po }: { po: PurchaseOrder }) {
           {canReceive && (
             <Button
               variant="outline"
-              onClick={() => setReceive(Object.fromEntries(po.lines.map((l) => [l.id, String(Math.max(0, l.qty - l.receivedQty))])))}
+              onClick={() =>
+                setReceive(
+                  Object.fromEntries(
+                    po.lines.map((l) => [l.id, String(Math.max(0, l.qty - l.receivedQty))]),
+                  ),
+                )
+              }
             >
               {t("po.fillRemaining", "Fill remaining")}
             </Button>
@@ -122,7 +135,11 @@ function PoView({ po }: { po: PurchaseOrder }) {
                 <th className="px-2 py-2 text-right font-medium">{t("po.received", "Received")}</th>
                 <th className="px-2 py-2 text-right font-medium">{t("po.unitCost", "Unit")}</th>
                 <th className="px-2 py-2 text-right font-medium">{t("stock.lineCost", "Cost")}</th>
-                {canReceive && <th className="px-4 py-2 text-right font-medium">{t("po.receiveNow", "Receive now")}</th>}
+                {canReceive && (
+                  <th className="px-4 py-2 text-right font-medium">
+                    {t("po.receiveNow", "Receive now")}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -131,8 +148,12 @@ function PoView({ po }: { po: PurchaseOrder }) {
                   <td className="px-4 py-1.5">{blankLabel(l.blank)}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums">{l.qty}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums">{l.receivedQty}</td>
-                  <td className="px-2 py-1.5 text-right"><Money cents={l.unitCost} /></td>
-                  <td className="px-2 py-1.5 text-right"><Money cents={l.unitCost * l.qty} /></td>
+                  <td className="px-2 py-1.5 text-right">
+                    <Money cents={l.unitCost} />
+                  </td>
+                  <td className="px-2 py-1.5 text-right">
+                    <Money cents={l.unitCost * l.qty} />
+                  </td>
                   {canReceive && (
                     <td className="px-4 py-1.5 text-right">
                       <Input
@@ -152,25 +173,42 @@ function PoView({ po }: { po: PurchaseOrder }) {
             </tbody>
             <tfoot className="text-sm">
               <tr className="border-t border-border">
-                <td className="px-4 py-1.5 text-muted-foreground" colSpan={4}>{t("orders.subtotal", "Subtotal")}</td>
-                <td className="px-2 py-1.5 text-right"><Money cents={po.subtotal} /></td>
+                <td className="px-4 py-1.5 text-muted-foreground" colSpan={4}>
+                  {t("orders.subtotal", "Subtotal")}
+                </td>
+                <td className="px-2 py-1.5 text-right">
+                  <Money cents={po.subtotal} />
+                </td>
               </tr>
               <tr>
-                <td className="px-4 py-1.5 text-muted-foreground" colSpan={4}>{t("po.freight", "Freight")}</td>
-                <td className="px-2 py-1.5 text-right"><Money cents={po.freight} /></td>
+                <td className="px-4 py-1.5 text-muted-foreground" colSpan={4}>
+                  {t("po.freight", "Freight")}
+                </td>
+                <td className="px-2 py-1.5 text-right">
+                  <Money cents={po.freight} />
+                </td>
               </tr>
               <tr className="font-semibold">
-                <td className="px-4 py-1.5" colSpan={4}>{t("orders.total", "Total")}</td>
-                <td className="px-2 py-1.5 text-right"><Money cents={po.total} /></td>
+                <td className="px-4 py-1.5" colSpan={4}>
+                  {t("orders.total", "Total")}
+                </td>
+                <td className="px-2 py-1.5 text-right">
+                  <Money cents={po.total} />
+                </td>
               </tr>
             </tfoot>
           </table>
         </div>
         {canReceive && (
           <div className="mt-4 flex justify-end">
-            <Button onClick={() => rec.mutate({ purchaseOrderId: po.id, lines, note: null })} disabled={lines.length === 0 || rec.isPending}>
+            <Button
+              onClick={() => rec.mutate({ purchaseOrderId: po.id, lines, note: null })}
+              disabled={lines.length === 0 || rec.isPending}
+            >
               {rec.isPending ? <Loader2 className="animate-spin" /> : <PackageCheck />}
-              {t("po.receive", "Receive {{count}} units", { count: lines.reduce((s, l) => s + l.qty, 0) })}
+              {t("po.receive", "Receive {{count}} units", {
+                count: lines.reduce((s, l) => s + l.qty, 0),
+              })}
             </Button>
           </div>
         )}

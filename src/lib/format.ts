@@ -241,3 +241,11 @@ export function slugify(name: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
 }
+
+/** Compact dollar axis labels: 1234 -> "$1.2k". Input is dollars, not cents. */
+export function formatMoneyShort(dollars: number): string {
+  const abs = Math.abs(dollars);
+  const sign = dollars < 0 ? "-" : "";
+  if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(abs >= 10_000 ? 0 : 1)}k`;
+  return `${sign}$${abs.toFixed(0)}`;
+}

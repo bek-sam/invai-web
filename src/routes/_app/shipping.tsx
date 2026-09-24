@@ -2,8 +2,8 @@ import {
   type Address,
   BATCH_STRATEGIES,
   type Shipment,
-  type ShipQueueEntry,
   type ShippingSettings,
+  type ShipQueueEntry,
 } from "@invai/contracts";
 import {
   Badge,
@@ -72,13 +72,26 @@ function ShippingPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/shipping" });
   return (
-    <Page title={t("nav.shipping")} description={t("ship.subtitle", "Rate-shop, buy labels, print 4×6 in pack order, push tracking.")}>
-      <Tabs value={search.tab ?? "queue"} onValueChange={(v) => void navigate({ search: { tab: v as (typeof TABS)[number] }, replace: true })}>
+    <Page
+      title={t("nav.shipping")}
+      description={t(
+        "ship.subtitle",
+        "Rate-shop, buy labels, print 4×6 in pack order, push tracking.",
+      )}
+    >
+      <Tabs
+        value={search.tab ?? "queue"}
+        onValueChange={(v) =>
+          void navigate({ search: { tab: v as (typeof TABS)[number] }, replace: true })
+        }
+      >
         <TabsList className="mb-3">
           <TabsTrigger value="queue">{t("ship.queue", "Ready to ship")}</TabsTrigger>
           <TabsTrigger value="shipments">{t("ship.shipments", "Shipments")}</TabsTrigger>
           <TabsTrigger value="tracking">{t("ship.tracking", "Tracking push")}</TabsTrigger>
-          {can("shipping.manage") && <TabsTrigger value="settings">{t("nav.settings")}</TabsTrigger>}
+          {can("shipping.manage") && (
+            <TabsTrigger value="settings">{t("nav.settings")}</TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value="queue">
           <Queue />
@@ -116,14 +129,18 @@ function Queue() {
   const batch = useMutation({
     mutationFn: async (orderIds: string[]) => {
       const res = await client.shipping.batchBuy({ orderIds, strategy });
-      const ids = res.results.flatMap((r) => (r.status === "labeled" && r.shipmentId ? [r.shipmentId] : []));
+      const ids = res.results.flatMap((r) =>
+        r.status === "labeled" && r.shipmentId ? [r.shipmentId] : [],
+      );
       if (ids.length) await printLabels(ids);
       return res;
     },
     onSuccess: (res) => {
       toast.success(t("ship.batchDone", "{{n}} labels bought", { n: res.labeled }), {
         description: [
-          t("ship.postage", "Postage {{amount}}", { amount: `$${(res.totalPostage / 100).toFixed(2)}` }),
+          t("ship.postage", "Postage {{amount}}", {
+            amount: `$${(res.totalPostage / 100).toFixed(2)}`,
+          }),
           res.failed ? t("orders.someFailed", "{{count}} failed", { count: res.failed }) : "",
         ]
           .filter(Boolean)
@@ -139,19 +156,44 @@ function Queue() {
       header: t("orders.order", "Order"),
       cell: ({ row }) => (
         <span className="flex items-center gap-1.5">
-          <Link to="/orders" search={{ order: row.original.orderId }} className="font-medium hover:underline" onClick={(e) => e.stopPropagation()}>
+          <Link
+            to="/orders"
+            search={{ order: row.original.orderId }}
+            className="font-medium hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
             #{row.original.orderNo}
           </Link>
           {row.original.isRush && <Zap className="size-3.5 text-danger" />}
         </span>
       ),
     },
-    { accessorKey: "channel", header: t("orders.channel", "Channel"), cell: ({ row }) => <ChannelBadge channel={row.original.channel} /> },
-    { accessorKey: "shipBy", header: t("orders.shipBy", "Ship by"), cell: ({ row }) => <ShipByBadge shipBy={row.original.shipBy} /> },
+    {
+      accessorKey: "channel",
+      header: t("orders.channel", "Channel"),
+      cell: ({ row }) => <ChannelBadge channel={row.original.channel} />,
+    },
+    {
+      accessorKey: "shipBy",
+      header: t("orders.shipBy", "Ship by"),
+      cell: ({ row }) => <ShipByBadge shipBy={row.original.shipBy} />,
+    },
     { accessorKey: "unitCount", header: t("orders.itemsCol", "Items") },
-    { accessorKey: "estimatedWeightOz", header: t("ship.weight", "Weight"), cell: ({ row }) => `${row.original.estimatedWeightOz.toFixed(1)} oz` },
-    { accessorKey: "binCode", header: t("orders.bin", "Bin"), cell: ({ row }) => row.original.binCode ?? "—" },
-    { accessorKey: "shippingMethod", header: t("orders.method", "Method"), cell: ({ row }) => row.original.shippingMethod ?? "—" },
+    {
+      accessorKey: "estimatedWeightOz",
+      header: t("ship.weight", "Weight"),
+      cell: ({ row }) => `${row.original.estimatedWeightOz.toFixed(1)} oz`,
+    },
+    {
+      accessorKey: "binCode",
+      header: t("orders.bin", "Bin"),
+      cell: ({ row }) => row.original.binCode ?? "—",
+    },
+    {
+      accessorKey: "shippingMethod",
+      header: t("orders.method", "Method"),
+      cell: ({ row }) => row.original.shippingMethod ?? "—",
+    },
     {
       accessorKey: "addressValid",
       header: t("ship.address", "Address"),
@@ -170,7 +212,14 @@ function Queue() {
       header: "",
       cell: ({ row }) =>
         can("shipping.buy") && (
-          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setRating(row.original); }}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRating(row.original);
+            }}
+          >
             <Tag />
             {t("ship.rates", "Rates")}
           </Button>
@@ -185,17 +234,32 @@ function Queue() {
           <Switch checked={atRisk} onCheckedChange={setAtRisk} />
           {t("today.atRisk", "At risk")}
         </label>
-        {q.data && <span className="text-sm text-muted-foreground">{t("ship.total", "{{n}} orders packed", { n: q.data.pages[0]?.total ?? 0 })}</span>}
+        {q.data && (
+          <span className="text-sm text-muted-foreground">
+            {t("ship.total", "{{n}} orders packed", { n: q.data.pages[0]?.total ?? 0 })}
+          </span>
+        )}
         {can("shipping.buy") && (
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            <NativeSelect aria-label={t("ship.strategy", "Strategy")} value={strategy} onChange={(e) => setStrategy(e.target.value as typeof strategy)}>
+            <NativeSelect
+              aria-label={t("ship.strategy", "Strategy")}
+              value={strategy}
+              onChange={(e) => setStrategy(e.target.value as typeof strategy)}
+            >
               {BATCH_STRATEGIES.map((s) => (
                 <option key={s} value={s}>
                   {t(`ship.strategy.${s}`, s.replace(/_/g, " "))}
                 </option>
               ))}
             </NativeSelect>
-            <Button onClick={() => batch.mutate(selectedIds.length ? selectedIds : rows.slice(0, 100).map((r) => r.orderId))} disabled={rows.length === 0 || batch.isPending}>
+            <Button
+              onClick={() =>
+                batch.mutate(
+                  selectedIds.length ? selectedIds : rows.slice(0, 100).map((r) => r.orderId),
+                )
+              }
+              disabled={rows.length === 0 || batch.isPending}
+            >
               {batch.isPending ? <Loader2 className="animate-spin" /> : <Printer />}
               {selectedIds.length
                 ? t("ship.buySelected", "Buy & print {{count}}", { count: selectedIds.length })
@@ -219,7 +283,10 @@ function Queue() {
           isLoadingMore={q.isFetchingNextPage}
           onLoadMore={() => void q.fetchNextPage()}
           emptyTitle={t("ship.queueEmpty", "Nothing packed and waiting")}
-          emptyDescription={t("ship.queueEmptyHint", "Orders appear here once every unit is packed.")}
+          emptyDescription={t(
+            "ship.queueEmptyHint",
+            "Orders appear here once every unit is packed.",
+          )}
           maxHeight="calc(100dvh - 17rem)"
           estimateRowHeightPx={48}
         />
@@ -249,21 +316,37 @@ function RatesDialog({ entry, onClose }: { entry: ShipQueueEntry; onClose: () =>
   );
   const fetchRates = () =>
     rates.mutate(
-      { orderId: entry.orderId, packagePresetId: presetId || undefined, parcel: Number(weight) > 0 ? { weightOz: Number(weight) } : undefined },
-      { onSuccess: (r) => setRateId(r.rates.find((x) => x.cheapest)?.rateId ?? r.rates[0]?.rateId ?? null) },
+      {
+        orderId: entry.orderId,
+        packagePresetId: presetId || undefined,
+        parcel: Number(weight) > 0 ? { weightOz: Number(weight) } : undefined,
+      },
+      {
+        onSuccess: (r) =>
+          setRateId(r.rates.find((x) => x.cheapest)?.rateId ?? r.rates[0]?.rateId ?? null),
+      },
     );
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("ship.ratesFor", "Rates for #{{no}}", { no: entry.orderNo })}</DialogTitle>
+          <DialogTitle>
+            {t("ship.ratesFor", "Rates for #{{no}}", { no: entry.orderNo })}
+          </DialogTitle>
           <DialogDescription>
-            {t("ship.ratesHint", "{{count}} items · ship by {{date}}", { count: entry.unitCount, date: formatDate(entry.shipBy) })}
+            {t("ship.ratesHint", "{{count}} items · ship by {{date}}", {
+              count: entry.unitCount,
+              date: formatDate(entry.shipBy),
+            })}
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("ship.package", "Package")} htmlFor="r-preset">
-            <NativeSelect id="r-preset" value={presetId} onChange={(e) => setPresetId(e.target.value)}>
+            <NativeSelect
+              id="r-preset"
+              value={presetId}
+              onChange={(e) => setPresetId(e.target.value)}
+            >
               <option value="">{t("ship.autoPackage", "Automatic")}</option>
               {presets.data?.packagePresets.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -273,7 +356,12 @@ function RatesDialog({ entry, onClose }: { entry: ShipQueueEntry; onClose: () =>
             </NativeSelect>
           </Field>
           <Field label={t("ship.weightOz", "Weight (oz)")} htmlFor="r-weight">
-            <Input id="r-weight" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} />
+            <Input
+              id="r-weight"
+              inputMode="decimal"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+            />
           </Field>
         </div>
         <Button variant="outline" onClick={fetchRates} disabled={rates.isPending}>
@@ -288,10 +376,18 @@ function RatesDialog({ entry, onClose }: { entry: ShipQueueEntry; onClose: () =>
                 <label
                   className={cn(
                     "flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-sm",
-                    rateId === r.rateId ? "border-primary bg-accent" : "border-border hover:bg-muted/50",
+                    rateId === r.rateId
+                      ? "border-primary bg-accent"
+                      : "border-border hover:bg-muted/50",
                   )}
                 >
-                  <input type="radio" name="rate" className="accent-[var(--color-primary)]" checked={rateId === r.rateId} onChange={() => setRateId(r.rateId)} />
+                  <input
+                    type="radio"
+                    name="rate"
+                    className="accent-[var(--color-primary)]"
+                    checked={rateId === r.rateId}
+                    onChange={() => setRateId(r.rateId)}
+                  />
                   <span className="flex-1">
                     <span className="font-medium uppercase">{r.carrier}</span> {r.serviceLabel}
                     <span className="block text-xs text-muted-foreground">
@@ -311,7 +407,12 @@ function RatesDialog({ entry, onClose }: { entry: ShipQueueEntry; onClose: () =>
           <Button variant="outline" onClick={onClose}>
             {t("action.cancel")}
           </Button>
-          <Button disabled={!rates.data || !rateId || buy.isPending} onClick={() => rates.data && rateId && buy.mutate({ shipmentId: rates.data.shipmentId, rateId })}>
+          <Button
+            disabled={!rates.data || !rateId || buy.isPending}
+            onClick={() =>
+              rates.data && rateId && buy.mutate({ shipmentId: rates.data.shipmentId, rateId })
+            }
+          >
             {buy.isPending ? <Loader2 className="animate-spin" /> : <Printer />}
             {t("ship.buyPrint", "Buy & print")}
           </Button>
@@ -345,15 +446,36 @@ function Shipments() {
   );
   const ids = Object.keys(selected).filter((k) => selected[k]);
   const columns: DataTableColumn<Shipment>[] = [
-    { accessorKey: "orderNo", header: t("orders.order", "Order"), cell: ({ row }) => <span className="font-medium">#{row.original.orderNo}</span> },
-    { accessorKey: "status", header: t("sheets.status", "Status"), cell: ({ row }) => <ShipmentStatusBadge status={row.original.status} /> },
-    { id: "service", header: t("ship.service", "Service"), cell: ({ row }) => (row.original.carrier ? `${row.original.carrier.toUpperCase()} ${row.original.service ?? ""}` : "—") },
+    {
+      accessorKey: "orderNo",
+      header: t("orders.order", "Order"),
+      cell: ({ row }) => <span className="font-medium">#{row.original.orderNo}</span>,
+    },
+    {
+      accessorKey: "status",
+      header: t("sheets.status", "Status"),
+      cell: ({ row }) => <ShipmentStatusBadge status={row.original.status} />,
+    },
+    {
+      id: "service",
+      header: t("ship.service", "Service"),
+      cell: ({ row }) =>
+        row.original.carrier
+          ? `${row.original.carrier.toUpperCase()} ${row.original.service ?? ""}`
+          : "—",
+    },
     {
       accessorKey: "trackingCode",
       header: t("ship.trackingCode", "Tracking"),
       cell: ({ row }) =>
         row.original.trackingUrl ? (
-          <a href={row.original.trackingUrl} target="_blank" rel="noreferrer" className="font-mono text-xs text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+          <a
+            href={row.original.trackingUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="font-mono text-xs text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
             {row.original.trackingCode}
           </a>
         ) : (
@@ -365,7 +487,14 @@ function Shipments() {
       header: t("ship.pushed", "Pushed to channel"),
       cell: ({ row }) => {
         const p = row.original.trackingPush;
-        const tone = p.status === "pushed" ? "success" : p.status === "failed" ? "danger" : p.status === "pending" ? "warning" : "secondary";
+        const tone =
+          p.status === "pushed"
+            ? "success"
+            : p.status === "failed"
+              ? "danger"
+              : p.status === "pending"
+                ? "warning"
+                : "secondary";
         return (
           <Badge variant={tone} title={p.error ?? undefined}>
             {t(`pushStatus.${p.status}`, p.status.replace(/_/g, " "))}
@@ -373,15 +502,36 @@ function Shipments() {
         );
       },
     },
-    { accessorKey: "postage", header: t("ship.postageCol", "Postage"), cell: ({ row }) => <Money cents={row.original.postage + row.original.labelFee} /> },
-    { accessorKey: "labeledAt", header: t("ship.labeled", "Labeled"), cell: ({ row }) => (row.original.labeledAt ? <RelativeTime value={row.original.labeledAt} className="text-muted-foreground" /> : "—") },
+    {
+      accessorKey: "postage",
+      header: t("ship.postageCol", "Postage"),
+      cell: ({ row }) => <Money cents={row.original.postage + row.original.labelFee} />,
+    },
+    {
+      accessorKey: "labeledAt",
+      header: t("ship.labeled", "Labeled"),
+      cell: ({ row }) =>
+        row.original.labeledAt ? (
+          <RelativeTime value={row.original.labeledAt} className="text-muted-foreground" />
+        ) : (
+          "—"
+        ),
+    },
     {
       id: "void",
       header: "",
       cell: ({ row }) =>
         can("shipping.buy") &&
         row.original.status === "labeled" && (
-          <Button size="sm" variant="ghost" className="text-danger" onClick={(e) => { e.stopPropagation(); voidLabel.mutate({ id: row.original.id }); }}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              voidLabel.mutate({ id: row.original.id });
+            }}
+          >
             {t("ship.void", "Void")}
           </Button>
         ),
@@ -390,7 +540,11 @@ function Shipments() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex justify-end">
-        <Button variant="outline" disabled={ids.length === 0 || print.isPending} onClick={() => print.mutate(ids)}>
+        <Button
+          variant="outline"
+          disabled={ids.length === 0 || print.isPending}
+          onClick={() => print.mutate(ids)}
+        >
           {print.isPending ? <Loader2 className="animate-spin" /> : <Printer />}
           {t("ship.printSelected", "Print {{count}} labels", { count: ids.length })}
         </Button>
@@ -432,7 +586,12 @@ function TrackingPush() {
   );
   if (q.isPending) return <SkeletonRows rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={() => void q.refetch()} />;
-  if (q.data.items.length === 0) return <p className="rounded-lg border border-border p-8 text-center text-sm text-muted-foreground">{t("ship.allPushed", "All tracking numbers reached their channels.")}</p>;
+  if (q.data.items.length === 0)
+    return (
+      <p className="rounded-lg border border-border p-8 text-center text-sm text-muted-foreground">
+        {t("ship.allPushed", "All tracking numbers reached their channels.")}
+      </p>
+    );
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
       <table className="w-full min-w-[40rem] text-sm">
@@ -449,15 +608,31 @@ function TrackingPush() {
           {q.data.items.map((p) => (
             <tr key={p.shipmentId} className="border-t border-border">
               <td className="px-3 py-2 font-medium">#{p.orderNo}</td>
-              <td className="px-3 py-2"><ChannelBadge channel={p.channel} /></td>
               <td className="px-3 py-2">
-                <Badge variant={p.status === "failed" ? "danger" : "warning"}>{t(`pushStatus.${p.status}`, p.status)}</Badge>
-                <span className="ml-2 text-xs text-muted-foreground">{t("ship.attempts", "{{n}} attempts", { n: p.attempts })}</span>
+                <ChannelBadge channel={p.channel} />
               </td>
-              <td className="max-w-xs truncate px-3 py-2 text-xs text-danger" title={p.error ?? undefined}>{p.error ?? "—"}</td>
+              <td className="px-3 py-2">
+                <Badge variant={p.status === "failed" ? "danger" : "warning"}>
+                  {t(`pushStatus.${p.status}`, p.status)}
+                </Badge>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {t("ship.attempts", "{{n}} attempts", { n: p.attempts })}
+                </span>
+              </td>
+              <td
+                className="max-w-xs truncate px-3 py-2 text-xs text-danger"
+                title={p.error ?? undefined}
+              >
+                {p.error ?? "—"}
+              </td>
               <td className="px-3 py-2 text-right">
                 {can("shipping.buy") && (
-                  <Button size="sm" variant="outline" onClick={() => retry.mutate({ shipmentId: p.shipmentId })} disabled={retry.isPending}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => retry.mutate({ shipmentId: p.shipmentId })}
+                    disabled={retry.isPending}
+                  >
                     <RotateCw />
                     {t("action.retry")}
                   </Button>
@@ -471,7 +646,18 @@ function TrackingPush() {
   );
 }
 
-const EMPTY_ADDRESS: Address = { name: "", company: null, street1: "", street2: null, city: "", state: "", zip: "", country: "US", phone: null, email: null };
+const EMPTY_ADDRESS: Address = {
+  name: "",
+  company: null,
+  street1: "",
+  street2: null,
+  city: "",
+  state: "",
+  zip: "",
+  country: "US",
+  phone: null,
+  email: null,
+};
 
 function SettingsForm() {
   const q = useQuery(orpc.shipping.settings.get.queryOptions({ input: {} }));
@@ -495,10 +681,19 @@ function SettingsEditor({ settings }: { settings: ShippingSettings }) {
       },
     }),
   );
-  const addr = (k: keyof Address) => (e: React.ChangeEvent<HTMLInputElement>) => setFrom({ ...from, [k]: e.target.value || (k === "company" || k === "street2" || k === "phone" || k === "email" ? null : "") });
+  const addr = (k: keyof Address) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFrom({
+      ...from,
+      [k]:
+        e.target.value ||
+        (k === "company" || k === "street2" || k === "phone" || k === "email" ? null : ""),
+    });
   return (
     <div className="flex max-w-4xl flex-col gap-4">
-      <Section title={t("ship.fromAddress", "Ship-from address")} description={t("ship.provider", "Carrier provider: {{p}}", { p: settings.carrierProvider })}>
+      <Section
+        title={t("ship.fromAddress", "Ship-from address")}
+        description={t("ship.provider", "Carrier provider: {{p}}", { p: settings.carrierProvider })}
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           {(
             [
@@ -521,7 +716,25 @@ function SettingsEditor({ settings }: { settings: ShippingSettings }) {
       <Section
         title={t("ship.presets", "Package presets")}
         actions={
-          <Button size="sm" variant="outline" onClick={() => setPresets([...presets, { id: "", name: "Poly mailer", lengthIn: 12, widthIn: 10, heightIn: 1, tareOz: 1, maxUnits: 2, isDefault: presets.length === 0 }])}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              setPresets([
+                ...presets,
+                {
+                  id: "",
+                  name: "Poly mailer",
+                  lengthIn: 12,
+                  widthIn: 10,
+                  heightIn: 1,
+                  tareOz: 1,
+                  maxUnits: 2,
+                  isDefault: presets.length === 0,
+                },
+              ])
+            }
+          >
             <Plus />
             {t("ship.addPreset", "Add preset")}
           </Button>
@@ -530,25 +743,75 @@ function SettingsEditor({ settings }: { settings: ShippingSettings }) {
         <div className="flex flex-col gap-2">
           {presets.map((p, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: new presets have no id yet
-            <div key={p.id || `new-${i}`} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[2fr_repeat(5,1fr)_auto_auto]">
+            <div
+              key={p.id || `new-${i}`}
+              className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[2fr_repeat(5,1fr)_auto_auto]"
+            >
               <Field label={t("ship.name", "Name")}>
-                <Input value={p.name} onChange={(e) => setPresets(presets.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+                <Input
+                  value={p.name}
+                  onChange={(e) =>
+                    setPresets(
+                      presets.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
+                    )
+                  }
+                />
               </Field>
               {(["lengthIn", "widthIn", "heightIn", "tareOz", "maxUnits"] as const).map((k) => (
-                <Field key={k} label={{ lengthIn: "L (in)", widthIn: "W (in)", heightIn: "H (in)", tareOz: t("ship.tare", "Tare (oz)"), maxUnits: t("ship.maxUnits", "Max units") }[k]}>
+                <Field
+                  key={k}
+                  label={
+                    {
+                      lengthIn: "L (in)",
+                      widthIn: "W (in)",
+                      heightIn: "H (in)",
+                      tareOz: t("ship.tare", "Tare (oz)"),
+                      maxUnits: t("ship.maxUnits", "Max units"),
+                    }[k]
+                  }
+                >
                   <Input
                     type="number"
                     step="0.1"
                     value={p[k] ?? ""}
-                    onChange={(e) => setPresets(presets.map((x, j) => (j === i ? { ...x, [k]: e.target.value === "" && k === "maxUnits" ? null : Number(e.target.value) } : x)))}
+                    onChange={(e) =>
+                      setPresets(
+                        presets.map((x, j) =>
+                          j === i
+                            ? {
+                                ...x,
+                                [k]:
+                                  e.target.value === "" && k === "maxUnits"
+                                    ? null
+                                    : Number(e.target.value),
+                              }
+                            : x,
+                        ),
+                      )
+                    }
                   />
                 </Field>
               ))}
               <label className="flex h-9 items-center gap-1.5 text-xs">
-                <Checkbox checked={p.isDefault} onCheckedChange={(v) => setPresets(presets.map((x, j) => ({ ...x, isDefault: j === i ? !!v : v ? false : x.isDefault })))} />
+                <Checkbox
+                  checked={p.isDefault}
+                  onCheckedChange={(v) =>
+                    setPresets(
+                      presets.map((x, j) => ({
+                        ...x,
+                        isDefault: j === i ? !!v : v ? false : x.isDefault,
+                      })),
+                    )
+                  }
+                />
                 {t("sheets.default", "default")}
               </label>
-              <Button variant="ghost" size="icon" onClick={() => setPresets(presets.filter((_, j) => j !== i))} aria-label={t("action.delete")}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setPresets(presets.filter((_, j) => j !== i))}
+                aria-label={t("action.delete")}
+              >
                 <Trash2 />
               </Button>
             </div>
@@ -558,7 +821,11 @@ function SettingsEditor({ settings }: { settings: ShippingSettings }) {
       <Section title={t("ship.defaults", "Defaults")}>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label={t("ship.strategyLabel", "Batch strategy")} htmlFor="s-strategy">
-            <NativeSelect id="s-strategy" value={strategy} onChange={(e) => setStrategy(e.target.value as typeof strategy)}>
+            <NativeSelect
+              id="s-strategy"
+              value={strategy}
+              onChange={(e) => setStrategy(e.target.value as typeof strategy)}
+            >
               {BATCH_STRATEGIES.map((s) => (
                 <option key={s} value={s}>
                   {t(`ship.strategy.${s}`, s.replace(/_/g, " "))}
