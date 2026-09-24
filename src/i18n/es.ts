@@ -305,6 +305,9 @@ export const es: Messages = {
     forbiddenTitle: "Sin acceso",
     networkTitle: "Sin conexión",
     notImplementedTitle: "Próximamente",
+    pageNotFoundTitle: "Página no encontrada",
+    pageNotFoundDescription: "Esta página no existe o se movió.",
+    pageNotFoundAction: "Volver a Hoy",
   },
   exclusion: {
     already_on_sheet: "Ya está en una hoja",

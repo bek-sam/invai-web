@@ -3,7 +3,7 @@ import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { ErrorState } from "./components/states";
+import { ErrorState, NotFoundState } from "./components/states";
 import { initAppI18n } from "./i18n";
 import { errorInfo, shouldRetry } from "./lib/errors";
 import { initTheme } from "./lib/theme";
@@ -42,6 +42,7 @@ const router = createRouter({
       <ErrorState error={error} onRetry={reset} />
     </div>
   ),
+  defaultNotFoundComponent: NotFoundState,
   scrollRestoration: true,
 });
 

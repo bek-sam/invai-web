@@ -1,6 +1,6 @@
 import { Button, cn, EmptyState, Skeleton } from "@invai/ui";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { AlertTriangle, Construction, RotateCw, WifiOff } from "lucide-react";
+import { AlertTriangle, Compass, Construction, RotateCw, WifiOff } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { errorInfo } from "../lib/errors";
@@ -105,4 +105,23 @@ export function QueryView<T>({
       <ErrorState error={query.error} onRetry={() => void query.refetch()} compact={errorCompact} />
     );
   return <>{children(query.data as T)}</>;
+}
+
+/** Router-level 404 for unknown URLs. */
+export function NotFoundState() {
+  const { t } = useTranslation();
+  return (
+    <div className="p-6">
+      <EmptyState
+        icon={Compass}
+        title={t("errors.pageNotFoundTitle")}
+        description={t("errors.pageNotFoundDescription")}
+        action={
+          <Button asChild variant="outline">
+            <a href="/">{t("errors.pageNotFoundAction")}</a>
+          </Button>
+        }
+      />
+    </div>
+  );
 }

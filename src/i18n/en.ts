@@ -299,6 +299,9 @@ export const en = {
     forbiddenTitle: "No access",
     networkTitle: "Offline",
     notImplementedTitle: "Coming soon",
+    pageNotFoundTitle: "Page not found",
+    pageNotFoundDescription: "This page doesn't exist or was moved.",
+    pageNotFoundAction: "Back to Today",
   },
   exclusion: {
     already_on_sheet: "Already on a sheet",
