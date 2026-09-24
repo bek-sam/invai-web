@@ -7,3 +7,6 @@ dist/
 .turbo/
 coverage/
 .DS_Store
+scripts/i18n-es-missing.json
+e2e/.report/
+e2e/.results/

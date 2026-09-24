@@ -5,20 +5,23 @@
   "description": "InvAI dashboard for owners, office staff, designers and DTF vendors",
   "type": "module",
   "scripts": {
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "i18n": "python3 scripts/gen-i18n.py && biome format --write src/i18n"
   },
   "dependencies": {
-    "@invai/contracts": "link:../invai-contracts",
-    "@invai/ui": "link:../invai-ui",
     "@ai-sdk/react": "^4.0.116",
     "@assistant-ui/react": "^0.15.21",
     "@hookform/resolvers": "^5.9.1",
+    "@invai/contracts": "link:../invai-contracts",
+    "@invai/ui": "link:../invai-ui",
     "@orpc/client": "^1.15.4",
     "@orpc/contract": "^1.15.4",
     "@orpc/tanstack-query": "^1.15.4",
@@ -27,8 +30,12 @@
     "@tanstack/react-table": "^9.2.4",
     "@tanstack/react-virtual": "^3.14.13",
     "ai": "^7.0.113",
+    "better-auth": "^1.7.5",
+    "i18next": "^26.4.2",
     "konva": "^10.7.0",
+    "lucide-react": "^1.47.0",
     "openseadragon": "^6.1.1",
+    "qrcode.react": "^4.2.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-hook-form": "^7.88.0",
@@ -39,17 +46,17 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "typescript": "^7.0.2",
     "@biomejs/biome": "^2.5.14",
-    "vitest": "^5.0.1",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-plugin": "^1.168.40",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.1",
-    "@playwright/test": "^1.63.0",
     "tailwindcss": "^4.3.3",
-    "vite": "^8.3.0"
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
   },
   "packageManager": "pnpm@12.6.0",
   "engines": {
