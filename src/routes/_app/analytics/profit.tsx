@@ -207,9 +207,7 @@ function ProfitPage() {
                       </p>
                     </Card>
                   ))
-                : Array.from({ length: 4 }, (_, i) => (
-                    <Skeleton key={`s${i}`} className="h-[88px]" />
-                  ))}
+                : ["a", "b", "c", "d"].map((k) => <Skeleton key={k} className="h-[88px]" />)}
               {totals ? (
                 <Card className="p-4">
                   <p className="text-sm text-muted-foreground">{t("profit.margin", "Margin")}</p>

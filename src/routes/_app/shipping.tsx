@@ -742,7 +742,6 @@ function SettingsEditor({ settings }: { settings: ShippingSettings }) {
       >
         <div className="flex flex-col gap-2">
           {presets.map((p, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: new presets have no id yet
             <div
               key={p.id || `new-${i}`}
               className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[2fr_repeat(5,1fr)_auto_auto]"

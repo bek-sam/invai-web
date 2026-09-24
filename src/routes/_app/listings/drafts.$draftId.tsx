@@ -181,7 +181,9 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
   );
   const addTag = () => {
     const next = parseTags(tagInput);
-    if (next.length) setTags([...tags, ...next]);
+    const seen = new Set(tags.map((x) => x.toLowerCase()));
+    const fresh = next.filter((x) => !seen.has(x.toLowerCase()));
+    if (fresh.length) setTags([...tags, ...fresh]);
     setTagInput("");
   };
   const errorCount = live.filter((i) => i.severity === "error").length;
@@ -264,7 +266,7 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
                       const bad = rules.tagMaxLen > 0 && tag.length > rules.tagMaxLen;
                       return (
                         <Badge
-                          key={`${tag}-${i}`}
+                          key={tag}
                           variant={bad ? "danger" : "secondary"}
                           className="gap-1 py-1"
                         >
