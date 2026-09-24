@@ -322,6 +322,26 @@ export const en = {
     out_of_stock: "Out of stock",
     payment: "Payment",
   },
+  invite: {
+    acceptFailed: "We couldn't accept the invite. Try again.",
+    emailFixed: "The invite is for this email.",
+    expiredHint: "Invites last a week. Ask the person who invited you to send a new one.",
+    expiredTitle: "This invite has expired",
+    gone: "This invite can't be used anymore. Ask the person who invited you to send a new one.",
+    haveAccount: "You already have an account. Use Sign in instead.",
+    invalidHint:
+      "It may have been canceled or copied wrong. Ask the person who invited you to send a new one.",
+    invalidTitle: "This invite link doesn't work",
+    otherAccount:
+      "This invite is for {{invited}}, but you're signed in as {{current}}. Log out, then accept it with {{invited}}.",
+    signUpFailed: "We couldn't create your account. Try again.",
+    subtitle: "{{company}} invited you to join as {{role}}.",
+    usedHint: "If you accepted it, sign in to get to work.",
+    usedTitle: "This invite was already used",
+    vendorSubtitle: "{{company}} invited you to InvAI to receive DTF gang sheets.",
+    wrongEmail:
+      "This invite is for a different email. Sign in with the email the invite was sent to.",
+  },
   jobs: {
     status: {
       done: "Done",
@@ -1064,6 +1084,8 @@ export const en = {
     ssactivewear: "S&S Activewear",
   },
   team: {
+    alreadyMember: "That person is already on the team.",
+    inviteFailed: "The invite email didn't go out. Check the address and try again.",
     deactivate: "Deactivate",
     empty: "Just you so far",
     invite: "Invite",

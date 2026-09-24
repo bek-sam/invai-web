@@ -328,6 +328,26 @@ export const es: Messages = {
     out_of_stock: "Sin inventario",
     payment: "Pago",
   },
+  invite: {
+    acceptFailed: "No pudimos aceptar la invitación. Inténtalo de nuevo.",
+    emailFixed: "La invitación es para este correo.",
+    expiredHint: "Las invitaciones duran una semana. Pide a quien te invitó que te mande otra.",
+    expiredTitle: "Esta invitación venció",
+    gone: "Esta invitación ya no sirve. Pide a quien te invitó que te mande otra.",
+    haveAccount: "Ya tienes una cuenta. Usa Iniciar sesión.",
+    invalidHint:
+      "Puede que la hayan cancelado o que el enlace esté incompleto. Pide a quien te invitó que te mande otra.",
+    invalidTitle: "Este enlace de invitación no funciona",
+    otherAccount:
+      "Esta invitación es para {{invited}}, pero entraste como {{current}}. Cierra sesión y acéptala con {{invited}}.",
+    signUpFailed: "No pudimos crear tu cuenta. Inténtalo de nuevo.",
+    subtitle: "{{company}} te invitó a unirte como {{role}}.",
+    usedHint: "Si ya la aceptaste, inicia sesión para empezar a trabajar.",
+    usedTitle: "Esta invitación ya se usó",
+    vendorSubtitle: "{{company}} te invitó a InvAI para recibir sus gang sheets DTF.",
+    wrongEmail:
+      "Esta invitación es para otro correo. Entra con el correo al que llegó la invitación.",
+  },
   jobs: {
     status: {
       done: "Listo",
@@ -1077,6 +1097,8 @@ export const es: Messages = {
     ssactivewear: "S&S Activewear",
   },
   team: {
+    alreadyMember: "Esa persona ya está en el equipo.",
+    inviteFailed: "El correo de invitación no salió. Revisa la dirección e inténtalo de nuevo.",
     deactivate: "Desactivar",
     empty: "Por ahora solo tú",
     invite: "Invitar",

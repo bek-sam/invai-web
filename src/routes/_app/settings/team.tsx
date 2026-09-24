@@ -22,6 +22,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Field, NativeSelect, Page } from "../../../components/page";
 import { ErrorState } from "../../../components/states";
+import { errorInfo } from "../../../lib/errors";
 import { useCan, useMe } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
 
@@ -218,8 +219,23 @@ function InviteDialog({
   );
   const invite = useMutation(
     orpc.team.invite.mutationOptions({
-      onSuccess: () => {
-        toast.success(t("team.invited", "Invitation sent to {{email}}", { email }));
+      // The API answers only after the email went out; a failed email is an error, never "sent".
+      meta: { silent: true },
+      onError: (err) => {
+        const { code, message } = errorInfo(err);
+        toast.error(
+          code === "UPSTREAM_FAILED"
+            ? t(
+                "team.inviteFailed",
+                "The invite email didn't go out. Check the address and try again.",
+              )
+            : code === "CONFLICT"
+              ? t("team.alreadyMember", "That person is already on the team.")
+              : message,
+        );
+      },
+      onSuccess: (invited) => {
+        toast.success(t("team.invited", "Invitation sent to {{email}}", { email: invited.email }));
         onDone();
         onClose();
       },
