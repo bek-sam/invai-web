@@ -314,6 +314,7 @@ test("8. the floor presses, QCs and packs the unit (API; the tablet UI has its o
 });
 
 test("9. shipping: rate, buy a mock label, PDF opens, tracking pushed, order shipped", async () => {
+  await ourItem(); // fills state when this step runs on its own
   const order0 = await api.orders.get({ id: state.orderId as string });
   if (order0.status === "shipped") {
     console.log("order already shipped on a previous run; checking the shipment only");
@@ -360,6 +361,7 @@ test("9. shipping: rate, buy a mock label, PDF opens, tracking pushed, order shi
 });
 
 test("10. analytics shows profit for the order's design", async () => {
+  await ourItem();
   const profit = await poll(
     () => api.finance.orderProfit({ orderId: state.orderId as string }),
     (p) => p.revenue > 0,
