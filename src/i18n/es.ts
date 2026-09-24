@@ -401,6 +401,7 @@ export const es: Messages = {
     wrong_order: "Pedido equivocado",
     wrong_size: "Talla equivocada",
     wrong_station: "Estación equivocada",
+    wrong_style: "Estilo de prenda equivocado",
   },
   movementKind: {
     adjust: "Ajuste",

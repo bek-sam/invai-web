@@ -395,6 +395,7 @@ export const en = {
     wrong_order: "Wrong order",
     wrong_size: "Wrong size",
     wrong_station: "Wrong station",
+    wrong_style: "Wrong style",
   },
   movementKind: {
     adjust: "Adjust",

@@ -27,7 +27,15 @@
     }
   },
   "files": {
-    "includes": ["src/**", "*.ts", "*.json", "!src/routeTree.gen.ts"]
+    "includes": [
+      "src/**",
+      "e2e/**",
+      "*.ts",
+      "*.json",
+      "!src/routeTree.gen.ts",
+      "!e2e/.report",
+      "!e2e/.results"
+    ]
   },
   "css": {
     "parser": {

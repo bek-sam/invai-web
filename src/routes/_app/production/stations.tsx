@@ -56,7 +56,9 @@ function StationsBoard() {
       );
     }, []),
   );
-  const today = lastNDays(1);
+  // Fixed for the life of the page: a fresh `to` on every render would change the query key
+  // (and refetch) on every SSE update.
+  const [today] = useState(() => lastNDays(1));
   const output = useQuery(
     orpc.production.staffOutput.queryOptions({ input: today, refetchInterval: 60_000 }),
   );

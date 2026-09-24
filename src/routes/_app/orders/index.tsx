@@ -37,7 +37,8 @@ import { client, orpc } from "../../../lib/rpc";
 
 const searchSchema = z.object({
   view: z.enum(ORDER_VIEWS).optional().catch(undefined),
-  q: z.string().optional().catch(undefined),
+  // Coerced: the router parses "?q=3310000001" as a number, and an order-number search must survive.
+  q: z.coerce.string().optional().catch(undefined),
   channel: z.enum(CHANNELS).optional().catch(undefined),
   personalized: z.boolean().optional().catch(undefined),
   order: z.string().optional().catch(undefined),

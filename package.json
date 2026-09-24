@@ -5,6 +5,8 @@
   "description": "InvAI dashboard for owners, office staff, designers and DTF vendors",
   "type": "module",
   "scripts": {
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
