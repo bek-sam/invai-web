@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
 import { Field, NativeSelect, Page } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { useMe } from "../../../lib/me";
-import { orpc } from "../../../lib/rpc";
+import { client, orpc } from "../../../lib/rpc";
 
 export const Route = createFileRoute("/_app/settings/stations")({
   component: StationsPage,
@@ -135,6 +135,7 @@ function StationsPage() {
           onClose={() => setCreating(false)}
           onCreated={(s) => {
             invalidate();
+            void queryClient.invalidateQueries({ queryKey: orpc.locations.key() });
             setCreating(false);
             issueFor(s);
           }}
@@ -162,7 +163,26 @@ function CreateStation({
   const [locationId, setLocationId] = useState(
     locations.find((l) => l.isDefault)?.id ?? locations[0]?.id ?? "",
   );
-  const create = useMutation(orpc.stations.create.mutationOptions({ onSuccess: onCreated }));
+  const create = useMutation({
+    mutationFn: async () => {
+      let loc = locationId;
+      // A new company may have no location yet; stations need one, so create "Main".
+      if (!loc)
+        loc = (
+          await client.locations.create({
+            name: t("stationsSettings.mainLocation", "Main"),
+            address: null,
+            isDefault: true,
+          })
+        ).id;
+      return client.stations.create({
+        name: name.trim(),
+        locationId: loc,
+        kind: (kind || null) as never,
+      });
+    },
+    onSuccess: onCreated,
+  });
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
@@ -187,29 +207,33 @@ function CreateStation({
             ))}
           </NativeSelect>
         </Field>
-        <Field label={t("company.location", "Location")} htmlFor="st-loc">
-          <NativeSelect
-            id="st-loc"
-            value={locationId}
-            onChange={(e) => setLocationId(e.target.value)}
-          >
-            {locations.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name}
-              </option>
-            ))}
-          </NativeSelect>
-        </Field>
+        {locations.length > 0 ? (
+          <Field label={t("company.location", "Location")} htmlFor="st-loc">
+            <NativeSelect
+              id="st-loc"
+              value={locationId}
+              onChange={(e) => setLocationId(e.target.value)}
+            >
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {t(
+              "stationsSettings.noLocation",
+              "A “Main” location will be created for this station.",
+            )}
+          </p>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             {t("action.cancel")}
           </Button>
-          <Button
-            disabled={!name.trim() || !locationId || create.isPending}
-            onClick={() =>
-              create.mutate({ name: name.trim(), locationId, kind: (kind || null) as never })
-            }
-          >
+          <Button disabled={!name.trim() || create.isPending} onClick={() => create.mutate()}>
             {create.isPending && <Loader2 className="animate-spin" />}
             {t("action.create")}
           </Button>

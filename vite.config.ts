@@ -20,6 +20,22 @@ export default defineConfig({
       "@orpc/contract",
     ],
   },
+  // Routes are code-split, so Vite would discover these on first navigation and reload mid-session.
+  optimizeDeps: {
+    include: [
+      "@orpc/client",
+      "@orpc/client/fetch",
+      "@orpc/tanstack-query",
+      "better-auth/react",
+      "better-auth/client/plugins",
+      "react-hook-form",
+      "@hookform/resolvers/zod",
+      "recharts",
+      "qrcode.react",
+      "@tanstack/react-virtual",
+      "zod",
+    ],
+  },
   server: { port: 5173 },
   test: { environment: "node", include: ["src/**/*.test.ts"] },
 });

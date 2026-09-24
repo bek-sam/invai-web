@@ -18,8 +18,11 @@ export const Route = createFileRoute("/_app")({
     } catch (err) {
       if (!isUnauthorized(err)) throw err;
       // A valid session with no active organization also yields 401; pick one and retry once.
-      const session = await authClient.getSession().catch(() => null);
-      if (!session?.data) throw toLogin();
+      // Only a definite "no session" sends the user to sign in; a network blip (API restarting)
+      // shows the error screen with a retry instead of logging them out.
+      const session = await authClient.getSession().catch(() => undefined);
+      if (!session || session.error) throw err;
+      if (!session.data) throw toLogin();
       await ensureActiveOrg();
       try {
         me = await context.queryClient.fetchQuery(meQueryOptions());

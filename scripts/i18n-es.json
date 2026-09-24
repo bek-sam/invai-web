@@ -1055,5 +1055,7 @@
  "vendor.tab.new": "Nuevas",
  "vendor.tab.in_progress": "En proceso",
  "vendor.tab.shipped": "Enviadas",
- "vendor.tab.all": "Todas"
+ "vendor.tab.all": "Todas",
+ "stationsSettings.mainLocation": "Principal",
+ "stationsSettings.noLocation": "Se creará una ubicación “Principal” para esta estación."
 }
