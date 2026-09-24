@@ -242,7 +242,7 @@ function Queue() {
         {can("shipping.buy") && (
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <NativeSelect
-              aria-label={t("ship.strategy", "Strategy")}
+              aria-label={t("ship.strategyAria", "Strategy")}
               value={strategy}
               onChange={(e) => setStrategy(e.target.value as typeof strategy)}
             >

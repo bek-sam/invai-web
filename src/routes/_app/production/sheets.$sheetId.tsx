@@ -273,7 +273,7 @@ function SendDialog({
       onSuccess: (s) => {
         toast.success(
           t("sheets.sentToast", "Sent to {{vendor}}", {
-            vendor: s.vendorName ?? t("sheets.vendor", "vendor"),
+            vendor: s.vendorName ?? t("sheets.vendorLower", "vendor"),
           }),
         );
         onSent();

@@ -244,7 +244,7 @@ function InviteDialog({
             invite.mutate({ name: name.trim(), email: email.trim(), role });
           }}
         >
-          <Field label={t("auth.yourName", "Name")} htmlFor="i-name">
+          <Field label={t("team.name", "Name")} htmlFor="i-name">
             <Input id="i-name" required value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
           <Field label={t("auth.email", "Email")} htmlFor="i-email">

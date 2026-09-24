@@ -198,7 +198,7 @@ function ProfitPage() {
                     [t("profit.revenue", "Revenue"), totals.revenue],
                     [t("profit.costs", "Costs"), -(totals.revenue - totals.net)],
                     [t("profit.channelFees", "Channel fees"), -totals.channelFees],
-                    [t("profit.net", "Net profit"), totals.net],
+                    [t("profit.netProfit", "Net profit"), totals.net],
                   ].map(([l, v]) => (
                     <Card key={l as string} className="p-4">
                       <p className="text-sm text-muted-foreground">{l}</p>

@@ -314,7 +314,7 @@ function DesignEditor({ design }: { design: Design | null }) {
         )}
       </Section>
       <Section
-        title={t("designs.placements", "Placements and print files")}
+        title={t("designs.placementsTitle", "Placements and print files")}
         actions={
           editable &&
           usedPlacements.size < PLACEMENTS.length && (

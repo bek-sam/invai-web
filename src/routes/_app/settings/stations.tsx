@@ -187,7 +187,7 @@ function CreateStation({
             ))}
           </NativeSelect>
         </Field>
-        <Field label={t("company.locations", "Location")} htmlFor="st-loc">
+        <Field label={t("company.location", "Location")} htmlFor="st-loc">
           <NativeSelect
             id="st-loc"
             value={locationId}

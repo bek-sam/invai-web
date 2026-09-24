@@ -44,7 +44,7 @@ export function OrderProfitBreakdown({ orderId }: { orderId: string }) {
             </tr>
           ))}
           <tr className="font-semibold">
-            <td className="pt-2">{t("profit.net", "Net profit")}</td>
+            <td className="pt-2">{t("profit.netProfit", "Net profit")}</td>
             <td className={cn("pt-2 text-right", p.net < 0 && "text-danger")}>
               <Money cents={p.net} />{" "}
               <span className="font-normal text-muted-foreground">({formatPct(p.marginPct)})</span>
