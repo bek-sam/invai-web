@@ -35,6 +35,7 @@ const SHEET_TONE: Record<SheetState, Tone> = {
   received: "success",
   failed: "danger",
   cancelled: "outline",
+  printing: "warning", // in-house path: ready -> printing -> printed
 };
 
 export function SheetStatusBadge({ status }: { status: SheetState }) {
