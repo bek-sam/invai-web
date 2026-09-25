@@ -92,7 +92,10 @@ test("1. owner signs in and Today shows the real numbers", async () => {
   await page.goto("/");
   await settled(page);
   const summary = await api.today.summary({});
-  await expect(page.getByText("Due today")).toBeVisible();
+  // getByText("Due today") is ambiguous when the team is over capacity today: the capacity
+  // banner's text ("More work due today than the team can finish...") also contains the phrase.
+  // The stat card is a link, so target it by role instead of loosening the text match.
+  await expect(page.getByRole("link", { name: "Due today" })).toBeVisible();
   const main = await page.locator("main").innerText();
   expect(main).toContain(String(summary.orders.dueToday));
   expect(main).toContain(String(summary.orders.atRisk));
@@ -343,7 +346,7 @@ test("9. shipping: rate, buy a mock label, PDF opens, tracking pushed, order shi
   const shipment = await poll(
     async () =>
       (await api.shipping.shipments.list({ orderId: state.orderId as string, limit: 5 })).items[0],
-    (s) => !!s && s.status === "labeled" && s.trackingPush.status !== "pending",
+    (s) => !!s && s.status !== "pending" && s.status !== "rated" && s.trackingPush.status !== "pending",
     { label: "labeled shipment" },
   );
   expect(shipment?.labelKey).toBeTruthy();
@@ -352,7 +355,14 @@ test("9. shipping: rate, buy a mock label, PDF opens, tracking pushed, order shi
     disposition: "inline",
   });
   expect((await fetch(label.url)).headers.get("content-type")).toContain("pdf");
-  const order = await api.orders.get({ id: state.orderId as string });
+  // T-2-5: Etsy (CSV-only) no longer ships at push time; the unit ships on the carrier's first
+  // scan, which the mock carrier fakes after MOCK_CARRIER_TRANSIT_HOURS (dev/E2E sets it low; see
+  // invai-infra/scripts/dev.sh). Poll instead of a single read.
+  const order = await poll(
+    () => api.orders.get({ id: state.orderId as string }),
+    (o) => o.status === "shipped",
+    { label: "order shipped" },
+  );
   expect(order.status).toBe("shipped");
   await page.goto("/shipping");
   await settled(page);

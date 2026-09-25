@@ -347,9 +347,20 @@ test("9. shipping: rates, buy (mock carrier), label PDF, tracking pushed, items 
     { label: "tracking push" },
   );
   expect(["pushed", "not_required"]).toContain(pushed.trackingPush.status);
-  const item = await owner.api.orderItems.get({ id: state.ourItemId as string });
+  // T-2-5: CSV-only channels (Etsy here) no longer ship at push time. The unit ships on the
+  // carrier's first scan, which the mock carrier fakes after MOCK_CARRIER_TRANSIT_HOURS (dev/E2E
+  // sets it low; see invai-infra/scripts/dev.sh). Poll instead of a single read.
+  const item = await poll(
+    () => owner.api.orderItems.get({ id: state.ourItemId as string }),
+    (i) => i.state === "shipped",
+    { label: "item shipped (carrier scan)" },
+  );
   expect(item.state).toBe("shipped");
-  const order = await owner.api.orders.get({ id: state.ourOrderId as string });
+  const order = await poll(
+    () => owner.api.orders.get({ id: state.ourOrderId as string }),
+    (o) => o.status === "shipped",
+    { label: "order shipped" },
+  );
   expect(order.status).toBe("shipped");
 });
 
