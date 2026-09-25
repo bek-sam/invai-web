@@ -346,7 +346,8 @@ test("9. shipping: rate, buy a mock label, PDF opens, tracking pushed, order shi
   const shipment = await poll(
     async () =>
       (await api.shipping.shipments.list({ orderId: state.orderId as string, limit: 5 })).items[0],
-    (s) => !!s && s.status !== "pending" && s.status !== "rated" && s.trackingPush.status !== "pending",
+    (s) =>
+      !!s && s.status !== "pending" && s.status !== "rated" && s.trackingPush.status !== "pending",
     { label: "labeled shipment" },
   );
   expect(shipment?.labelKey).toBeTruthy();
