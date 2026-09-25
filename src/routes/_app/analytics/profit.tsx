@@ -1,5 +1,6 @@
-import { PROFIT_DIMENSIONS, type ProfitRow } from "@invai/contracts";
+import { type Channel, PROFIT_DIMENSIONS, type ProfitRow } from "@invai/contracts";
 import {
+  Button,
   Card,
   cn,
   DataTable,
@@ -14,11 +15,12 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  toast,
 } from "@invai/ui";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Info } from "lucide-react";
-import { useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Download, Info, Loader2, RefreshCw } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Bar,
@@ -34,8 +36,15 @@ import { z } from "zod";
 import { NativeSelect, Page, Section } from "../../../components/page";
 import { ErrorState } from "../../../components/states";
 import { OrderProfitBreakdown } from "../../../features/finance/order-profit";
-import { formatDay, formatMoneyShort, formatPct, lastNDays } from "../../../lib/format";
-import { orpc } from "../../../lib/rpc";
+import { errorMessage } from "../../../lib/errors";
+import {
+  formatDay,
+  formatMoneyShort,
+  formatPct,
+  lastNDays,
+  toDateInput,
+} from "../../../lib/format";
+import { client, orpc } from "../../../lib/rpc";
 
 const PERIODS = [7, 30, 90] as const;
 
@@ -59,12 +68,48 @@ function ProfitPage() {
     () => lastNDays(days, new Date(Math.floor(Date.now() / 60_000) * 60_000)),
     [days],
   );
+  const queryClient = useQueryClient();
+  const [recomputeStartedAt, setRecomputeStartedAt] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
   const q = useQuery(
     orpc.finance.profit.queryOptions({
       input: { dimension: dim, period, sort: dim === "day" ? "key" : "net", limit: 200 },
+      refetchInterval: () =>
+        recomputeStartedAt && Date.now() - recomputeStartedAt < 20_000 ? 2000 : false,
     }),
   );
+  const recompute = useMutation(
+    orpc.finance.recompute.mutationOptions({
+      onSuccess: () => {
+        setRecomputeStartedAt(Date.now());
+        toast.success(t("profit.recomputeStarted", "Profit is being recomputed"));
+        void queryClient.invalidateQueries({ queryKey: orpc.finance.profit.key() });
+      },
+      onError: (err) => toast.error(errorMessage(err)),
+    }),
+  );
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const { key } = await client.finance.exportCsv({ dimension: dim, period });
+      const { url } = await client.files.downloadUrl({ fileKey: key, disposition: "attachment" });
+      window.open(url, "_blank", "noopener");
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setExporting(false);
+    }
+  }
   const label = (r: ProfitRow) => (dim === "day" ? formatDay(r.key) : r.label);
+  /** Orders-list filters this row's dimension actually supports (contract has no design/blank
+   * filter yet on `orders.list`, so those two dims can only pre-filter by period). */
+  const ordersSearchFor = (r: ProfitRow) => {
+    const from = toDateInput(new Date(period.from));
+    const to = toDateInput(new Date(period.to));
+    if (dim === "day") return { from: r.key, to: r.key };
+    if (dim === "channel") return { channel: r.key as Channel, from, to };
+    return { from, to };
+  };
   const chartRows = useMemo(() => {
     const rows = q.data?.rows ?? [];
     const list =
@@ -155,22 +200,43 @@ function ProfitPage() {
         "True profit after fees, blanks, transfers, labels, packaging, labor, ads and refunds.",
       )}
       actions={
-        <NativeSelect
-          aria-label={t("profit.period", "Period")}
-          value={days}
-          onChange={(e) =>
-            void navigate({
-              search: (p) => ({ ...p, days: Number(e.target.value) }),
-              replace: true,
-            })
-          }
-        >
-          {PERIODS.map((d) => (
-            <option key={d} value={d}>
-              {t("profit.lastDays", "Last {{n}} days", { n: d })}
-            </option>
-          ))}
-        </NativeSelect>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/analytics/ad-spend"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            {t("profit.manageAdSpend", "Manage ad spend")}
+          </Link>
+          <NativeSelect
+            aria-label={t("profit.period", "Period")}
+            value={days}
+            onChange={(e) =>
+              void navigate({
+                search: (p) => ({ ...p, days: Number(e.target.value) }),
+                replace: true,
+              })
+            }
+          >
+            {PERIODS.map((d) => (
+              <option key={d} value={d}>
+                {t("profit.lastDays", "Last {{n}} days", { n: d })}
+              </option>
+            ))}
+          </NativeSelect>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={recompute.isPending}
+            onClick={() => recompute.mutate({ period })}
+          >
+            {recompute.isPending ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+            {t("profit.recompute", "Recompute")}
+          </Button>
+          <Button variant="outline" size="sm" disabled={exporting} onClick={() => void exportCsv()}>
+            {exporting ? <Loader2 className="animate-spin" /> : <Download />}
+            {t("profit.export", "Export CSV")}
+          </Button>
+        </div>
       }
     >
       <div className="flex flex-col gap-4">
@@ -290,15 +356,25 @@ function ProfitPage() {
                 )}
               </Section>
             )}
+            {(dim === "design" || dim === "blank") && (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Info className="size-4" />
+                {t(
+                  "profit.drilldownLimited",
+                  "Rows open the orders list for this period; the orders list can't filter by {{dim}} yet.",
+                  { dim: t(`profit.dim.${dim}`).toLowerCase() },
+                )}
+              </p>
+            )}
             <DataTable
               columns={columns as DataTableColumn<ProfitRow, unknown>[]}
               data={q.data?.rows ?? []}
               getRowId={(r) => r.key}
               isLoading={q.isPending}
-              onRowClick={
+              onRowClick={(r) =>
                 dim === "order"
-                  ? (r) => void navigate({ search: (p) => ({ ...p, order: r.key }) })
-                  : undefined
+                  ? void navigate({ search: (p) => ({ ...p, order: r.key }) })
+                  : void navigate({ to: "/orders", search: ordersSearchFor(r) })
               }
               emptyTitle={t("profit.noData", "No orders in this period")}
               maxHeight="32rem"
