@@ -1,4 +1,5 @@
 import i18n from "i18next";
+import { demoModeMessage } from "../features/demo/demo-mode";
 
 export interface ErrorInfo {
   code: string;
@@ -28,6 +29,8 @@ export function errorInfo(err: unknown): ErrorInfo {
       );
       return { code, status, message, data: e.data ?? null };
     }
+    if (code === "DEMO_MODE")
+      return { code, status, message: demoModeMessage(), data: e.data ?? null };
     const upgrade = upgradeReasonOf(code, e.data);
     if (upgrade) return { code, status, message: upgradeMessage(upgrade), data: e.data ?? null };
     return { code, status, message, data: e.data ?? null };
