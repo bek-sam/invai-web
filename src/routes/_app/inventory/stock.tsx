@@ -1,5 +1,7 @@
 import {
   ADJUST_REASONS,
+  type BlankVariant,
+  type CountResult,
   MOVEMENT_KINDS,
   type Movement,
   type ReorderSuggestion,
@@ -33,19 +35,28 @@ import {
 } from "@invai/ui";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, ClipboardPlus, Loader2, Search, SlidersHorizontal } from "lucide-react";
+import {
+  CheckCircle2,
+  ClipboardCheck,
+  ClipboardPlus,
+  Loader2,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { Field, NativeSelect, Page } from "../../../components/page";
-import { blankLabel } from "../../../components/pickers";
+import { BlankPicker, blankLabel } from "../../../components/pickers";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { useDebounced } from "../../../hooks/use-debounced";
 import { formatNumber, freightProgress } from "../../../lib/format";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
 
-const TABS = ["stock", "movements", "reorder"] as const;
+const TABS = ["stock", "movements", "reorder", "count"] as const;
 
 export const Route = createFileRoute("/_app/inventory/stock")({
   validateSearch: z.object({
@@ -84,6 +95,9 @@ function StockPage() {
           {can("purchasing.read") && (
             <TabsTrigger value="reorder">{t("stock.reorder", "Reorder")}</TabsTrigger>
           )}
+          {can("inventory.count") && (
+            <TabsTrigger value="count">{t("stock.count", "Count")}</TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value="stock">
           <StockLevels
@@ -98,6 +112,9 @@ function StockPage() {
         </TabsContent>
         <TabsContent value="reorder">
           <Reorder />
+        </TabsContent>
+        <TabsContent value="count">
+          <CycleCount />
         </TabsContent>
       </Tabs>
     </Page>
@@ -611,5 +628,255 @@ function SupplierSuggestion({ suggestion: s }: { suggestion: ReorderSuggestion }
         </table>
       </div>
     </Card>
+  );
+}
+
+type CountLine = {
+  blankVariantId: string;
+  blank: { brand: string; style: string; color: string; size: string };
+  counted: string;
+};
+
+/** T-6-1 AC4: pick a location or bin, enter counts, preview the difference, submit. */
+function CycleCount() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const locations = useQuery(orpc.locations.list.queryOptions({ input: {} }));
+  const [locationId, setLocationId] = useState("");
+  const [picked, setPicked] = useState<BlankVariant | null>(null);
+  const [lines, setLines] = useState<CountLine[]>([]);
+  const [note, setNote] = useState("");
+  const [result, setResult] = useState<CountResult | null>(null);
+
+  function addLine() {
+    if (!picked || lines.some((l) => l.blankVariantId === picked.id)) return;
+    setLines([
+      ...lines,
+      {
+        blankVariantId: picked.id,
+        blank: { brand: picked.brand, style: picked.style, color: picked.color, size: picked.size },
+        counted: "0",
+      },
+    ]);
+    setPicked(null);
+  }
+  function setLine(id: string, counted: string) {
+    setLines(lines.map((l) => (l.blankVariantId === id ? { ...l, counted } : l)));
+  }
+  function removeLine(id: string) {
+    setLines(lines.filter((l) => l.blankVariantId !== id));
+  }
+
+  const payloadLines = lines.map((l) => ({
+    blankVariantId: l.blankVariantId,
+    counted: Number.parseInt(l.counted, 10),
+  }));
+  const valid =
+    payloadLines.length > 0 &&
+    payloadLines.every((l) => Number.isInteger(l.counted) && l.counted >= 0);
+
+  const submit = useMutation(
+    orpc.inventory.count.mutationOptions({
+      onSuccess: (res) => {
+        toast.success(t("stock.countSubmitted", "Count submitted"));
+        setResult(res);
+        setLines([]);
+        setNote("");
+        void queryClient.invalidateQueries({ queryKey: orpc.inventory.key() });
+      },
+    }),
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card className="flex flex-col gap-3 p-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label={t("stock.location", "Location")} htmlFor="count-location">
+            <NativeSelect
+              id="count-location"
+              value={locationId}
+              onChange={(e) => setLocationId(e.target.value)}
+              disabled={locations.isPending}
+            >
+              <option value="">{t("stock.defaultLocation", "Default location")}</option>
+              {locations.data?.items.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        </div>
+        <Field label={t("stock.addToCount", "Add a blank to count")}>
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <BlankPicker value={picked} onChange={setPicked} />
+            </div>
+            <Button type="button" variant="outline" onClick={addLine} disabled={!picked}>
+              <Plus />
+              {t("action.add", "Add")}
+            </Button>
+          </div>
+        </Field>
+      </Card>
+      {lines.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[36rem] text-sm">
+              <thead className="bg-muted/50 text-xs text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium">{t("orders.blank", "Blank")}</th>
+                  <th className="px-2 py-2 text-right font-medium">
+                    {t("stock.expected", "Expected")}
+                  </th>
+                  <th className="px-2 py-2 text-right font-medium">
+                    {t("stock.counted", "Counted")}
+                  </th>
+                  <th className="px-2 py-2 text-right font-medium">
+                    {t("stock.difference", "Difference")}
+                  </th>
+                  <th className="w-8">
+                    <span className="sr-only">{t("action.delete")}</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {lines.map((l) => (
+                  <CountLineRow
+                    key={l.blankVariantId}
+                    line={l}
+                    locationId={locationId || undefined}
+                    onChange={(v) => setLine(l.blankVariantId, v)}
+                    onRemove={() => removeLine(l.blankVariantId)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex flex-col gap-3 border-t border-border p-4">
+            <Field label={t("orders.note", "Note")} htmlFor="count-note">
+              <Textarea
+                id="count-note"
+                rows={2}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            </Field>
+            <div className="flex justify-end">
+              <Button
+                onClick={() =>
+                  submit.mutate({
+                    locationId: locationId || undefined,
+                    lines: payloadLines,
+                    note: note.trim() || null,
+                  })
+                }
+                disabled={!valid || submit.isPending}
+              >
+                {submit.isPending ? <Loader2 className="animate-spin" /> : <ClipboardCheck />}
+                {t("stock.submitCount", "Submit count")}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+      {lines.length === 0 && !result && (
+        <Card>
+          <EmptyState
+            icon={ClipboardCheck}
+            title={t("stock.countEmpty", "Nothing added yet")}
+            description={t("stock.countEmptyHint", "Search for a blank above to start a count.")}
+          />
+        </Card>
+      )}
+      {result && (
+        <Card className="p-4">
+          <p className="mb-2 text-sm font-medium">{t("stock.lastCount", "Last count")}</p>
+          <ul className="flex flex-col gap-1 text-sm">
+            {result.variance.map((v) => (
+              <li key={v.blankVariantId} className="flex justify-between gap-3 tabular-nums">
+                <span className="text-muted-foreground">
+                  {t("stock.countLine", "expected {{expected}}, counted {{counted}}", {
+                    expected: v.expected,
+                    counted: v.counted,
+                  })}
+                </span>
+                <span
+                  className={cn(
+                    "font-medium",
+                    v.delta > 0 && "text-success",
+                    v.delta < 0 && "text-danger",
+                  )}
+                >
+                  {v.delta > 0 ? "+" : ""}
+                  {v.delta}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function CountLineRow({
+  line,
+  locationId,
+  onChange,
+  onRemove,
+}: {
+  line: CountLine;
+  locationId: string | undefined;
+  onChange: (counted: string) => void;
+  onRemove: () => void;
+}) {
+  const { t } = useTranslation();
+  const expected = useQuery(
+    orpc.inventory.stock.get.queryOptions({
+      input: { blankVariantId: line.blankVariantId, locationId },
+    }),
+  );
+  const onHand = expected.data?.onHand ?? null;
+  const counted = Number.parseInt(line.counted, 10);
+  const delta = onHand === null || !Number.isInteger(counted) ? null : counted - onHand;
+  return (
+    <tr className="border-t border-border">
+      <td className="px-4 py-1.5">{blankLabel(line.blank)}</td>
+      <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+        {expected.isPending ? "…" : (onHand ?? "—")}
+      </td>
+      <td className="px-2 py-1.5">
+        <Input
+          type="number"
+          min={0}
+          className="ml-auto h-8 w-20 text-right"
+          value={line.counted}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={t("stock.counted", "Counted")}
+        />
+      </td>
+      <td className="px-2 py-1.5 text-right tabular-nums">
+        {delta === null ? (
+          "—"
+        ) : (
+          <span className={cn(delta > 0 && "text-success", delta < 0 && "text-danger")}>
+            {delta > 0 ? "+" : ""}
+            {delta}
+          </span>
+        )}
+      </td>
+      <td className="px-2 py-1.5 text-right">
+        <Button
+          size="icon"
+          variant="ghost"
+          className="size-7 text-danger"
+          onClick={onRemove}
+          aria-label={t("action.delete")}
+        >
+          <Trash2 />
+        </Button>
+      </td>
+    </tr>
   );
 }

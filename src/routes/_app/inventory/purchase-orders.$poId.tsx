@@ -1,15 +1,28 @@
 import type { PurchaseOrder } from "@invai/contracts";
-import { Button, Input, Money, Skeleton, toast } from "@invai/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Money,
+  Skeleton,
+  toast,
+} from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Ban, Loader2, PackageCheck, Send } from "lucide-react";
+import { ArrowLeft, Ban, Loader2, PackageCheck, Pencil, Send, Stamp } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
-import { DefList, Section } from "../../../components/page";
+import { DefList, Field, Section } from "../../../components/page";
 import { blankLabel } from "../../../components/pickers";
 import { PoStatusBadge } from "../../../components/po-badge";
 import { ErrorState } from "../../../components/states";
+import { PoFormDialog } from "../../../features/inventory/po-form-dialog";
 import { formatDateTime } from "../../../lib/format";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
@@ -46,7 +59,10 @@ function PoView({ po }: { po: PurchaseOrder }) {
   const can = useCan();
   const queryClient = useQueryClient();
   const [receive, setReceive] = useState<Record<string, string>>({});
+  const [receiptKey, setReceiptKey] = useState(() => crypto.randomUUID());
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [placing, setPlacing] = useState(false);
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: orpc.inventory.key() });
   const submit = useMutation(
     orpc.inventory.purchaseOrders.submit.mutationOptions({
@@ -61,6 +77,8 @@ function PoView({ po }: { po: PurchaseOrder }) {
       onSuccess: () => {
         toast.success(t("po.receivedToast", "Received into stock"));
         setReceive({});
+        // A fresh key for the next receipt; retries of this one keep reusing `receiptKey`.
+        setReceiptKey(crypto.randomUUID());
         invalidate();
       },
     }),
@@ -87,9 +105,21 @@ function PoView({ po }: { po: PurchaseOrder }) {
         </div>
         <div className="flex gap-2">
           {po.status === "draft" && can("purchasing.manage") && (
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              <Pencil />
+              {t("action.edit")}
+            </Button>
+          )}
+          {po.status === "draft" && can("purchasing.manage") && (
             <Button onClick={() => submit.mutate({ id: po.id })} disabled={submit.isPending}>
               {submit.isPending ? <Loader2 className="animate-spin" /> : <Send />}
               {t("po.submit", "Submit to supplier")}
+            </Button>
+          )}
+          {po.status === "draft" && can("purchasing.manage") && (
+            <Button variant="outline" onClick={() => setPlacing(true)}>
+              <Stamp />
+              {t("po.markPlaced", "Mark placed by phone/email")}
             </Button>
           )}
           {canReceive && (
@@ -202,7 +232,14 @@ function PoView({ po }: { po: PurchaseOrder }) {
         {canReceive && (
           <div className="mt-4 flex justify-end">
             <Button
-              onClick={() => rec.mutate({ purchaseOrderId: po.id, lines, note: null })}
+              onClick={() =>
+                rec.mutate({
+                  purchaseOrderId: po.id,
+                  lines,
+                  note: null,
+                  idempotencyKey: receiptKey,
+                })
+              }
               disabled={lines.length === 0 || rec.isPending}
             >
               {rec.isPending ? <Loader2 className="animate-spin" /> : <PackageCheck />}
@@ -221,6 +258,71 @@ function PoView({ po }: { po: PurchaseOrder }) {
         pending={cancel.isPending}
         onConfirm={() => cancel.mutate({ id: po.id })}
       />
+      {editing && <PoFormDialog po={po} onClose={() => setEditing(false)} />}
+      {placing && (
+        <MarkPlacedDialog po={po} onClose={() => setPlacing(false)} onDone={invalidate} />
+      )}
     </div>
+  );
+}
+
+/** AC2: for suppliers with no ordering API, record that the order was placed by phone/email. */
+function MarkPlacedDialog({
+  po,
+  onClose,
+  onDone,
+}: {
+  po: PurchaseOrder;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const { t } = useTranslation();
+  const [ref, setRef] = useState("");
+  const markPlaced = useMutation(
+    orpc.inventory.purchaseOrders.markPlaced.mutationOptions({
+      onSuccess: () => {
+        toast.success(t("po.placedToast", "Marked placed"));
+        onDone();
+        onClose();
+      },
+    }),
+  );
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("po.markPlacedTitle", "Mark {{no}} placed", { no: po.poNo })}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              "po.markPlacedHint",
+              "For a supplier with no ordering API: record the order you placed by phone or email.",
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <Field label={t("po.supplierOrder", "Supplier order")} htmlFor="po-placed-ref">
+          <Input
+            id="po-placed-ref"
+            autoFocus
+            value={ref}
+            onChange={(e) => setRef(e.target.value)}
+            placeholder={t("po.supplierOrderPlaceholder", "Their order or confirmation number")}
+          />
+        </Field>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            {t("action.cancel")}
+          </Button>
+          <Button
+            onClick={() => markPlaced.mutate({ id: po.id, supplierOrderRef: ref.trim() })}
+            disabled={!ref.trim() || markPlaced.isPending}
+          >
+            {markPlaced.isPending && <Loader2 className="animate-spin" />}
+            {t("po.markPlacedConfirm", "Mark placed")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

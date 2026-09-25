@@ -34,6 +34,7 @@ import { Route as AppSettingsBillingRouteImport } from './routes/_app/settings/b
 import { Route as AppSettingsChannelsRouteImport } from './routes/_app/settings/channels'
 import { Route as AppSettingsCompanyRouteImport } from './routes/_app/settings/company'
 import { Route as AppSettingsCostsRouteImport } from './routes/_app/settings/costs'
+import { Route as AppSettingsInventoryRouteImport } from './routes/_app/settings/inventory'
 import { Route as AppSettingsShippingRouteImport } from './routes/_app/settings/shipping'
 import { Route as AppSettingsStationsRouteImport } from './routes/_app/settings/stations'
 import { Route as AppSettingsTeamRouteImport } from './routes/_app/settings/team'
@@ -177,6 +178,11 @@ const AppSettingsCostsRoute = AppSettingsCostsRouteImport.update({
   path: '/settings/costs',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsInventoryRoute = AppSettingsInventoryRouteImport.update({
+  id: '/settings/inventory',
+  path: '/settings/inventory',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsShippingRoute = AppSettingsShippingRouteImport.update({
   id: '/settings/shipping',
   path: '/settings/shipping',
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/settings/channels': typeof AppSettingsChannelsRoute
   '/settings/company': typeof AppSettingsCompanyRoute
   '/settings/costs': typeof AppSettingsCostsRoute
+  '/settings/inventory': typeof AppSettingsInventoryRoute
   '/settings/shipping': typeof AppSettingsShippingRoute
   '/settings/stations': typeof AppSettingsStationsRoute
   '/settings/team': typeof AppSettingsTeamRoute
@@ -338,6 +345,7 @@ export interface FileRoutesByTo {
   '/settings/channels': typeof AppSettingsChannelsRoute
   '/settings/company': typeof AppSettingsCompanyRoute
   '/settings/costs': typeof AppSettingsCostsRoute
+  '/settings/inventory': typeof AppSettingsInventoryRoute
   '/settings/shipping': typeof AppSettingsShippingRoute
   '/settings/stations': typeof AppSettingsStationsRoute
   '/settings/team': typeof AppSettingsTeamRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/_app/settings/channels': typeof AppSettingsChannelsRoute
   '/_app/settings/company': typeof AppSettingsCompanyRoute
   '/_app/settings/costs': typeof AppSettingsCostsRoute
+  '/_app/settings/inventory': typeof AppSettingsInventoryRoute
   '/_app/settings/shipping': typeof AppSettingsShippingRoute
   '/_app/settings/stations': typeof AppSettingsStationsRoute
   '/_app/settings/team': typeof AppSettingsTeamRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/settings/channels'
     | '/settings/company'
     | '/settings/costs'
+    | '/settings/inventory'
     | '/settings/shipping'
     | '/settings/stations'
     | '/settings/team'
@@ -471,6 +481,7 @@ export interface FileRouteTypes {
     | '/settings/channels'
     | '/settings/company'
     | '/settings/costs'
+    | '/settings/inventory'
     | '/settings/shipping'
     | '/settings/stations'
     | '/settings/team'
@@ -515,6 +526,7 @@ export interface FileRouteTypes {
     | '/_app/settings/channels'
     | '/_app/settings/company'
     | '/_app/settings/costs'
+    | '/_app/settings/inventory'
     | '/_app/settings/shipping'
     | '/_app/settings/stations'
     | '/_app/settings/team'
@@ -722,6 +734,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsCostsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/inventory': {
+      id: '/_app/settings/inventory'
+      path: '/settings/inventory'
+      fullPath: '/settings/inventory'
+      preLoaderRoute: typeof AppSettingsInventoryRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/shipping': {
       id: '/_app/settings/shipping'
       path: '/settings/shipping'
@@ -862,6 +881,7 @@ interface AppRouteChildren {
   AppSettingsChannelsRoute: typeof AppSettingsChannelsRoute
   AppSettingsCompanyRoute: typeof AppSettingsCompanyRoute
   AppSettingsCostsRoute: typeof AppSettingsCostsRoute
+  AppSettingsInventoryRoute: typeof AppSettingsInventoryRoute
   AppSettingsShippingRoute: typeof AppSettingsShippingRoute
   AppSettingsStationsRoute: typeof AppSettingsStationsRoute
   AppSettingsTeamRoute: typeof AppSettingsTeamRoute
@@ -900,6 +920,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsChannelsRoute: AppSettingsChannelsRoute,
   AppSettingsCompanyRoute: AppSettingsCompanyRoute,
   AppSettingsCostsRoute: AppSettingsCostsRoute,
+  AppSettingsInventoryRoute: AppSettingsInventoryRoute,
   AppSettingsShippingRoute: AppSettingsShippingRoute,
   AppSettingsStationsRoute: AppSettingsStationsRoute,
   AppSettingsTeamRoute: AppSettingsTeamRoute,

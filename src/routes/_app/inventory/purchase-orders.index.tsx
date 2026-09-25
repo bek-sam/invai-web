@@ -2,13 +2,15 @@ import { PO_STATES, type PurchaseOrder } from "@invai/contracts";
 import { Button, DataTable, type DataTableColumn, Money, RelativeTime } from "@invai/ui";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NativeSelect, Page } from "../../../components/page";
 import { PoStatusBadge } from "../../../components/po-badge";
 import { ErrorState } from "../../../components/states";
+import { PoFormDialog } from "../../../features/inventory/po-form-dialog";
 import { formatDate } from "../../../lib/format";
+import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
 
 export const Route = createFileRoute("/_app/inventory/purchase-orders/")({
@@ -17,8 +19,10 @@ export const Route = createFileRoute("/_app/inventory/purchase-orders/")({
 
 function PurchaseOrdersPage() {
   const { t } = useTranslation();
+  const can = useCan();
   const navigate = useNavigate();
   const [status, setStatus] = useState("");
+  const [creating, setCreating] = useState(false);
   const q = useInfiniteQuery(
     orpc.inventory.purchaseOrders.list.infiniteOptions({
       input: (cursor: string | undefined) => ({
@@ -79,12 +83,20 @@ function PurchaseOrdersPage() {
       title={t("nav.purchaseOrders")}
       description={t("po.subtitle", "Orders to your blank suppliers, and receiving.")}
       actions={
-        <Button variant="outline" asChild>
-          <Link to="/inventory/stock" search={{ tab: "reorder" }}>
-            <Lightbulb />
-            {t("po.fromSuggestions", "Reorder suggestions")}
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/inventory/stock" search={{ tab: "reorder" }}>
+              <Lightbulb />
+              {t("po.fromSuggestions", "Reorder suggestions")}
+            </Link>
+          </Button>
+          {can("purchasing.manage") && (
+            <Button onClick={() => setCreating(true)}>
+              <Plus />
+              {t("po.new", "New PO")}
+            </Button>
+          )}
+        </div>
       }
     >
       <NativeSelect
@@ -115,10 +127,14 @@ function PurchaseOrdersPage() {
             void navigate({ to: "/inventory/purchase-orders/$poId", params: { poId: r.id } })
           }
           emptyTitle={t("po.empty", "No purchase orders")}
-          emptyDescription={t("po.emptyHint", "Create one from the reorder suggestions.")}
+          emptyDescription={t(
+            "po.emptyHint",
+            "Create one by hand, or from the reorder suggestions.",
+          )}
           maxHeight="calc(100dvh - 15rem)"
         />
       )}
+      {creating && <PoFormDialog po={null} onClose={() => setCreating(false)} />}
     </Page>
   );
 }

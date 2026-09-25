@@ -27,6 +27,7 @@ import {
   Truck,
   Type,
   Users,
+  Warehouse,
 } from "lucide-react";
 
 export interface NavItem {
@@ -249,6 +250,14 @@ export const SHOP_NAV: NavGroup[] = [
         icon: PackageCheck,
         permission: "vendors.read",
         keywords: "dtf supplier",
+      },
+      {
+        key: "inventorySettings",
+        to: "/settings/inventory",
+        labelKey: "nav.inventorySettings",
+        icon: Warehouse,
+        permission: "inventory.read",
+        keywords: "blank supplier api key velocity reorder",
       },
       {
         key: "stationsSettings",
