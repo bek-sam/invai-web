@@ -56,14 +56,28 @@ const toast = (text: string | RegExp) =>
     .getByText(text)
     .first();
 
-/** Click a button when it is on screen; on a re-run the step may already be done. */
-const clickIfShown = async (scope: Page | ReturnType<Page["getByRole"]>, name: string | RegExp) => {
+/**
+ * Click a button once it is actually on screen. On a re-run the step may already be done, so this
+ * tolerates the button never appearing -- but it waits for it (bounded) rather than taking a
+ * single instantaneous snapshot. An instant `isVisible()` check right after a navigation or reload
+ * can catch the button mid-render and wrongly read that as "not needed", silently skipping a step
+ * the flow still requires (filed as a flake in invai-docs/waves/2/gate.md §4). Every call site
+ * below still asserts the resulting domain state afterwards, so a step that really was skipped
+ * wrongly fails loudly instead of passing silently.
+ */
+const clickIfShown = async (
+  scope: Page | ReturnType<Page["getByRole"]>,
+  name: string | RegExp,
+  timeout = 8_000,
+) => {
   const button = scope.getByRole("button", { name, exact: typeof name === "string" });
-  if (await button.isVisible().catch(() => false)) {
-    await button.click();
-    return true;
-  }
-  return false;
+  const shown = await button
+    .waitFor({ state: "visible", timeout })
+    .then(() => true)
+    .catch(() => false);
+  if (!shown) return false;
+  await button.click();
+  return true;
 };
 
 const ourItem = async () => {
@@ -244,6 +258,13 @@ test("6. send to vendor; the vendor acknowledges, prints and ships in the portal
     await dialog.getByRole("button", { name: "Send to vendor" }).click();
     await expect(toast(/Sent to/)).toBeVisible();
   }
+  // "Send to vendor" is only skipped when a previous run already sent it; either way the sheet
+  // must be off "ready" before the vendor portal can do anything with it.
+  await poll(
+    () => api.production.sheets.get({ id: state.sheetId as string }),
+    (sh) => sh.status !== "ready",
+    { label: "sheet sent to vendor" },
+  );
 
   const vendorPage = await (await page.context().browser()?.newContext())?.newPage();
   if (!vendorPage) throw new Error("no browser");
@@ -257,10 +278,20 @@ test("6. send to vendor; the vendor acknowledges, prints and ships in the portal
     await expect(
       vendorPage.getByRole("region", { name: /Notifications/ }).getByText("Acknowledged"),
     ).toBeVisible();
+  // Acknowledging is optional (the backend accepts "Mark printed" straight from "sent" too), so
+  // there is no state to assert for it here beyond the toast above when it was clicked.
   if (await clickIfShown(vendorPage, "Mark printed"))
     await expect(
       vendorPage.getByRole("region", { name: /Notifications/ }).getByText("Marked printed"),
     ).toBeVisible();
+  // "Mark printed" is required to reach "Mark shipped"; assert it landed even when this run's
+  // click was skipped because a previous run already did it, so a wrongly-skipped click here
+  // fails loudly right at this step instead of only surfacing later.
+  await poll(
+    () => api.production.sheets.get({ id: state.sheetId as string }),
+    (sh) => ["printed", "shipped", "received"].includes(sh.status),
+    { label: "sheet marked printed" },
+  );
   if (await clickIfShown(vendorPage, "Mark shipped")) {
     const ship = vendorPage.getByRole("dialog", { name: "Mark shipped" });
     await ship.locator("#vs-carrier").fill("ups");
@@ -270,7 +301,11 @@ test("6. send to vendor; the vendor acknowledges, prints and ships in the portal
       vendorPage.getByRole("region", { name: /Notifications/ }).getByText("Marked shipped"),
     ).toBeVisible();
   }
-  const sheet = await api.production.sheets.get({ id: state.sheetId as string });
+  const sheet = await poll(
+    () => api.production.sheets.get({ id: state.sheetId as string }),
+    (sh) => ["shipped", "received"].includes(sh.status),
+    { label: "sheet marked shipped" },
+  );
   expect(["shipped", "received"]).toContain(sheet.status);
   await vendorPage.context().close();
 });
@@ -280,7 +315,14 @@ test("7. the owner marks the sheet received; items are transfer_in", async () =>
   await settled(page);
   if (await clickIfShown(page, "Mark received"))
     await expect(toast("Transfers received")).toBeVisible();
-  const item = await api.orderItems.get({ id: state.itemId as string });
+  // "Mark received" is required to move the item off the sheet; poll (rather than a single read)
+  // so a click that just landed has a moment to be reflected, and so a wrongly-skipped click still
+  // fails loudly here instead of silently leaving the item behind.
+  const item = await poll(
+    () => api.orderItems.get({ id: state.itemId as string }),
+    (i) => ["transfer_in", "pressed", "packed", "shipped"].includes(i.state),
+    { label: "item transferred in" },
+  );
   expect(["transfer_in", "pressed", "packed", "shipped"]).toContain(item.state);
 });
 
