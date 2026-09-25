@@ -129,11 +129,29 @@ function Queue() {
   const batch = useMutation({
     mutationFn: async (orderIds: string[]) => {
       const res = await client.shipping.batchBuy({ orderIds, strategy });
-      const ids = res.results.flatMap((r) =>
-        r.status === "labeled" && r.shipmentId ? [r.shipmentId] : [],
-      );
+      if (res.status !== "queued") {
+        const ids = res.results.flatMap((r) =>
+          r.status === "labeled" && r.shipmentId ? [r.shipmentId] : [],
+        );
+        if (ids.length) await printLabels(ids);
+        return res;
+      }
+      // The labels are bought in a background job: follow it, then print what it bought.
+      let job = await client.production.jobs.get({ id: res.jobId });
+      while (job.status !== "done" && job.status !== "failed") {
+        await new Promise((r) => setTimeout(r, 1500));
+        job = await client.production.jobs.get({ id: res.jobId });
+      }
+      if (job.status === "failed") throw new Error(job.error ?? job.message ?? "Batch failed");
+      const ids = job.resultIds;
+      const shipments = await Promise.all(ids.map((id) => client.shipping.shipments.get({ id })));
       if (ids.length) await printLabels(ids);
-      return res;
+      return {
+        ...res,
+        labeled: ids.length,
+        failed: orderIds.length - ids.length,
+        totalPostage: shipments.reduce((sum, s) => sum + s.postage, 0),
+      };
     },
     onSuccess: (res) => {
       toast.success(t("ship.batchDone", "{{n}} labels bought", { n: res.labeled }), {
