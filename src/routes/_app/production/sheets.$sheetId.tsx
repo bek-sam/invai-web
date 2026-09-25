@@ -22,6 +22,7 @@ import {
   FileDown,
   Loader2,
   PackageCheck,
+  Printer,
   RefreshCw,
   Send,
 } from "lucide-react";
@@ -34,7 +35,7 @@ import { ErrorState, SkeletonRows } from "../../../components/states";
 import { PlacementList } from "../../../features/production/placement-list";
 import { SheetPreview } from "../../../features/production/sheet-preview";
 import { formatDateTime, formatInches, formatPct } from "../../../lib/format";
-import { useCan } from "../../../lib/me";
+import { useCan, useMe } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
 import { openInNewTab } from "../../../lib/upload";
 
@@ -129,6 +130,7 @@ function SheetView({ sheet }: { sheet: GangSheetDetail }) {
 function SheetActions({ sheet }: { sheet: GangSheetDetail }) {
   const { t } = useTranslation();
   const can = useCan();
+  const me = useMe();
   const queryClient = useQueryClient();
   const [sendOpen, setSendOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -167,6 +169,22 @@ function SheetActions({ sheet }: { sheet: GangSheetDetail }) {
       },
     }),
   );
+  const markPrinting = useMutation(
+    orpc.production.sheets.markPrinting.mutationOptions({
+      onSuccess: () => {
+        toast.success(t("sheets.printingToast", "Printing in-house"));
+        invalidate();
+      },
+    }),
+  );
+  const markPrinted = useMutation(
+    orpc.production.sheets.markPrinted.mutationOptions({
+      onSuccess: () => {
+        toast.success(t("sheets.printedToast", "Marked printed"));
+        invalidate();
+      },
+    }),
+  );
   const download = async (kind: "png" | "pdf") => {
     const urls = await downloads.mutateAsync();
     const url = urls[kind];
@@ -195,10 +213,31 @@ function SheetActions({ sheet }: { sheet: GangSheetDetail }) {
         <FileDown />
         PDF
       </Button>
-      {manage && s === "ready" && (
+      {manage && s === "ready" && !me.org.printsInHouse && (
         <Button size="sm" onClick={() => setSendOpen(true)}>
           <Send />
           {t("sheets.send", "Send to vendor")}
+        </Button>
+      )}
+      {manage && s === "ready" && me.org.printsInHouse && (
+        <Button
+          size="sm"
+          onClick={() => markPrinting.mutate({ id: sheet.id })}
+          disabled={markPrinting.isPending}
+        >
+          {markPrinting.isPending ? <Loader2 className="animate-spin" /> : <Printer />}
+          {t("sheets.markPrinting", "Print in-house")}
+        </Button>
+      )}
+      {manage && s === "printing" && (
+        <Button
+          size="sm"
+          variant="success"
+          onClick={() => markPrinted.mutate({ id: sheet.id })}
+          disabled={markPrinted.isPending}
+        >
+          {markPrinted.isPending ? <Loader2 className="animate-spin" /> : <PackageCheck />}
+          {t("sheets.markPrinted", "Mark printed")}
         </Button>
       )}
       {manage && ["sent", "acknowledged", "printed", "shipped"].includes(s) && (
@@ -223,17 +262,18 @@ function SheetActions({ sheet }: { sheet: GangSheetDetail }) {
           {t("sheets.regenerate", "Regenerate")}
         </Button>
       )}
-      {manage && ["building", "ready", "failed", "sent", "acknowledged"].includes(s) && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-danger"
-          onClick={() => setCancelOpen(true)}
-        >
-          <Ban />
-          {t("action.cancel")}
-        </Button>
-      )}
+      {manage &&
+        ["building", "ready", "printing", "failed", "sent", "acknowledged"].includes(s) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-danger"
+            onClick={() => setCancelOpen(true)}
+          >
+            <Ban />
+            {t("action.cancel")}
+          </Button>
+        )}
       {sendOpen && (
         <SendDialog sheet={sheet} open={sendOpen} onOpenChange={setSendOpen} onSent={invalidate} />
       )}

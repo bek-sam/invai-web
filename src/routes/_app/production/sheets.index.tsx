@@ -37,6 +37,7 @@ const TABS = ["open", "received", "all"] as const;
 const OPEN: SheetState[] = [
   "building",
   "ready",
+  "printing",
   "sent",
   "acknowledged",
   "printed",

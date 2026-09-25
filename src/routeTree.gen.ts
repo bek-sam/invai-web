@@ -20,6 +20,7 @@ import { Route as AppAccountRouteImport } from './routes/_app/account'
 import { Route as AppAssistantRouteImport } from './routes/_app/assistant'
 import { Route as AppShippingRouteImport } from './routes/_app/shipping'
 import { Route as AcceptInviteInvitationIdRouteImport } from './routes/accept-invite.$invitationId'
+import { Route as AppAnalyticsAdSpendRouteImport } from './routes/_app/analytics/ad-spend'
 import { Route as AppAnalyticsProfitRouteImport } from './routes/_app/analytics/profit'
 import { Route as AppCatalogBlanksRouteImport } from './routes/_app/catalog/blanks'
 import { Route as AppCatalogProductsRouteImport } from './routes/_app/catalog/products'
@@ -28,6 +29,8 @@ import { Route as AppInventoryStockRouteImport } from './routes/_app/inventory/s
 import { Route as AppListingsTrademarkRouteImport } from './routes/_app/listings/trademark'
 import { Route as AppOrdersIndexRouteImport } from './routes/_app/orders/index'
 import { Route as AppOrdersOrderIdRouteImport } from './routes/_app/orders/$orderId'
+import { Route as AppProductionBinsRouteImport } from './routes/_app/production/bins'
+import { Route as AppProductionReprintsRouteImport } from './routes/_app/production/reprints'
 import { Route as AppProductionStationsRouteImport } from './routes/_app/production/stations'
 import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/audit'
 import { Route as AppSettingsBillingRouteImport } from './routes/_app/settings/billing'
@@ -108,6 +111,11 @@ const AcceptInviteInvitationIdRoute =
     path: '/accept-invite/$invitationId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppAnalyticsAdSpendRoute = AppAnalyticsAdSpendRouteImport.update({
+  id: '/analytics/ad-spend',
+  path: '/analytics/ad-spend',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAnalyticsProfitRoute = AppAnalyticsProfitRouteImport.update({
   id: '/analytics/profit',
   path: '/analytics/profit',
@@ -146,6 +154,16 @@ const AppOrdersIndexRoute = AppOrdersIndexRouteImport.update({
 const AppOrdersOrderIdRoute = AppOrdersOrderIdRouteImport.update({
   id: '/orders/$orderId',
   path: '/orders/$orderId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProductionBinsRoute = AppProductionBinsRouteImport.update({
+  id: '/production/bins',
+  path: '/production/bins',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProductionReprintsRoute = AppProductionReprintsRouteImport.update({
+  id: '/production/reprints',
+  path: '/production/reprints',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProductionStationsRoute = AppProductionStationsRouteImport.update({
@@ -288,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/assistant': typeof AppAssistantRoute
   '/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
+  '/analytics/ad-spend': typeof AppAnalyticsAdSpendRoute
   '/analytics/profit': typeof AppAnalyticsProfitRoute
   '/catalog/blanks': typeof AppCatalogBlanksRoute
   '/catalog/products': typeof AppCatalogProductsRoute
@@ -295,6 +314,8 @@ export interface FileRoutesByFullPath {
   '/inventory/stock': typeof AppInventoryStockRoute
   '/listings/trademark': typeof AppListingsTrademarkRoute
   '/orders/$orderId': typeof AppOrdersOrderIdRoute
+  '/production/bins': typeof AppProductionBinsRoute
+  '/production/reprints': typeof AppProductionReprintsRoute
   '/production/stations': typeof AppProductionStationsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
   '/settings/billing': typeof AppSettingsBillingRoute
@@ -332,6 +353,7 @@ export interface FileRoutesByTo {
   '/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
   '/': typeof AppIndexRoute
+  '/analytics/ad-spend': typeof AppAnalyticsAdSpendRoute
   '/analytics/profit': typeof AppAnalyticsProfitRoute
   '/catalog/blanks': typeof AppCatalogBlanksRoute
   '/catalog/products': typeof AppCatalogProductsRoute
@@ -339,6 +361,8 @@ export interface FileRoutesByTo {
   '/inventory/stock': typeof AppInventoryStockRoute
   '/listings/trademark': typeof AppListingsTrademarkRoute
   '/orders/$orderId': typeof AppOrdersOrderIdRoute
+  '/production/bins': typeof AppProductionBinsRoute
+  '/production/reprints': typeof AppProductionReprintsRoute
   '/production/stations': typeof AppProductionStationsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
   '/settings/billing': typeof AppSettingsBillingRoute
@@ -378,6 +402,7 @@ export interface FileRoutesById {
   '/_app/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/analytics/ad-spend': typeof AppAnalyticsAdSpendRoute
   '/_app/analytics/profit': typeof AppAnalyticsProfitRoute
   '/_app/catalog/blanks': typeof AppCatalogBlanksRoute
   '/_app/catalog/products': typeof AppCatalogProductsRoute
@@ -385,6 +410,8 @@ export interface FileRoutesById {
   '/_app/inventory/stock': typeof AppInventoryStockRoute
   '/_app/listings/trademark': typeof AppListingsTrademarkRoute
   '/_app/orders/$orderId': typeof AppOrdersOrderIdRoute
+  '/_app/production/bins': typeof AppProductionBinsRoute
+  '/_app/production/reprints': typeof AppProductionReprintsRoute
   '/_app/production/stations': typeof AppProductionStationsRoute
   '/_app/settings/audit': typeof AppSettingsAuditRoute
   '/_app/settings/billing': typeof AppSettingsBillingRoute
@@ -424,6 +451,7 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/shipping'
     | '/accept-invite/$invitationId'
+    | '/analytics/ad-spend'
     | '/analytics/profit'
     | '/catalog/blanks'
     | '/catalog/products'
@@ -431,6 +459,8 @@ export interface FileRouteTypes {
     | '/inventory/stock'
     | '/listings/trademark'
     | '/orders/$orderId'
+    | '/production/bins'
+    | '/production/reprints'
     | '/production/stations'
     | '/settings/audit'
     | '/settings/billing'
@@ -468,6 +498,7 @@ export interface FileRouteTypes {
     | '/shipping'
     | '/accept-invite/$invitationId'
     | '/'
+    | '/analytics/ad-spend'
     | '/analytics/profit'
     | '/catalog/blanks'
     | '/catalog/products'
@@ -475,6 +506,8 @@ export interface FileRouteTypes {
     | '/inventory/stock'
     | '/listings/trademark'
     | '/orders/$orderId'
+    | '/production/bins'
+    | '/production/reprints'
     | '/production/stations'
     | '/settings/audit'
     | '/settings/billing'
@@ -513,6 +546,7 @@ export interface FileRouteTypes {
     | '/_app/shipping'
     | '/accept-invite/$invitationId'
     | '/_app/'
+    | '/_app/analytics/ad-spend'
     | '/_app/analytics/profit'
     | '/_app/catalog/blanks'
     | '/_app/catalog/products'
@@ -520,6 +554,8 @@ export interface FileRouteTypes {
     | '/_app/inventory/stock'
     | '/_app/listings/trademark'
     | '/_app/orders/$orderId'
+    | '/_app/production/bins'
+    | '/_app/production/reprints'
     | '/_app/production/stations'
     | '/_app/settings/audit'
     | '/_app/settings/billing'
@@ -636,6 +672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AcceptInviteInvitationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/analytics/ad-spend': {
+      id: '/_app/analytics/ad-spend'
+      path: '/analytics/ad-spend'
+      fullPath: '/analytics/ad-spend'
+      preLoaderRoute: typeof AppAnalyticsAdSpendRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/analytics/profit': {
       id: '/_app/analytics/profit'
       path: '/analytics/profit'
@@ -690,6 +733,20 @@ declare module '@tanstack/react-router' {
       path: '/orders/$orderId'
       fullPath: '/orders/$orderId'
       preLoaderRoute: typeof AppOrdersOrderIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/production/bins': {
+      id: '/_app/production/bins'
+      path: '/production/bins'
+      fullPath: '/production/bins'
+      preLoaderRoute: typeof AppProductionBinsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/production/reprints': {
+      id: '/_app/production/reprints'
+      path: '/production/reprints'
+      fullPath: '/production/reprints'
+      preLoaderRoute: typeof AppProductionReprintsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/production/stations': {
@@ -868,6 +925,7 @@ interface AppRouteChildren {
   AppAssistantRoute: typeof AppAssistantRoute
   AppShippingRoute: typeof AppShippingRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAnalyticsAdSpendRoute: typeof AppAnalyticsAdSpendRoute
   AppAnalyticsProfitRoute: typeof AppAnalyticsProfitRoute
   AppCatalogBlanksRoute: typeof AppCatalogBlanksRoute
   AppCatalogProductsRoute: typeof AppCatalogProductsRoute
@@ -875,6 +933,8 @@ interface AppRouteChildren {
   AppInventoryStockRoute: typeof AppInventoryStockRoute
   AppListingsTrademarkRoute: typeof AppListingsTrademarkRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
+  AppProductionBinsRoute: typeof AppProductionBinsRoute
+  AppProductionReprintsRoute: typeof AppProductionReprintsRoute
   AppProductionStationsRoute: typeof AppProductionStationsRoute
   AppSettingsAuditRoute: typeof AppSettingsAuditRoute
   AppSettingsBillingRoute: typeof AppSettingsBillingRoute
@@ -907,6 +967,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAssistantRoute: AppAssistantRoute,
   AppShippingRoute: AppShippingRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAnalyticsAdSpendRoute: AppAnalyticsAdSpendRoute,
   AppAnalyticsProfitRoute: AppAnalyticsProfitRoute,
   AppCatalogBlanksRoute: AppCatalogBlanksRoute,
   AppCatalogProductsRoute: AppCatalogProductsRoute,
@@ -914,6 +975,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppInventoryStockRoute: AppInventoryStockRoute,
   AppListingsTrademarkRoute: AppListingsTrademarkRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
+  AppProductionBinsRoute: AppProductionBinsRoute,
+  AppProductionReprintsRoute: AppProductionReprintsRoute,
   AppProductionStationsRoute: AppProductionStationsRoute,
   AppSettingsAuditRoute: AppSettingsAuditRoute,
   AppSettingsBillingRoute: AppSettingsBillingRoute,
