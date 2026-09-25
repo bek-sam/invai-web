@@ -520,6 +520,8 @@ export const es: Messages = {
     bannerBody:
       "Prueba lo que quieras. Son datos de ejemplo: tu tienda real no cambia y no se envía nada a clientes ni a marketplaces.",
     bannerTitle: "Demo: esta es una tienda de ejemplo",
+    cantPay:
+      "Esta es una tienda de ejemplo: aquí no se puede pagar ni cobrar nada. Cambia a tu tienda para gestionar planes y facturación.",
     leave: "Salir del demo",
     leaveFailed: "No se pudo salir de la tienda de ejemplo",
     reset: "Reiniciar demo",

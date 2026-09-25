@@ -504,6 +504,8 @@ export const en = {
     bannerBody:
       "Try anything here. It's sample data, your real shop isn't touched, and nothing goes out to customers or marketplaces.",
     bannerTitle: "Demo: this is a sample shop",
+    cantPay:
+      "This is a sample shop, so nothing here can be paid for or charged. Switch to your shop to manage plans and billing.",
     leave: "Leave demo",
     leaveFailed: "Couldn't leave the sample shop",
     reset: "Reset demo",
