@@ -16,10 +16,11 @@ import {
 } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Copy, KeyRound, Loader2, Plus, Tablet } from "lucide-react";
+import { Copy, KeyRound, Loader2, Pencil, Plus, Tablet } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ConfirmDialog } from "../../../components/confirm-dialog";
 import { Field, NativeSelect, Page } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { useMe } from "../../../lib/me";
@@ -36,9 +37,23 @@ function StationsPage() {
   const locations = useQuery(orpc.locations.list.queryOptions({ input: {}, retry: false }));
   const [creating, setCreating] = useState(false);
   const [token, setToken] = useState<{ station: StationDevice; token: string } | null>(null);
+  const [editing, setEditing] = useState<StationDevice | null>(null);
+  const [confirm, setConfirm] = useState<{
+    kind: "revoke" | "deactivate";
+    station: StationDevice;
+  } | null>(null);
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: orpc.stations.key() });
   const issue = useMutation(orpc.stations.issueToken.mutationOptions({ onSuccess: invalidate }));
   const update = useMutation(orpc.stations.update.mutationOptions({ onSuccess: invalidate }));
+  const revoke = useMutation(
+    orpc.stations.revokeToken.mutationOptions({
+      onSuccess: () => {
+        toast.success(t("stationsSettings.revoked", "Token revoked. The tablet is signed out."));
+        setConfirm(null);
+        invalidate();
+      },
+    }),
+  );
   const issueFor = (s: StationDevice) =>
     issue.mutate({ id: s.id }, { onSuccess: (r) => setToken({ station: s, token: r.token }) });
   return (
@@ -96,14 +111,16 @@ function StationsPage() {
                 ) : (
                   t("stationsSettings.noToken", "No token yet")
                 )}
-                {s.lastSeenAt && (
+                {" · "}
+                {s.lastSeenAt ? (
                   <>
-                    {" · "}
                     {t("team.lastSeen", "Last seen")} <RelativeTime value={s.lastSeenAt} />
                   </>
+                ) : (
+                  t("stationsSettings.neverSeen", "Not seen yet")
                 )}
               </p>
-              <div className="mt-1 flex gap-2">
+              <div className="mt-1 flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -115,10 +132,28 @@ function StationsPage() {
                     ? t("stationsSettings.reissue", "New token")
                     : t("stationsSettings.issue", "Pair tablet")}
                 </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditing(s)}>
+                  <Pencil />
+                  {t("action.edit")}
+                </Button>
+                {s.tokenIssuedAt && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-danger"
+                    onClick={() => setConfirm({ kind: "revoke", station: s })}
+                  >
+                    {t("stationsSettings.revoke", "Revoke token")}
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => update.mutate({ id: s.id, active: !s.active })}
+                  onClick={() =>
+                    s.active
+                      ? setConfirm({ kind: "deactivate", station: s })
+                      : update.mutate({ id: s.id, active: true })
+                  }
                 >
                   {s.active
                     ? t("team.deactivate", "Deactivate")
@@ -139,6 +174,57 @@ function StationsPage() {
             setCreating(false);
             issueFor(s);
           }}
+        />
+      )}
+      {editing && (
+        <EditStation
+          station={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            invalidate();
+            setEditing(null);
+          }}
+        />
+      )}
+      {confirm && (
+        <ConfirmDialog
+          open
+          onOpenChange={(o) => !o && setConfirm(null)}
+          destructive
+          pending={revoke.isPending || update.isPending}
+          title={
+            confirm.kind === "revoke"
+              ? t("stationsSettings.revokeTitle", "Revoke the token for {{name}}?", {
+                  name: confirm.station.name,
+                })
+              : t("stationsSettings.deactivateTitle", "Deactivate {{name}}?", {
+                  name: confirm.station.name,
+                })
+          }
+          description={
+            confirm.kind === "revoke"
+              ? t(
+                  "stationsSettings.revokeBody",
+                  "Use this for a lost or stolen tablet. It is signed out at once and can't be used until you pair it with a new token.",
+                )
+              : t(
+                  "stationsSettings.deactivateBody",
+                  "Staff can't sign in on this tablet until you reactivate it.",
+                )
+          }
+          confirmLabel={
+            confirm.kind === "revoke"
+              ? t("stationsSettings.revoke", "Revoke token")
+              : t("team.deactivate", "Deactivate")
+          }
+          onConfirm={() =>
+            confirm.kind === "revoke"
+              ? revoke.mutate({ id: confirm.station.id })
+              : update.mutate(
+                  { id: confirm.station.id, active: false },
+                  { onSuccess: () => setConfirm(null) },
+                )
+          }
         />
       )}
       {token && (
@@ -238,6 +324,73 @@ function CreateStation({
             {t("action.create")}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditStation({
+  station,
+  onClose,
+  onSaved,
+}: {
+  station: StationDevice;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { t } = useTranslation();
+  const [name, setName] = useState(station.name);
+  const [kind, setKind] = useState<string>(station.kind ?? "");
+  const save = useMutation(orpc.stations.update.mutationOptions({ onSuccess: onSaved }));
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("stationsSettings.editTitle", "Edit {{name}}", { name: station.name })}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              "stationsSettings.editHint",
+              "A paired tablet picks up the new name and screen the next time staff sign in.",
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            save.mutate({ id: station.id, name: name.trim(), kind: (kind || null) as never });
+          }}
+        >
+          <Field label={t("designs.name", "Name")} htmlFor="st-edit-name">
+            <Input
+              id="st-edit-name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Field>
+          <Field label={t("stations.station", "Station")} htmlFor="st-edit-kind">
+            <NativeSelect id="st-edit-kind" value={kind} onChange={(e) => setKind(e.target.value)}>
+              <option value="">{t("stationsSettings.anyStation", "Any station")}</option>
+              {STATIONS.map((k) => (
+                <option key={k} value={k}>
+                  {t(`station.${k}`)}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t("action.cancel")}
+            </Button>
+            <Button type="submit" disabled={!name.trim() || save.isPending}>
+              {save.isPending && <Loader2 className="animate-spin" />}
+              {t("action.save")}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
