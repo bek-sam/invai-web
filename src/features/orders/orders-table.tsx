@@ -183,7 +183,9 @@ export function OrdersTable({
                         </div>
                         <div className="mt-1 flex items-center gap-2">
                           <OrderStatusBadge status={o.status} />
-                          <ShipByBadge shipBy={o.shipBy} />
+                          {o.status !== "shipped" &&
+                            o.status !== "delivered" &&
+                            o.status !== "cancelled" && <ShipByBadge shipBy={o.shipBy} />}
                           <span className="ml-auto text-xs text-muted-foreground">
                             {t("orders.nItems", "{{count}} items", { count: o.itemCount })}
                           </span>

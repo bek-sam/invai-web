@@ -16,23 +16,31 @@ import {
 } from "@invai/ui";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Pause, Play, Search, X } from "lucide-react";
+import { Ban, Download, Loader2, Pause, Play, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { NativeSelect, Page } from "../../../components/page";
 import { ErrorState } from "../../../components/states";
-import { HoldDialog, useInvalidateOrders } from "../../../features/orders/dialogs";
+import {
+  BulkCancelDialog,
+  HoldDialog,
+  useInvalidateOrders,
+} from "../../../features/orders/dialogs";
+import { downloadCsv, EXPORT_MAX_ROWS, ordersCsv } from "../../../features/orders/export";
 import { OrderDetail } from "../../../features/orders/order-detail";
 import { OrdersTable } from "../../../features/orders/orders-table";
 import {
   nextActiveIndex,
   ORDER_VIEWS,
   type OrderView,
+  tabCount,
   viewFilters,
 } from "../../../features/orders/views";
 import { useDebounced } from "../../../hooks/use-debounced";
-import { useCan } from "../../../lib/me";
+import { errorMessage } from "../../../lib/errors";
+import { endOfDayIso, startOfDayIso, toDateInput } from "../../../lib/format";
+import { useCan, useMe } from "../../../lib/me";
 import { client, orpc } from "../../../lib/rpc";
 
 const searchSchema = z.object({
@@ -41,6 +49,10 @@ const searchSchema = z.object({
   q: z.coerce.string().optional().catch(undefined),
   channel: z.enum(CHANNELS).optional().catch(undefined),
   personalized: z.boolean().optional().catch(undefined),
+  /** Placed-on date range, YYYY-MM-DD (local days). */
+  from: z.iso.date().optional().catch(undefined),
+  to: z.iso.date().optional().catch(undefined),
+  tag: z.coerce.string().max(40).optional().catch(undefined),
   order: z.string().optional().catch(undefined),
 });
 
@@ -61,6 +73,10 @@ function OrdersPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [activeIndex, setActiveIndex] = useState(-1);
   const [holdOpen, setHoldOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [tagText, setTagText] = useState(search.tag ?? "");
+  const tag = useDebounced(tagText.trim(), 300);
+  const me = useMe();
   const invalidate = useInvalidateOrders();
 
   const setSearch = useCallback(
@@ -72,15 +88,33 @@ function OrdersPage() {
   useEffect(() => {
     if ((search.q ?? "") !== q) setSearch({ q: q || undefined });
   }, [q, search.q, setSearch]);
+  useEffect(() => {
+    if ((search.tag ?? "") !== tag) setSearch({ tag: tag || undefined });
+  }, [tag, search.tag, setSearch]);
 
-  const filters = useMemo(
+  const timeZone = me.org.timezone;
+  /** Filters shared by the list, the tab counts and the export (everything but the tab). */
+  const common = useMemo(
     () => ({
-      ...viewFilters(view),
       search: q || undefined,
       channel: search.channel ? [search.channel] : undefined,
       hasPersonalization: search.personalized || undefined,
+      placedFrom: search.from ? startOfDayIso(search.from) : undefined,
+      placedTo: search.to ? endOfDayIso(search.to) : undefined,
+      tag: search.tag || undefined,
     }),
-    [view, q, search.channel, search.personalized],
+    [q, search.channel, search.personalized, search.from, search.to, search.tag],
+  );
+  const filters = useMemo(
+    () => ({ ...viewFilters(view, { timeZone }), ...common }),
+    [view, common, timeZone],
+  );
+  const hasFilters = !!(
+    search.channel ||
+    search.personalized ||
+    search.from ||
+    search.to ||
+    search.tag
   );
 
   const list = useInfiniteQuery(
@@ -96,13 +130,23 @@ function OrdersPage() {
       getNextPageParam: (last) => last.nextCursor ?? undefined,
     }),
   );
-  const counts = useQuery(
+  const counts = useQuery(orpc.orders.counts.queryOptions({ input: common, retry: false }));
+  // The order rollup can't tell "needs mapping" from "needs artwork": count those by item state.
+  const mappingCounts = useQuery(
     orpc.orders.counts.queryOptions({
-      input: {
-        search: q || undefined,
-        channel: filters.channel,
-        hasPersonalization: filters.hasPersonalization,
-      },
+      input: { ...common, itemState: ["needs_mapping"] },
+      retry: false,
+    }),
+  );
+  const artworkCounts = useQuery(
+    orpc.orders.counts.queryOptions({
+      input: { ...common, itemState: ["needs_artwork"] },
+      retry: false,
+    }),
+  );
+  const blockedCounts = useQuery(
+    orpc.orders.counts.queryOptions({
+      input: { ...common, itemState: ["needs_mapping", "needs_artwork"] },
       retry: false,
     }),
   );
@@ -176,25 +220,49 @@ function OrdersPage() {
     },
   });
 
-  const tabCount = (v: OrderView): number | undefined => {
-    const c = counts.data;
-    if (!c) return undefined;
-    switch (v) {
-      case "at_risk":
-        return c.atRisk;
-      case "needs_mapping":
-      case "needs_artwork":
-        return c.byStatus.needs_attention;
-      case "ready":
-        return c.byStatus.new;
-      case "on_hold":
-        return c.byStatus.on_hold;
-      default:
-        return undefined;
-    }
-  };
+  const countFor = (v: OrderView) =>
+    tabCount(v, counts.data, {
+      needs_mapping: mappingCounts.data,
+      needs_artwork: artworkCounts.data,
+      blocked: blockedCounts.data,
+    });
+
+  const exportCsv = useMutation({
+    mutationFn: async () => {
+      const rows: Order[] = [];
+      let cursor: string | undefined;
+      do {
+        const page = await client.orders.list({
+          ...filters,
+          cursor,
+          limit: 200,
+          sort: "shipBy",
+          dir: "asc",
+        });
+        rows.push(...page.items);
+        cursor = page.nextCursor ?? undefined;
+      } while (cursor && rows.length < EXPORT_MAX_ROWS);
+      const capped = rows.slice(0, EXPORT_MAX_ROWS);
+      downloadCsv(`orders-${view}-${toDateInput(new Date())}.csv`, ordersCsv(capped));
+      return { count: capped.length, more: !!cursor };
+    },
+    onSuccess: ({ count, more }) =>
+      toast.success(t("orders.exported", "Exported {{count}} order(s)", { count }), {
+        description: more
+          ? t(
+              "orders.exportCapped",
+              "Only the first {{max}} are included. Narrow the filters to get the rest.",
+              {
+                max: EXPORT_MAX_ROWS,
+              },
+            )
+          : undefined,
+      }),
+    onError: (err) => toast.error(errorMessage(err)),
+  });
 
   const selectedIds = [...selected];
+  const selectedOrders = orders.filter((o) => selected.has(o.id));
   return (
     <Page
       title={t("nav.orders")}
@@ -214,7 +282,7 @@ function OrdersPage() {
           <div className="-mx-1 overflow-x-auto px-1">
             <TabsList>
               {ORDER_VIEWS.map((v) => {
-                const n = tabCount(v);
+                const n = countFor(v);
                 return (
                   <TabsTrigger key={v} value={v} className="gap-1.5">
                     {t(`orders.view.${v}`, v)}
@@ -251,6 +319,34 @@ function OrdersPage() {
               </option>
             ))}
           </NativeSelect>
+          <div className="flex items-center gap-1">
+            <Input
+              type="date"
+              className="w-[9.5rem]"
+              value={search.from ?? ""}
+              max={search.to}
+              onChange={(e) => setSearch({ from: e.target.value || undefined })}
+              aria-label={t("orders.placedFrom", "Placed from")}
+            />
+            <span className="text-muted-foreground" aria-hidden>
+              –
+            </span>
+            <Input
+              type="date"
+              className="w-[9.5rem]"
+              value={search.to ?? ""}
+              min={search.from}
+              onChange={(e) => setSearch({ to: e.target.value || undefined })}
+              aria-label={t("orders.placedTo", "Placed to")}
+            />
+          </div>
+          <Input
+            className="w-32"
+            value={tagText}
+            onChange={(e) => setTagText(e.target.value)}
+            placeholder={t("orders.tagFilter", "Tag")}
+            aria-label={t("orders.tagFilterLabel", "Filter by tag")}
+          />
           <label className="flex items-center gap-2 text-sm">
             <Switch
               checked={!!search.personalized}
@@ -259,6 +355,34 @@ function OrdersPage() {
             />
             {t("orders.personalized", "Personalized")}
           </label>
+          {hasFilters && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setTagText("");
+                setSearch({
+                  channel: undefined,
+                  personalized: undefined,
+                  from: undefined,
+                  to: undefined,
+                  tag: undefined,
+                });
+              }}
+            >
+              <X />
+              {t("orders.clearFilters", "Clear filters")}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => exportCsv.mutate()}
+            disabled={exportCsv.isPending || orders.length === 0}
+          >
+            {exportCsv.isPending ? <Loader2 className="animate-spin" /> : <Download />}
+            {t("orders.exportCsv", "Export CSV")}
+          </Button>
           {selected.size > 0 && can("orders.manage") && (
             <div className="ml-auto flex items-center gap-2 rounded-md border border-border bg-muted/50 px-2 py-1 text-sm">
               <span className="tabular-nums">
@@ -276,6 +400,15 @@ function OrdersPage() {
               >
                 <Play />
                 {t("orders.release", "Release")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-danger"
+                onClick={() => setCancelOpen(true)}
+              >
+                <Ban />
+                {t("orders.cancel", "Cancel")}
               </Button>
               <Button
                 size="icon"
@@ -313,6 +446,14 @@ function OrdersPage() {
         onOpenChange={setHoldOpen}
         onDone={() => setSelected(new Set())}
       />
+      {cancelOpen && (
+        <BulkCancelDialog
+          orders={selectedOrders}
+          open={cancelOpen}
+          onOpenChange={setCancelOpen}
+          onDone={() => setSelected(new Set())}
+        />
+      )}
       <Sheet open={!!search.order} onOpenChange={(o) => !o && setSearch({ order: undefined })}>
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
           <SheetHeader className="sr-only">

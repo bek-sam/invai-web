@@ -25,6 +25,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Field, NativeSelect } from "../../components/page";
 import { BlankPicker, DesignPicker } from "../../components/pickers";
+import { errorMessage } from "../../lib/errors";
 import { client, orpc } from "../../lib/rpc";
 
 export function useInvalidateOrders() {
@@ -337,6 +338,121 @@ export function MapItemDialog({
           >
             {map.isPending && <Loader2 className="animate-spin" />}
             {t("orders.map", "Map item")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Cancel several whole orders at once, after a confirmation that names the count. */
+export function BulkCancelDialog({
+  orders,
+  open,
+  onOpenChange,
+  onDone,
+}: {
+  orders: { id: string; orderNo: string }[];
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onDone?: () => void;
+}) {
+  const { t } = useTranslation();
+  const invalidate = useInvalidateOrders();
+  const [reason, setReason] = useState<(typeof CANCEL_REASONS)[number]>("buyer_request");
+  const [note, setNote] = useState("");
+  const [failed, setFailed] = useState<{ orderNo: string; message: string }[]>([]);
+  const cancel = useMutation({
+    mutationFn: async () => {
+      const results = await Promise.allSettled(
+        orders.map((o) => client.orders.cancel({ id: o.id, reason, note: note.trim() || null })),
+      );
+      const bad = results.flatMap((r, i) =>
+        r.status === "rejected"
+          ? [{ orderNo: orders[i]?.orderNo ?? "", message: errorMessage(r.reason) }]
+          : [],
+      );
+      return { ok: results.length - bad.length, bad };
+    },
+    onSuccess: ({ ok, bad }) => {
+      void invalidate();
+      if (ok > 0)
+        toast.success(t("orders.bulkCancelled", "{{count}} order(s) cancelled", { count: ok }));
+      setFailed(bad);
+      if (bad.length === 0) {
+        onOpenChange(false);
+        onDone?.();
+      }
+    },
+  });
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) setFailed([]);
+        onOpenChange(o);
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("orders.bulkCancelTitle", "Cancel {{count}} order(s)?", { count: orders.length })}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              "orders.bulkCancelHint",
+              "Every open unit is cancelled. Transfers already on a sheet are marked scrap, reserved blanks return to stock, and unshipped labels are voided. This can't be undone.",
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <Field label={t("orders.reason", "Reason")} htmlFor="bulk-cancel-reason">
+          <NativeSelect
+            id="bulk-cancel-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value as typeof reason)}
+          >
+            {CANCEL_REASONS.filter((r) => r !== "channel_cancelled").map((r) => (
+              <option key={r} value={r}>
+                {t(`cancelReason.${r}`, r.replace(/_/g, " "))}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
+        <Field label={t("orders.note", "Note")} htmlFor="bulk-cancel-note">
+          <Textarea
+            id="bulk-cancel-note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+          />
+        </Field>
+        {failed.length > 0 && (
+          <div role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+            <p className="font-medium">
+              {t("orders.bulkCancelFailed", "{{count}} order(s) couldn't be cancelled:", {
+                count: failed.length,
+              })}
+            </p>
+            <ul className="mt-1 list-disc pl-5">
+              {failed.map((f) => (
+                <li key={f.orderNo}>
+                  #{f.orderNo.replace(/^#+/, "")}: {f.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t("action.back")}
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={cancel.isPending || orders.length === 0}
+            onClick={() => cancel.mutate()}
+          >
+            {cancel.isPending && <Loader2 className="animate-spin" />}
+            {t("orders.bulkCancelConfirm", "Cancel {{count}} order(s)", { count: orders.length })}
           </Button>
         </DialogFooter>
       </DialogContent>

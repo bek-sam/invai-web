@@ -19,7 +19,6 @@ import {
   Ban,
   CheckCircle2,
   ExternalLink,
-  Flag,
   Link2,
   Loader2,
   MessageSquare,
@@ -39,6 +38,13 @@ import { useCan } from "../../lib/me";
 import { orpc } from "../../lib/rpc";
 import { OrderProfitBreakdown } from "../finance/order-profit";
 import { CancelDialog, HoldDialog, MapItemDialog, useInvalidateOrders } from "./dialogs";
+import {
+  AddressSection,
+  ItemActions,
+  ItemFlags,
+  OrderTags,
+  ShipmentSection,
+} from "./order-actions";
 
 export function OrderDetail({
   orderId,
@@ -75,6 +81,8 @@ export function OrderDetail({
           <Timeline orderId={order.id} />
         </div>
         <div className="flex flex-col gap-4">
+          <AddressSection key={`${order.id}-${order.hold?.reason ?? ""}`} order={order} />
+          <ShipmentSection orderId={order.id} />
           <Section title={t("orders.summary", "Summary")}>
             <DefList
               items={[
@@ -171,12 +179,8 @@ function OrderHeader({ order, inDrawer }: { order: OrderWithItems; inDrawer: boo
             {t("orders.rush", "Rush")}
           </Badge>
         )}
-        {order.tags.map((tag) => (
-          <Badge key={tag} variant="outline">
-            {tag}
-          </Badge>
-        ))}
       </div>
+      <OrderTags order={order} />
       {order.hold && (
         <p className="flex items-center gap-2 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
           <Pause className="size-4" />
@@ -255,7 +259,6 @@ function ItemRow({ item, channel }: { item: OrderItem; channel: string }) {
     }),
   );
   const thumbKey = item.artwork.previewKey ?? design.data?.placements[0]?.previewKey ?? null;
-  const activeFlags = item.flags.filter((f) => f.active);
   return (
     <li className="flex gap-3 py-3">
       <SignedImage
@@ -278,22 +281,7 @@ function ItemRow({ item, channel }: { item: OrderItem; channel: string }) {
           {item.placement ? ` · ${t(`placement.${item.placement}`, item.placement)}` : ""}
         </p>
         <p className="font-mono text-xs text-muted-foreground">{item.channelSku}</p>
-        {activeFlags.length > 0 && (
-          <ul className="mt-1 flex flex-col gap-0.5">
-            {activeFlags.map((f) => (
-              <li
-                key={f.code}
-                className={cn(
-                  "flex items-center gap-1 text-xs",
-                  f.severity === "error" ? "text-danger" : "text-warning",
-                )}
-              >
-                <Flag className="size-3" />
-                {f.message}
-              </li>
-            ))}
-          </ul>
-        )}
+        <ItemFlags item={item} />
         {item.personalization.length > 0 && <PersonalizationProof item={item} />}
         {item.state === "needs_mapping" && can("orders.map") && (
           <Button size="sm" className="mt-2" onClick={() => setMapOpen(true)}>
@@ -301,6 +289,7 @@ function ItemRow({ item, channel }: { item: OrderItem; channel: string }) {
             {t("orders.map", "Map item")}
           </Button>
         )}
+        <ItemActions item={item} />
       </div>
       <div className="shrink-0 text-right text-sm">
         <Money cents={item.unitPrice} />
