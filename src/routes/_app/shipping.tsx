@@ -33,14 +33,16 @@ import {
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Plus, Printer, RotateCw, Tag, Trash2, Zap } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ShipmentStatusBadge } from "../../components/badges";
 import { Field, NativeSelect, Page, Section } from "../../components/page";
 import { ErrorState, SkeletonRows } from "../../components/states";
+import { errorMessage } from "../../lib/errors";
 import { formatDate, orderLabel } from "../../lib/format";
 import { useCan } from "../../lib/me";
+import { pollJob } from "../../lib/poll-job";
 import { client, orpc } from "../../lib/rpc";
 import { openInNewTab } from "../../lib/upload";
 
@@ -110,6 +112,18 @@ function ShippingPage() {
   );
 }
 
+type BatchOutcome =
+  | { kind: "aborted" }
+  | { kind: "timeout" }
+  | {
+      kind: "done";
+      ids: string[];
+      labeled: number;
+      failed: number;
+      /** null when some bought shipment couldn't be read back for its postage. */
+      totalPostage: number | null;
+    };
+
 function Queue() {
   const { t } = useTranslation();
   const can = useCan();
@@ -126,47 +140,92 @@ function Queue() {
     }),
   );
   const rows = useMemo(() => q.data?.pages.flatMap((p) => p.items) ?? [], [q.data]);
+  // Labels the last batch bought, printed from a click (a tab opened later is popup-blocked).
+  const [toPrint, setToPrint] = useState<string[]>([]);
+  // Stops the batch poll when the page goes away.
+  const pollAbort = useRef<AbortController | null>(null);
+  useEffect(() => () => pollAbort.current?.abort(), []);
+  const print = (ids: string[]) =>
+    void printLabels(ids).then(
+      () => setToPrint([]),
+      (err: unknown) => toast.error(errorMessage(err)),
+    );
   const batch = useMutation({
-    mutationFn: async (orderIds: string[]) => {
+    mutationFn: async (orderIds: string[]): Promise<BatchOutcome> => {
       const res = await client.shipping.batchBuy({ orderIds, strategy });
       if (res.status !== "queued") {
         const ids = res.results.flatMap((r) =>
           r.status === "labeled" && r.shipmentId ? [r.shipmentId] : [],
         );
-        if (ids.length) await printLabels(ids);
-        return res;
+        return { kind: "done", ids, ...res };
       }
-      // The labels are bought in a background job: follow it, then print what it bought.
-      let job = await client.production.jobs.get({ id: res.jobId });
-      while (job.status !== "done" && job.status !== "failed") {
-        await new Promise((r) => setTimeout(r, 1500));
-        job = await client.production.jobs.get({ id: res.jobId });
-      }
-      if (job.status === "failed") throw new Error(job.error ?? job.message ?? "Batch failed");
-      const ids = job.resultIds;
-      const shipments = await Promise.all(ids.map((id) => client.shipping.shipments.get({ id })));
-      if (ids.length) await printLabels(ids);
+      // The labels are bought in a background job: follow it (3 min at most), then offer to print.
+      pollAbort.current?.abort();
+      const abort = new AbortController();
+      pollAbort.current = abort;
+      const out = await pollJob(() => client.production.jobs.get({ id: res.jobId }), {
+        signal: abort.signal,
+        deadlineMs: 180_000,
+      });
+      if (out.kind === "aborted") return { kind: "aborted" };
+      if (out.kind === "timeout") return { kind: "timeout" };
+      if (out.job.status === "failed")
+        throw new Error(out.job.error ?? out.job.message ?? "The label batch failed");
+      const ids = out.job.resultIds;
+      // Postage is a nice-to-have: a shipment that can't be read just leaves it out.
+      const shipments = await Promise.allSettled(
+        ids.map((id) => client.shipping.shipments.get({ id })),
+      );
+      const read = shipments.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
       return {
-        ...res,
+        kind: "done",
+        ids,
         labeled: ids.length,
         failed: orderIds.length - ids.length,
-        totalPostage: shipments.reduce((sum, s) => sum + s.postage, 0),
+        totalPostage:
+          read.length === ids.length ? read.reduce((sum, s) => sum + s.postage, 0) : null,
       };
     },
-    onSuccess: (res) => {
-      toast.success(t("ship.batchDone", "{{n}} labels bought", { n: res.labeled }), {
+    onSuccess: (out) => {
+      if (out.kind === "aborted") return;
+      if (out.kind === "timeout") {
+        setSelected(new Set());
+        toast.info(
+          t(
+            "ship.batchStillBuying",
+            "Still buying labels in the background. They'll show up under Shipments when they're done.",
+          ),
+        );
+        return;
+      }
+      setToPrint(out.ids);
+      toast.success(t("ship.batchDone", "{{n}} labels bought", { n: out.labeled }), {
         description: [
-          t("ship.postage", "Postage {{amount}}", {
-            amount: `$${(res.totalPostage / 100).toFixed(2)}`,
-          }),
-          res.failed ? t("orders.someFailed", "{{count}} failed", { count: res.failed }) : "",
+          out.totalPostage === null
+            ? ""
+            : t("ship.postage", "Postage {{amount}}", {
+                amount: `$${(out.totalPostage / 100).toFixed(2)}`,
+              }),
+          out.failed ? t("orders.someFailed", "{{count}} failed", { count: out.failed }) : "",
         ]
           .filter(Boolean)
           .join(" · "),
+        ...(out.ids.length
+          ? {
+              duration: 30_000,
+              action: {
+                label: t("ship.printSelected", "Print {{count}} labels", {
+                  count: out.ids.length,
+                }),
+                onClick: () => print(out.ids),
+              },
+            }
+          : {}),
       });
       setSelected(new Set());
-      invalidate();
     },
+    // Whatever happened, the queue may have changed.
+    onSettled: () => invalidate(),
   });
   const columns: DataTableColumn<ShipQueueEntry>[] = [
     {
@@ -270,6 +329,12 @@ function Queue() {
                 </option>
               ))}
             </NativeSelect>
+            {toPrint.length > 0 && (
+              <Button variant="outline" onClick={() => print(toPrint)}>
+                <Printer />
+                {t("ship.printSelected", "Print {{count}} labels", { count: toPrint.length })}
+              </Button>
+            )}
             <Button
               onClick={() =>
                 batch.mutate(

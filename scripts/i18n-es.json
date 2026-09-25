@@ -533,6 +533,7 @@
  "ship.attempts": "{{n}} intentos",
  "ship.autoPackage": "Automático",
  "ship.batchDone": "{{n}} etiquetas compradas",
+ "ship.batchStillBuying": "Seguimos comprando las etiquetas en segundo plano. Aparecerán en Envíos cuando terminen.",
  "ship.bought": "Etiqueta comprada: {{code}}",
  "ship.buyAll": "Comprar e imprimir todo",
  "ship.buyPrint": "Comprar e imprimir",

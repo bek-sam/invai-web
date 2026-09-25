@@ -1053,6 +1053,8 @@ export const en = {
     attempts: "{{n}} attempts",
     autoPackage: "Automatic",
     batchDone: "{{n}} labels bought",
+    batchStillBuying:
+      "Still buying labels in the background. They'll show up under Shipments when they're done.",
     bought: "Label bought: {{code}}",
     buyAll: "Buy & print all",
     buyPrint: "Buy & print",

@@ -1068,6 +1068,8 @@ export const es: Messages = {
     attempts: "{{n}} intentos",
     autoPackage: "Automático",
     batchDone: "{{n}} etiquetas compradas",
+    batchStillBuying:
+      "Seguimos comprando las etiquetas en segundo plano. Aparecerán en Envíos cuando terminen.",
     bought: "Etiqueta comprada: {{code}}",
     buyAll: "Comprar e imprimir todo",
     buyPrint: "Comprar e imprimir",
