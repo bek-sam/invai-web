@@ -37,6 +37,8 @@ import type * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BillingBanner } from "../features/billing/billing-banner";
+import { DemoBanner } from "../features/demo/demo-banner";
+import { DemoMenuItems } from "../features/demo/menu-items";
 import { useMediaQuery } from "../hooks/use-media";
 import { type Lang, setLang } from "../i18n";
 import { authClient } from "../lib/auth";
@@ -139,6 +141,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
         className="[&_main]:p-3 sm:[&_main]:p-6"
       >
         <BillingBanner />
+        <DemoBanner />
         {children}
       </AppShell>
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
@@ -311,6 +314,7 @@ function UserMenu() {
             {t("shell.accountSettings", "Account and security")}
           </Link>
         </DropdownMenuItem>
+        <DemoMenuItems />
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs text-muted-foreground">
           {t("shell.theme", "Theme")}

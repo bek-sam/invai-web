@@ -2,6 +2,7 @@ import type { Alert, TodaySummary } from "@invai/contracts";
 import { Button, cn, EmptyState, Progress, RelativeTime, Skeleton, StatCard } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import type { TFunction } from "i18next";
 import {
   AlertOctagon,
   AlertTriangle,
@@ -9,7 +10,6 @@ import {
   CalendarClock,
   Check,
   CheckCircle2,
-  Circle,
   Clock,
   FileUp,
   Info,
@@ -22,6 +22,8 @@ import { useTranslation } from "react-i18next";
 import { AnyLink } from "../../components/any-link";
 import { Page, Section } from "../../components/page";
 import { ErrorState, SkeletonRows } from "../../components/states";
+import { isOwnDemo } from "../../features/demo/is-own-demo";
+import { OnboardingChecklist } from "../../features/onboarding/checklist";
 import { useCan, useMe } from "../../lib/me";
 import { orpc } from "../../lib/rpc";
 
@@ -49,7 +51,7 @@ function TodayPage() {
       actions={<QuickActions />}
     >
       <div className="flex flex-col gap-4">
-        {me.onboarding && <Onboarding checklist={me.onboarding} />}
+        {me.onboarding && <OnboardingChecklist checklist={me.onboarding} isDemo={isOwnDemo(me)} />}
         {summary.isError ? (
           <ErrorState error={summary.error} onRetry={() => void summary.refetch()} />
         ) : (
@@ -122,7 +124,7 @@ function StatGrid({ data }: { data: TodaySummary | undefined }) {
       icon: CalendarClock,
       tone: "info" as const,
       to: "/orders",
-      search: { view: "all" },
+      search: { view: "due_today" },
     },
     {
       label: t("today.overdue", "Overdue"),
@@ -130,7 +132,7 @@ function StatGrid({ data }: { data: TodaySummary | undefined }) {
       icon: AlertOctagon,
       tone: data.orders.overdue > 0 ? ("danger" as const) : ("neutral" as const),
       to: "/orders",
-      search: { view: "at_risk" },
+      search: { view: "overdue" },
     },
     {
       label: t("today.atRisk", "At risk"),
@@ -146,7 +148,7 @@ function StatGrid({ data }: { data: TodaySummary | undefined }) {
       icon: Ban,
       tone: blocked > 0 ? ("warning" as const) : ("neutral" as const),
       to: "/orders",
-      search: { view: "needs_mapping" },
+      search: { view: "blocked" },
       hint: t("today.blockedHint", "{{m}} mapping · {{a}} artwork", {
         m: data.blocked.needsMapping,
         a: data.blocked.needsArtwork,
@@ -177,16 +179,20 @@ function StatGrid({ data }: { data: TodaySummary | undefined }) {
           key={c.label}
           to={c.to}
           search={c.search}
-          className="rounded-lg outline-none transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring"
+          className="relative rounded-lg outline-none transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring"
         >
           <StatCard
             label={c.label}
             value={c.value.toLocaleString()}
             icon={c.icon}
             tone={c.tone}
-            className="h-full"
+            className={cn("h-full", c.hint && "pb-12")}
           />
-          {c.hint && <span className="sr-only">{c.hint}</span>}
+          {c.hint && (
+            <span className="absolute inset-x-4 bottom-3 line-clamp-2 text-xs text-muted-foreground">
+              {c.hint}
+            </span>
+          )}
         </AnyLink>
       ))}
     </div>
@@ -347,6 +353,44 @@ const SEVERITY_CLASS = {
   critical: "text-danger",
 } as const;
 
+/** The alert's headline in the reader's language, from its kind (the backend text is English). */
+function alertKindLabel(t: TFunction, kind: Alert["kind"]): string {
+  switch (kind) {
+    case "order_at_risk":
+      return t("alerts.kind.order_at_risk", "Order at risk of shipping late");
+    case "order_overdue":
+      return t("alerts.kind.order_overdue", "Order past its ship-by date");
+    case "sync_broken":
+      return t("alerts.kind.sync_broken", "Store connection stopped syncing");
+    case "sheet_stuck":
+      return t("alerts.kind.sheet_stuck", "Gang sheet waiting on the vendor");
+    case "stock_low":
+      return t("alerts.kind.stock_low", "Low stock");
+    case "artwork_flagged":
+      return t("alerts.kind.artwork_flagged", "Artwork needs review");
+    case "items_need_mapping":
+      return t("alerts.kind.items_need_mapping", "Items need SKU mapping");
+    case "tracking_push_failed":
+      return t("alerts.kind.tracking_push_failed", "Tracking didn't reach the marketplace");
+    case "plan_limit_reached":
+      return t("alerts.kind.plan_limit_reached", "Plan limit reached");
+    case "ai_credits_low":
+      return t("alerts.kind.ai_credits_low", "AI credits running low");
+    case "vendor_sheet_received":
+      return t("alerts.kind.vendor_sheet_received", "New gang sheet from a shop");
+    case "qc_fail_spike":
+      return t("alerts.kind.qc_fail_spike", "More QC fails than usual");
+  }
+}
+
+/**
+ * The specifics under the headline: the backend's title names the order, SKU or sheet. Its
+ * English sentence ("Ships within 24 hours…") only adds to it in English.
+ */
+function alertDetail(a: Alert, language: string): string {
+  return language.startsWith("en") && a.message ? `${a.title} · ${a.message}` : a.title;
+}
+
 function alertLink(a: Alert): { to: string; search?: Record<string, unknown> } | null {
   if (!a.entity) return null;
   switch (a.entity.type) {
@@ -365,7 +409,7 @@ function alertLink(a: Alert): { to: string; search?: Record<string, unknown> } |
 }
 
 function AlertsPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const alerts = useQuery(orpc.alerts.list.queryOptions({ input: { limit: 12 } }));
   const markAll = useMutation(
@@ -424,9 +468,11 @@ function AlertsPanel() {
                 />
                 <div className="min-w-0 flex-1">
                   <p className={cn("text-sm", a.readAt ? "text-muted-foreground" : "font-medium")}>
-                    {a.title}
+                    {alertKindLabel(t, a.kind)}
                   </p>
-                  <p className="line-clamp-2 text-xs text-muted-foreground">{a.message}</p>
+                  <p className="line-clamp-2 text-xs text-muted-foreground">
+                    {alertDetail(a, i18n.language)}
+                  </p>
                 </div>
                 <RelativeTime
                   value={a.createdAt}
@@ -462,71 +508,6 @@ function AlertsPanel() {
           })}
         </ul>
       )}
-    </Section>
-  );
-}
-
-function Onboarding({
-  checklist,
-}: {
-  checklist: NonNullable<ReturnType<typeof useMe>["onboarding"]>;
-}) {
-  const { t } = useTranslation();
-  const steps = [
-    {
-      done: checklist.channelConnected,
-      label: t("onboarding.channel", "Connect a sales channel or import a CSV"),
-      to: "/settings/channels",
-    },
-    {
-      done: checklist.blanksImported,
-      label: t("onboarding.blanks", "Import your blanks"),
-      to: "/catalog/blanks",
-    },
-    {
-      done: checklist.skusMapped,
-      label: t("onboarding.skus", "Map your SKUs to designs and blanks"),
-      to: "/catalog/sku-mapping",
-    },
-    {
-      done: checklist.vendorAdded,
-      label: t("onboarding.vendor", "Add your DTF vendor"),
-      to: "/settings/vendors",
-    },
-    {
-      done: checklist.staffInvited,
-      label: t("onboarding.staff", "Invite your team"),
-      to: "/settings/team",
-    },
-  ];
-  const doneCount = steps.filter((s) => s.done).length;
-  if (doneCount === steps.length) return null;
-  return (
-    <Section
-      title={t("onboarding.title", "Get set up")}
-      description={t("onboarding.progress", "{{done}} of {{total}} done", {
-        done: doneCount,
-        total: steps.length,
-      })}
-    >
-      <Progress value={(doneCount / steps.length) * 100} className="mb-3" />
-      <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
-        {steps.map((s) => (
-          <li key={s.to}>
-            <AnyLink
-              to={s.to}
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-            >
-              {s.done ? (
-                <CheckCircle2 className="size-4 text-success" />
-              ) : (
-                <Circle className="size-4 text-muted-foreground" />
-              )}
-              <span className={cn(s.done && "text-muted-foreground line-through")}>{s.label}</span>
-            </AnyLink>
-          </li>
-        ))}
-      </ul>
     </Section>
   );
 }
