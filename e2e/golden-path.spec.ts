@@ -167,7 +167,11 @@ test("3. the unmapped SKU is mapped in the order drawer with a saved rule", asyn
   } else {
     await openOrderDrawer("ETSY-OLD-CACTUS-XL", "needs_mapping");
     const drawer = page.getByRole("dialog", { name: "Order detail" });
-    await expect(drawer).toContainText(/is not mapped|not recognized/);
+    // T-5-1 (bca872f) replaced the inline English flag message with a translated label
+    // ("Needs mapping") plus the server's specific message as a hover title, so mapping is
+    // still surfaced but not as page text matching the old English sentence.
+    await expect(drawer.getByText("Needs mapping").first()).toBeVisible();
+    await expect(drawer.locator('[title="SKU ETSY-OLD-CACTUS-XL is not mapped"]')).toBeVisible();
     await drawer.getByRole("button", { name: "Map item" }).click();
     const dialog = page.getByRole("dialog", { name: /Map SKU/ });
     await expect(dialog).toBeVisible();
