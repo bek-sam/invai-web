@@ -9,6 +9,7 @@ const org = (over: Partial<{ id: string; slug: string; demo: boolean }>) => ({
   timezone: "America/Phoenix",
   plan: "trial" as const,
   demo: false,
+  printsInHouse: false,
   createdAt: "2026-09-25T00:00:00Z",
   ...over,
 });
