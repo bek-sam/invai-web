@@ -22,7 +22,17 @@ import {
 } from "@invai/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
-import { Bell, Check, ChevronsUpDown, Laptop, LogOut, Moon, Search, Sun } from "lucide-react";
+import {
+  Bell,
+  Check,
+  ChevronsUpDown,
+  Laptop,
+  LogOut,
+  Moon,
+  Search,
+  Sun,
+  UserCog,
+} from "lucide-react";
 import type * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -295,6 +305,13 @@ function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/account">
+            <UserCog className="size-4" />
+            {t("shell.accountSettings", "Account and security")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs text-muted-foreground">
           {t("shell.theme", "Theme")}
         </DropdownMenuLabel>
@@ -315,7 +332,11 @@ function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={i18n.language}
-          onValueChange={(v) => void setLang(v as Lang)}
+          onValueChange={(v) => {
+            void setLang(v as Lang);
+            // Emails follow the same language; a failure here only affects email language.
+            void authClient.updateUser({ locale: v as Lang }).catch(() => undefined);
+          }}
         >
           <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="es">Español</DropdownMenuRadioItem>

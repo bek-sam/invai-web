@@ -4,6 +4,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { AppFrame } from "../components/app-frame";
 import { ErrorState } from "../components/states";
+import { VerifyEmailBanner } from "../features/account/verify-email-banner";
 import { authClient } from "../lib/auth";
 import { isUnauthorized } from "../lib/errors";
 import { meQueryOptions } from "../lib/me";
@@ -33,7 +34,10 @@ export const Route = createFileRoute("/_app")({
     }
     const path = location.pathname;
     const inVendor = path === "/vendor" || path.startsWith("/vendor/");
-    const shared = path.startsWith("/settings/company") || path.startsWith("/settings/team");
+    const shared =
+      path.startsWith("/settings/company") ||
+      path.startsWith("/settings/team") ||
+      path === "/account";
     if (me.org.type === "vendor" && !inVendor && !shared) throw redirect({ to: "/vendor" });
     if (me.org.type === "shop" && inVendor) throw redirect({ to: "/" });
     return { me };
@@ -45,6 +49,7 @@ export const Route = createFileRoute("/_app")({
 function AppLayout() {
   return (
     <AppFrame>
+      <VerifyEmailBanner />
       <Outlet />
     </AppFrame>
   );

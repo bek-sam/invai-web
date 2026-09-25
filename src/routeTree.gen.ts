@@ -10,9 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppAccountRouteImport } from './routes/_app/account'
 import { Route as AppAssistantRouteImport } from './routes/_app/assistant'
 import { Route as AppShippingRouteImport } from './routes/_app/shipping'
 import { Route as AcceptInviteInvitationIdRouteImport } from './routes/accept-invite.$invitationId'
@@ -51,9 +55,19 @@ const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -61,9 +75,19 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountRoute = AppAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAssistantRoute = AppAssistantRouteImport.update({
@@ -243,8 +267,12 @@ const AppVendorSheetsSheetIdRoute = AppVendorSheetsSheetIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/verify-email': typeof VerifyEmailRoute
+  '/account': typeof AppAccountRoute
   '/assistant': typeof AppAssistantRoute
   '/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
@@ -280,8 +308,12 @@ export interface FileRoutesByFullPath {
   '/production/sheets/': typeof AppProductionSheetsIndexRoute
 }
 export interface FileRoutesByTo {
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/verify-email': typeof VerifyEmailRoute
+  '/account': typeof AppAccountRoute
   '/assistant': typeof AppAssistantRoute
   '/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
@@ -320,8 +352,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/verify-email': typeof VerifyEmailRoute
+  '/_app/account': typeof AppAccountRoute
   '/_app/assistant': typeof AppAssistantRoute
   '/_app/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
@@ -361,8 +397,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
     | '/signup'
+    | '/verify-email'
+    | '/account'
     | '/assistant'
     | '/shipping'
     | '/accept-invite/$invitationId'
@@ -398,8 +438,12 @@ export interface FileRouteTypes {
     | '/production/sheets/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
     | '/signup'
+    | '/verify-email'
+    | '/account'
     | '/assistant'
     | '/shipping'
     | '/accept-invite/$invitationId'
@@ -437,8 +481,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_app'
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
     | '/signup'
+    | '/verify-email'
+    | '/_app/account'
     | '/_app/assistant'
     | '/_app/shipping'
     | '/accept-invite/$invitationId'
@@ -477,8 +525,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
   AcceptInviteInvitationIdRoute: typeof AcceptInviteInvitationIdRoute
 }
 
@@ -491,11 +542,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -505,11 +570,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/': {
       id: '/_app/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/account': {
+      id: '/_app/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/assistant': {
@@ -747,6 +826,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAccountRoute: typeof AppAccountRoute
   AppAssistantRoute: typeof AppAssistantRoute
   AppShippingRoute: typeof AppShippingRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -783,6 +863,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAccountRoute: AppAccountRoute,
   AppAssistantRoute: AppAssistantRoute,
   AppShippingRoute: AppShippingRoute,
   AppIndexRoute: AppIndexRoute,
@@ -823,8 +904,11 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
   AcceptInviteInvitationIdRoute: AcceptInviteInvitationIdRoute,
 }
 export const routeTree = rootRouteImport

@@ -67,3 +67,15 @@ describe("upgradeReason", () => {
     expect(info.message).not.toContain("SERVER TEXT");
   });
 });
+
+describe("EMAIL_NOT_VERIFIED", () => {
+  it("gets a plain message instead of the server text", () => {
+    const err = Object.assign(new Error("Verify your email first"), {
+      code: "EMAIL_NOT_VERIFIED",
+      status: 403,
+    });
+    expect(errorInfo(err)).toMatchObject({ code: "EMAIL_NOT_VERIFIED", status: 403 });
+    expect(errorInfo(err).message).toMatch(/Confirm your email/);
+    expect(shouldRetry(0, err)).toBe(false);
+  });
+});

@@ -21,6 +21,13 @@ export function errorInfo(err: unknown): ErrorInfo {
       message = "This part of the API isn't available yet";
       return { code: "NOT_IMPLEMENTED", status: 501, message, data: e.data ?? null };
     }
+    if (code === "EMAIL_NOT_VERIFIED") {
+      message = tr(
+        "verifyEmail.needed",
+        "Confirm your email first. Check your inbox for our link.",
+      );
+      return { code, status, message, data: e.data ?? null };
+    }
     const upgrade = upgradeReasonOf(code, e.data);
     if (upgrade) return { code, status, message: upgradeMessage(upgrade), data: e.data ?? null };
     return { code, status, message, data: e.data ?? null };

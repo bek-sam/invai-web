@@ -9,8 +9,9 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { AuthLayout } from "../components/auth-layout";
 import { Field } from "../components/page";
+import { authErrorMessage } from "../features/account/auth-errors";
+import { toLocale } from "../features/account/session";
 import { authClient } from "../lib/auth";
-import { errorMessage } from "../lib/errors";
 import { slugify } from "../lib/format";
 
 export const Route = createFileRoute("/signup")({
@@ -18,16 +19,17 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
+// Messages are i18n keys; the form translates them when it shows them.
 const schema = z.object({
-  name: z.string().min(1, "Required"),
-  email: z.email("Enter a valid email"),
-  password: z.string().min(8, "At least 8 characters"),
-  company: z.string().min(2, "Required"),
+  name: z.string().min(1, "signup.required"),
+  email: z.email("signup.badEmail"),
+  password: z.string().min(8, "authError.passwordShort"),
+  company: z.string().min(2, "signup.required"),
 });
 type FormValues = z.infer<typeof schema>;
 
 function SignupPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const session = useQuery({
@@ -37,6 +39,18 @@ function SignupPage() {
   });
   const signedIn = !!session.data?.data?.user;
   const [error, setError] = useState<string | null>(null);
+  const fieldError = (msg: string | undefined) => {
+    switch (msg) {
+      case undefined:
+        return undefined;
+      case "signup.badEmail":
+        return t("signup.badEmail", "Enter a valid email");
+      case "authError.passwordShort":
+        return t("authError.passwordShort", "Use at least 8 characters.");
+      default:
+        return t("signup.required", "Required");
+    }
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(
@@ -53,18 +67,37 @@ function SignupPage() {
           name: values.name,
           email: values.email,
           password: values.password,
+          // The language of the confirmation email and later account emails.
+          locale: toLocale(i18n.language),
         });
-        if (res.error) throw new Error(res.error.message || "Sign-up failed");
+        if (res.error) {
+          setError(
+            authErrorMessage(
+              res.error,
+              t,
+              t("signup.failed", "Couldn't create your account. Try again."),
+            ),
+          );
+          return;
+        }
       }
       const slug = `${slugify(values.company) || "shop"}-${Math.random().toString(36).slice(2, 6)}`;
       const org = await authClient.organization.create({ name: values.company, slug });
-      if (org.error || !org.data)
-        throw new Error(org.error?.message || "Couldn't create the company");
+      if (org.error || !org.data) {
+        setError(
+          authErrorMessage(
+            org.error,
+            t,
+            t("signup.orgFailed", "Couldn't create the company. Try again."),
+          ),
+        );
+        return;
+      }
       await authClient.organization.setActive({ organizationId: org.data.id });
       queryClient.clear();
       await navigate({ to: "/" });
     } catch (e) {
-      setError(errorMessage(e));
+      setError(authErrorMessage(e as Error, t));
     }
   }
 
@@ -101,17 +134,21 @@ function SignupPage() {
             <Field
               label={t("auth.yourName", "Your name")}
               htmlFor="name"
-              error={errors.name?.message}
+              error={fieldError(errors.name?.message)}
             >
               <Input id="name" autoComplete="name" {...form.register("name")} />
             </Field>
-            <Field label={t("auth.email", "Email")} htmlFor="email" error={errors.email?.message}>
+            <Field
+              label={t("auth.email", "Email")}
+              htmlFor="email"
+              error={fieldError(errors.email?.message)}
+            >
               <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
             </Field>
             <Field
               label={t("auth.password", "Password")}
               htmlFor="password"
-              error={errors.password?.message}
+              error={fieldError(errors.password?.message)}
             >
               <Input
                 id="password"
@@ -125,7 +162,7 @@ function SignupPage() {
         <Field
           label={t("auth.companyName", "Company name")}
           htmlFor="company"
-          error={errors.company?.message}
+          error={fieldError(errors.company?.message)}
           hint={t("auth.companyHint", "Your shop's name, e.g. Desert Bloom Tees")}
         >
           <Input id="company" autoComplete="organization" {...form.register("company")} />
