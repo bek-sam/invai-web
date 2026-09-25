@@ -336,6 +336,8 @@ export const es: Messages = {
     walmart: "Walmart",
   },
   channels: {
+    alreadyConnected:
+      "Esta tienda sigue conectada aquí. Para conectarla de nuevo, primero desconéctala y luego vuelve a conectarla.",
     api: "API",
     autoImport: "Importar pedidos automáticamente",
     connect: "Conectar",
@@ -352,27 +354,91 @@ export const es: Messages = {
     disconnectTitle: "¿Desconectar {{name}}?",
     format: "Formato del archivo",
     healthy: "Bien",
+    history: {
+      created: "{{n}} nuevos",
+      done: "Listo",
+      doneWithErrors: "Listo, algunas filas fallaron",
+      errors: "{{n}} con error",
+      failed: "Falló",
+      more: "Ver importaciones anteriores",
+      none: "Todavía no hay importaciones CSV. Importa un archivo y aparecerá aquí.",
+      queued: "Esperando para empezar",
+      rows: "{{n}} filas",
+      rowsTotal: "{{n}} filas",
+      running: "Importando",
+      showErrors: "Ver filas con errores",
+      title: "Historial de importaciones",
+      unchanged: "{{n}} sin cambios",
+      updated: "{{n}} actualizados",
+    },
+    importFor: "Importar un CSV para {{name}}",
     importHint: "Reimportar el mismo archivo actualiza los pedidos en lugar de duplicarlos.",
+    importQueued:
+      "Este archivo tiene {{n}} filas, así que se importa en segundo plano. Síguelo en el Historial de importaciones de esta página.",
     importTitle: "Importar pedidos desde CSV",
     imported: "Pedidos nuevos",
+    issue: {
+      approval:
+        "{{name}} todavía no aprueba nuestra app. Mientras tanto, importa su exportación CSV.",
+      details: "Detalles",
+      error:
+        "La última sincronización tuvo un problema. Presiona Sincronizar para intentarlo de nuevo.",
+      pending:
+        "No se terminó la aprobación en Shopify. Reconecta para abrir otra vez la pantalla de aprobación de Shopify.",
+      stale:
+        "Sin sincronizar desde hace {{n}} minutos. Presiona Sincronizar para intentarlo ahora.",
+      tokenLost:
+        "Shopify dejó de aceptar nuestro acceso a esta tienda. No llegarán pedidos nuevos hasta que la desconectes y la vuelvas a conectar.",
+      tokenRetry:
+        "No se pudo renovar el acceso a Shopify. Seguimos intentando. Si continúa, desconecta la tienda y vuelve a conectarla.",
+      webhooks:
+        "Shopify no está enviando avisos inmediatos de pedidos. Los pedidos siguen llegando cada 10 minutos. Si continúa, desconecta la tienda y vuelve a conectarla.",
+    },
     lastImport: "última importación",
     mapNow: "Mapearlos ahora",
     mock: "sandbox",
     needMapping: "{{n}} artículos necesitan mapeo de SKU.",
     none: "Aún no hay canales",
     noneHint: "Conecta Shopify o agrega un marketplace para importar sus exportaciones CSV.",
+    oauth: {
+      connected: "Tu tienda de Shopify está conectada. Los pedidos nuevos llegan solos.",
+      connectedNamed: "{{name}} está conectada. Los pedidos nuevos llegan solos.",
+      declined:
+        "No se aprobó el acceso en Shopify, así que la tienda no está conectada. Inténtalo de nuevo cuando quieras.",
+      dismiss: "Ocultar este mensaje",
+      elsewhere:
+        "Esta tienda de Shopify ya está conectada a otra cuenta de InvAI. Desconéctala allí primero.",
+      expired:
+        "El enlace de aprobación de Shopify venció antes de terminar. Conecta la tienda de nuevo.",
+      failed: "Shopify no terminó de conectar la tienda. Intenta conectarla de nuevo.",
+      retry: "Conectar de nuevo",
+    },
     orders24h: "{{n}} pedidos en 24 h",
     pendingApproval: "API pendiente de aprobación",
     processingDays: "Días de procesamiento",
     processingHint: "Cuando el canal no envía fecha límite de envío",
     pushAvailability: "Pausar anuncios cuando se agoten las prendas",
     pushTracking: "Enviar números de rastreo",
+    reconnect: "Reconectar",
+    reconnectTitle: "Reconectar Shopify",
     riskWindow: "Ventana de riesgo (horas)",
     rowsFailed: "Filas con error",
+    settingsFor: "Ajustes de {{name}}",
     shopDomain: "Dominio de la tienda",
     shopName: "Nombre de la tienda",
     shopifyHint: "Te enviaremos a Shopify para aprobar el acceso y luego volverás aquí.",
     skipped: "Sin cambios",
+    state: {
+      pending: "Sin terminar",
+    },
+    stock: {
+      hint: "Cada publicación recibe la cantidad de prendas que tienes en existencia, menos lo ya apartado, así se agota cuando se acaba una prenda. Las actualizaciones salen en menos de 30 segundos después de un cambio de existencias, a partir del próximo cambio. Solo se actualizan las publicaciones mapeadas.",
+      label: "Enviar existencias de prendas a esta tienda",
+      offToast: "Actualizaciones de existencias a {{name}} desactivadas",
+      onToast: "Actualizaciones de existencias a {{name}} activadas",
+      paused: "En pausa hasta que la tienda esté conectada y aprobada.",
+      undo: "Deshacer",
+    },
     subtitle:
       "De dónde llegan los pedidos. Shopify se conecta por API; los demás marketplaces se importan desde sus CSV.",
     sync: "Sincronizar",
@@ -645,6 +711,7 @@ export const es: Messages = {
     settings: "Configuración",
     sheetInbox: "Bandeja de hojas",
     shipping: "Envíos",
+    shippingSettings: "Ajustes de envío",
     shops: "Tiendas",
     skuMapping: "Mapeo de SKU",
     stations: "Estaciones",
@@ -1124,10 +1191,87 @@ export const es: Messages = {
     tracking: "Envío de rastreo",
     trackingCode: "Rastreo",
     void: "Anular",
+    voidBody:
+      "Esto anula la etiqueta actual y le pide a la paquetería que devuelva el franqueo. No se puede deshacer desde aquí; compra una etiqueta nueva si el pedido todavía se envía.",
+    voidConfirm: "Anular etiqueta",
+    voidErr: {
+      busy: "Algo más está pasando con esta etiqueta ahora mismo. Inténtalo de nuevo en un minuto.",
+      pushed:
+        "El rastreo ya se envió al canal del comprador, así que esta etiqueta no se puede anular aquí. Cancela o reembolsa el pedido en el canal.",
+      refused: "La paquetería rechazó anular esta etiqueta. Sigue activa.",
+      scanned: "La paquetería ya tiene este paquete, así que la etiqueta no se puede anular.",
+      unknown:
+        "No pudimos confirmar la anulación con la paquetería. Presiona Anular otra vez para revisar.",
+    },
+    voidGotIt: "Entendido",
+    voidPushRule:
+      "Cuando el rastreo ya se envió al canal del comprador, no se puede anular aquí. Cancela o reembolsa el pedido en el canal.",
+    voidRefund:
+      "El reembolso puede aparecer como pendiente unos días en lugar de al instante. Es normal.",
+    voidRefundNote:
+      "El reembolso del franqueo puede aparecer como pendiente con la paquetería unos días.",
+    voidScanRule:
+      "Solo se puede anular una etiqueta que la paquetería aún no ha escaneado. Los pedidos de canales CSV se pueden anular hasta que se escanee el paquete.",
+    voidTitle: "¿Anular la etiqueta de {{order}}?",
     voided: "Etiqueta anulada",
     weight: "Peso",
     weightOz: "Peso (oz)",
     zip: "C.P.",
+  },
+  shipSettings: {
+    accountTitle: "Cuenta de paquetería",
+    addWeight: "Agregar estilo",
+    allowedCarriers: "Paqueterías permitidas",
+    carrierNeeded: "Elige al menos una paquetería.",
+    carriersHint: "Las tarifas y etiquetas solo vienen de las paqueterías que actives.",
+    carriersTitle: "Paqueterías y etiquetas",
+    defaultPreset: "Usar cuando no quepa en otro",
+    fixFirst: "Corrige los campos marcados y luego guarda.",
+    formatPdf: "PDF, 4×6 in",
+    formatZpl: "ZPL para impresoras térmicas (próximamente)",
+    fromHint:
+      "Se imprime en cada etiqueta como dirección de devolución. Las paqueterías también la usan para las tarifas.",
+    height: "Alto (in)",
+    labelFormat: "Formato de etiqueta",
+    labelFormatHint:
+      "El PDF de 4×6 se imprime en cualquier impresora de etiquetas. Los archivos ZPL para impresoras térmicas llegan pronto.",
+    length: "Largo (in)",
+    live: "En vivo",
+    liveHint: "Las etiquetas son reales y el franqueo se cobra a tu cuenta de paquetería.",
+    maxItems: "Hasta (piezas)",
+    maxItemsHint: "Vacío = cualquier cantidad",
+    newPresetName: "Sobre de polietileno",
+    noPresets:
+      "Todavía no hay empaques. Agrega el sobre que más usas para que las tarifas usen su tamaño.",
+    noWeights: "Cada estilo usa el peso de su prenda.",
+    notNegative: "0 o más",
+    optional: "{{label}} (opcional)",
+    pickStyle: "Elige un estilo",
+    positive: "Mayor que 0",
+    presetsHint:
+      "Los sobres y cajas con los que empacas. Cada pedido usa el empaque más chico que le quepa según sus piezas.",
+    removePreset: "Quitar {{name}}",
+    removeWeight: "Quitar el estilo {{code}}",
+    removeWeightRow: "Quitar esta fila",
+    required: "Obligatorio",
+    style: "Estilo",
+    styleTwice: "Este estilo ya está en la lista",
+    subtitle:
+      "Desde dónde salen los paquetes, qué paqueterías y cajas usar y cómo se imprimen las etiquetas.",
+    tare: "Peso vacío (oz)",
+    testHint:
+      "Las etiquetas son de muestra: no se cobra franqueo y no se pueden enviar. Las etiquetas reales empiezan cuando se agregue una cuenta de paquetería.",
+    testMode: "Modo de prueba",
+    thisPreset: "este empaque",
+    title: "Ajustes de envío",
+    toShipping: "Ir a Envíos",
+    weightOz: "Peso (oz)",
+    weightsHint:
+      "Pon un peso para todo un estilo, como las sudaderas, cuando el peso de la prenda esté mal o falte.",
+    weightsTitle: "Peso por estilo",
+    wholeNumber: "Un número entero mayor que 0",
+    width: "Ancho (in)",
+    zipInvalid: "Usa 5 dígitos, por ejemplo 85004",
   },
   shipmentState: {
     delivered: "Entregado",

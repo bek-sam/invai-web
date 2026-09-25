@@ -1,15 +1,8 @@
-import {
-  type Address,
-  BATCH_STRATEGIES,
-  type Shipment,
-  type ShippingSettings,
-  type ShipQueueEntry,
-} from "@invai/contracts";
+import { BATCH_STRATEGIES, type Shipment, type ShipQueueEntry } from "@invai/contracts";
 import {
   Badge,
   Button,
   ChannelBadge,
-  Checkbox,
   cn,
   DataTable,
   type DataTableColumn,
@@ -31,15 +24,17 @@ import {
   toast,
 } from "@invai/ui";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Loader2, Plus, Printer, RotateCw, Tag, Trash2, Zap } from "lucide-react";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import type { TFunction } from "i18next";
+import { AlertTriangle, Loader2, Printer, RotateCw, Settings2, Tag, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ShipmentStatusBadge } from "../../components/badges";
-import { Field, NativeSelect, Page, Section } from "../../components/page";
+import { ConfirmDialog } from "../../components/confirm-dialog";
+import { Field, NativeSelect, Page } from "../../components/page";
 import { ErrorState, SkeletonRows } from "../../components/states";
-import { errorMessage } from "../../lib/errors";
+import { errorInfo, errorMessage } from "../../lib/errors";
 import { formatDate, orderLabel } from "../../lib/format";
 import { useCan } from "../../lib/me";
 import { pollJob } from "../../lib/poll-job";
@@ -80,6 +75,16 @@ function ShippingPage() {
         "ship.subtitle",
         "Rate-shop, buy labels, print 4×6 in pack order, push tracking.",
       )}
+      actions={
+        can("shipping.manage") && (
+          <Button asChild variant="outline">
+            <Link to="/settings/shipping">
+              <Settings2 />
+              {t("shipSettings.title", "Shipping settings")}
+            </Link>
+          </Button>
+        )
+      }
     >
       <Tabs
         value={search.tab ?? "queue"}
@@ -91,9 +96,6 @@ function ShippingPage() {
           <TabsTrigger value="queue">{t("ship.queue", "Ready to ship")}</TabsTrigger>
           <TabsTrigger value="shipments">{t("ship.shipments", "Shipments")}</TabsTrigger>
           <TabsTrigger value="tracking">{t("ship.tracking", "Tracking push")}</TabsTrigger>
-          {can("shipping.manage") && (
-            <TabsTrigger value="settings">{t("nav.settings")}</TabsTrigger>
-          )}
         </TabsList>
         <TabsContent value="queue">
           <Queue />
@@ -105,7 +107,8 @@ function ShippingPage() {
           <TrackingPush />
         </TabsContent>
         <TabsContent value="settings">
-          <SettingsForm />
+          {/* Settings moved to their own page; old links still land there. */}
+          <Navigate to="/settings/shipping" replace />
         </TabsContent>
       </Tabs>
     </Page>
@@ -519,10 +522,22 @@ function Shipments() {
   );
   const rows = useMemo(() => q.data?.pages.flatMap((p) => p.items) ?? [], [q.data]);
   const print = useMutation({ mutationFn: printLabels });
+  const [voiding, setVoiding] = useState<Shipment | null>(null);
   const voidLabel = useMutation(
     orpc.shipping.void.mutationOptions({
+      meta: { silent: true },
       onSuccess: () => {
-        toast.success(t("ship.voided", "Label voided"));
+        setVoiding(null);
+        toast.success(t("ship.voided", "Label voided"), {
+          description: t(
+            "ship.voidRefundNote",
+            "The postage refund can show as pending with the carrier for a few days.",
+          ),
+        });
+        invalidate();
+      },
+      onError: (err) => {
+        toast.error(voidErrorText(err, t));
         invalidate();
       },
     }),
@@ -612,7 +627,7 @@ function Shipments() {
             className="text-danger"
             onClick={(e) => {
               e.stopPropagation();
-              voidLabel.mutate({ id: row.original.id });
+              setVoiding(row.original);
             }}
           >
             {t("ship.void", "Void")}
@@ -650,7 +665,108 @@ function Shipments() {
           maxHeight="calc(100dvh - 17rem)"
         />
       )}
+      <VoidLabelDialog
+        shipment={voiding}
+        pending={voidLabel.isPending}
+        onClose={() => setVoiding(null)}
+        onConfirm={(s) => voidLabel.mutate({ id: s.id })}
+      />
     </div>
+  );
+}
+
+/** What went wrong with a void, in words the office can act on. */
+function voidErrorText(err: unknown, t: TFunction): string {
+  const info = errorInfo(err);
+  const detail =
+    info.data && typeof info.data === "object" && "detail" in info.data
+      ? String((info.data as { detail: unknown }).detail)
+      : "";
+  if (info.code === "VOID_REJECTED") {
+    if (/tracking was already sent/i.test(detail))
+      return t(
+        "ship.voidErr.pushed",
+        "Tracking was already sent to the buyer's channel, so this label can't be voided here. Cancel or refund the order on the channel instead.",
+      );
+    if (/already shipped|can't be voided/i.test(detail))
+      return t(
+        "ship.voidErr.scanned",
+        "The carrier already has this package, so the label can't be voided.",
+      );
+    return t("ship.voidErr.refused", "The carrier refused to void this label. It's still active.");
+  }
+  if (info.code === "UPSTREAM_FAILED")
+    return t(
+      "ship.voidErr.unknown",
+      "We couldn't confirm the void with the carrier. Press Void again to check.",
+    );
+  if (info.code === "CONFLICT")
+    return t(
+      "ship.voidErr.busy",
+      "Something else is happening with this label right now. Try again in a minute.",
+    );
+  return info.message;
+}
+
+function VoidLabelDialog({
+  shipment: s,
+  pending,
+  onClose,
+  onConfirm,
+}: {
+  shipment: Shipment | null;
+  pending: boolean;
+  onClose: () => void;
+  onConfirm: (s: Shipment) => void;
+}) {
+  const { t } = useTranslation();
+  const pushed = s?.trackingPush.status === "pushed";
+  return (
+    <ConfirmDialog
+      open={!!s}
+      onOpenChange={(o) => !o && onClose()}
+      title={t("ship.voidTitle", "Void the label for {{order}}?", {
+        order: s ? orderLabel(s.orderNo) : "",
+      })}
+      description={t(
+        "ship.voidBody",
+        "This voids the current label and asks the carrier for the postage back. You can't undo it from here; buy a new label if the order still ships.",
+      )}
+      confirmLabel={pushed ? t("ship.voidGotIt", "Got it") : t("ship.voidConfirm", "Void label")}
+      destructive={!pushed}
+      pending={pending}
+      onConfirm={() => (pushed ? onClose() : s && onConfirm(s))}
+    >
+      <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-muted-foreground">
+        <li>
+          {t(
+            "ship.voidRefund",
+            "The refund may show as pending for a few days instead of right away. That's normal.",
+          )}
+        </li>
+        <li>
+          {t(
+            "ship.voidScanRule",
+            "Only a label the carrier hasn't scanned yet can be voided. Orders from CSV channels stay voidable until the package is scanned.",
+          )}
+        </li>
+        <li>
+          {t(
+            "ship.voidPushRule",
+            "Once tracking is sent to the buyer's channel, void isn't possible here. Cancel or refund the order on the channel instead.",
+          )}
+        </li>
+      </ul>
+      {pushed && (
+        <p role="alert" className="flex items-start gap-2 text-sm text-danger">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {t(
+            "ship.voidErr.pushed",
+            "Tracking was already sent to the buyer's channel, so this label can't be voided here. Cancel or refund the order on the channel instead.",
+          )}
+        </p>
+      )}
+    </ConfirmDialog>
   );
 }
 
@@ -725,218 +841,6 @@ function TrackingPush() {
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-const EMPTY_ADDRESS: Address = {
-  name: "",
-  company: null,
-  street1: "",
-  street2: null,
-  city: "",
-  state: "",
-  zip: "",
-  country: "US",
-  phone: null,
-  email: null,
-};
-
-function SettingsForm() {
-  const q = useQuery(orpc.shipping.settings.get.queryOptions({ input: {} }));
-  if (q.isPending) return <SkeletonRows rows={6} />;
-  if (q.isError) return <ErrorState error={q.error} onRetry={() => void q.refetch()} />;
-  return <SettingsEditor key={JSON.stringify(q.data)} settings={q.data} />;
-}
-
-function SettingsEditor({ settings }: { settings: ShippingSettings }) {
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const [from, setFrom] = useState<Address>(settings.fromAddress ?? EMPTY_ADDRESS);
-  const [presets, setPresets] = useState(settings.packagePresets.map((p) => ({ ...p })));
-  const [strategy, setStrategy] = useState(settings.defaultStrategy);
-  const [push, setPush] = useState(settings.trackingPushEnabled);
-  const save = useMutation(
-    orpc.shipping.settings.update.mutationOptions({
-      onSuccess: () => {
-        toast.success(t("settings.saved", "Settings saved"));
-        void queryClient.invalidateQueries({ queryKey: orpc.shipping.settings.key() });
-      },
-    }),
-  );
-  const addr = (k: keyof Address) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setFrom({
-      ...from,
-      [k]:
-        e.target.value ||
-        (k === "company" || k === "street2" || k === "phone" || k === "email" ? null : ""),
-    });
-  return (
-    <div className="flex max-w-4xl flex-col gap-4">
-      <Section
-        title={t("ship.fromAddress", "Ship-from address")}
-        description={t("ship.provider", "Carrier provider: {{p}}", { p: settings.carrierProvider })}
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          {(
-            [
-              ["name", t("ship.name", "Name")],
-              ["company", t("ship.company", "Company")],
-              ["street1", t("ship.street1", "Street")],
-              ["street2", t("ship.street2", "Apt, suite")],
-              ["city", t("ship.city", "City")],
-              ["state", t("ship.state", "State")],
-              ["zip", t("ship.zip", "ZIP")],
-              ["phone", t("ship.phone", "Phone")],
-            ] as [keyof Address, string][]
-          ).map(([k, label]) => (
-            <Field key={k} label={label} htmlFor={`from-${k}`}>
-              <Input id={`from-${k}`} value={(from[k] as string | null) ?? ""} onChange={addr(k)} />
-            </Field>
-          ))}
-        </div>
-      </Section>
-      <Section
-        title={t("ship.presets", "Package presets")}
-        actions={
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              setPresets([
-                ...presets,
-                {
-                  id: "",
-                  name: "Poly mailer",
-                  lengthIn: 12,
-                  widthIn: 10,
-                  heightIn: 1,
-                  tareOz: 1,
-                  maxUnits: 2,
-                  isDefault: presets.length === 0,
-                },
-              ])
-            }
-          >
-            <Plus />
-            {t("ship.addPreset", "Add preset")}
-          </Button>
-        }
-      >
-        <div className="flex flex-col gap-2">
-          {presets.map((p, i) => (
-            <div
-              key={p.id || `new-${i}`}
-              className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[2fr_repeat(5,1fr)_auto_auto]"
-            >
-              <Field label={t("ship.name", "Name")}>
-                <Input
-                  value={p.name}
-                  onChange={(e) =>
-                    setPresets(
-                      presets.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
-                    )
-                  }
-                />
-              </Field>
-              {(["lengthIn", "widthIn", "heightIn", "tareOz", "maxUnits"] as const).map((k) => (
-                <Field
-                  key={k}
-                  label={
-                    {
-                      lengthIn: "L (in)",
-                      widthIn: "W (in)",
-                      heightIn: "H (in)",
-                      tareOz: t("ship.tare", "Tare (oz)"),
-                      maxUnits: t("ship.maxUnits", "Max units"),
-                    }[k]
-                  }
-                >
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={p[k] ?? ""}
-                    onChange={(e) =>
-                      setPresets(
-                        presets.map((x, j) =>
-                          j === i
-                            ? {
-                                ...x,
-                                [k]:
-                                  e.target.value === "" && k === "maxUnits"
-                                    ? null
-                                    : Number(e.target.value),
-                              }
-                            : x,
-                        ),
-                      )
-                    }
-                  />
-                </Field>
-              ))}
-              <label className="flex h-9 items-center gap-1.5 text-xs">
-                <Checkbox
-                  checked={p.isDefault}
-                  onCheckedChange={(v) =>
-                    setPresets(
-                      presets.map((x, j) => ({
-                        ...x,
-                        isDefault: j === i ? !!v : v ? false : x.isDefault,
-                      })),
-                    )
-                  }
-                />
-                {t("sheets.default", "default")}
-              </label>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setPresets(presets.filter((_, j) => j !== i))}
-                aria-label={t("action.delete")}
-              >
-                <Trash2 />
-              </Button>
-            </div>
-          ))}
-        </div>
-      </Section>
-      <Section title={t("ship.defaults", "Defaults")}>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label={t("ship.strategyLabel", "Batch strategy")} htmlFor="s-strategy">
-            <NativeSelect
-              id="s-strategy"
-              value={strategy}
-              onChange={(e) => setStrategy(e.target.value as typeof strategy)}
-            >
-              {BATCH_STRATEGIES.map((s) => (
-                <option key={s} value={s}>
-                  {t(`ship.strategy.${s}`, s.replace(/_/g, " "))}
-                </option>
-              ))}
-            </NativeSelect>
-          </Field>
-          <label className="flex items-center gap-2 self-end text-sm">
-            <Switch checked={push} onCheckedChange={setPush} />
-            {t("ship.pushTracking", "Push tracking to channels automatically")}
-          </label>
-        </div>
-      </Section>
-      <div className="flex justify-end">
-        <Button
-          disabled={save.isPending}
-          onClick={() =>
-            save.mutate({
-              fromAddress: from.street1 ? from : null,
-              packagePresets: presets.map(({ id, ...rest }) => (id ? { id, ...rest } : rest)),
-              defaultStrategy: strategy,
-              trackingPushEnabled: push,
-            })
-          }
-        >
-          {save.isPending && <Loader2 className="animate-spin" />}
-          {t("action.save")}
-        </Button>
-      </div>
     </div>
   );
 }

@@ -235,6 +235,14 @@ export const SHOP_NAV: NavGroup[] = [
         keywords: "shopify etsy csv import",
       },
       {
+        key: "shippingSettings",
+        to: "/settings/shipping",
+        labelKey: "nav.shippingSettings",
+        icon: Truck,
+        permission: "shipping.manage",
+        keywords: "carrier label package ship-from address",
+      },
+      {
         key: "vendors",
         to: "/settings/vendors",
         labelKey: "nav.vendors",
