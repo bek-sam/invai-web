@@ -26,6 +26,7 @@ import { Bell, Check, ChevronsUpDown, Laptop, LogOut, Moon, Search, Sun } from "
 import type * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { BillingBanner } from "../features/billing/billing-banner";
 import { useMediaQuery } from "../hooks/use-media";
 import { type Lang, setLang } from "../i18n";
 import { authClient } from "../lib/auth";
@@ -127,6 +128,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
         }
         className="[&_main]:p-3 sm:[&_main]:p-6"
       >
+        <BillingBanner />
         {children}
       </AppShell>
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
