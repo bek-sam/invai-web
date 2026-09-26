@@ -1,6 +1,17 @@
-import type { BillingStatus, Plan, PlanKey } from "@invai/contracts";
-import { Badge, Button, Card, cn, Money, Progress, toast } from "@invai/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { BillingStatus, CreditEntry, Plan, PlanKey } from "@invai/contracts";
+import {
+  Badge,
+  Button,
+  Card,
+  cn,
+  DataTable,
+  type DataTableColumn,
+  Money,
+  Progress,
+  RelativeTime,
+  toast,
+} from "@invai/ui";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, ExternalLink, Info, Loader2, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -67,6 +78,15 @@ function BillingPage() {
       enabled: can("ai.credits.read"),
     }),
   );
+  const ledger = useInfiniteQuery(
+    orpc.ai.credits.ledger.infiniteOptions({
+      input: (cursor: string | undefined) => ({ cursor, limit: 20 }),
+      initialPageParam: undefined,
+      getNextPageParam: (last) => last.nextCursor ?? undefined,
+      enabled: can("ai.credits.read"),
+    }),
+  );
+  const ledgerRows = ledger.data?.pages.flatMap((p) => p.items) ?? [];
 
   // Coming back from Stripe: say what happened, refresh, and drop the flags from the URL.
   const returned: Notice | null = search.checkout
@@ -306,6 +326,24 @@ function BillingPage() {
               )}
             </Section>
           )}
+
+          {credits.data && (
+            <Section
+              title={t("billing.ledgerTitle", "AI credit history")}
+              description={t(
+                "billing.ledgerHint",
+                "Every draft, assistant answer and trademark check that spent a credit.",
+              )}
+            >
+              <CreditLedgerTable
+                rows={ledgerRows}
+                isLoading={ledger.isPending}
+                hasMore={!!ledger.hasNextPage}
+                isLoadingMore={ledger.isFetchingNextPage}
+                onLoadMore={() => void ledger.fetchNextPage()}
+              />
+            </Section>
+          )}
         </div>
       )}
       <ConfirmDialog
@@ -405,6 +443,85 @@ function statusLine(s: BillingStatus, t: T): string {
         to: formatDate(s.usage.periodEnd),
       });
   }
+}
+
+function CreditLedgerTable({
+  rows,
+  isLoading,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
+}: {
+  rows: CreditEntry[];
+  isLoading: boolean;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
+}) {
+  const { t } = useTranslation();
+  const columns: DataTableColumn<CreditEntry>[] = [
+    {
+      accessorKey: "at",
+      header: t("billing.ledgerWhen", "When"),
+      cell: ({ row }) => <RelativeTime value={row.original.at} className="text-muted-foreground" />,
+    },
+    {
+      accessorKey: "kind",
+      header: t("billing.ledgerKind", "Kind"),
+      cell: ({ row }) => (
+        <Badge variant="secondary">
+          {t(`creditKind.${row.original.kind}`, row.original.kind.replace(/_/g, " "))}
+        </Badge>
+      ),
+    },
+    {
+      id: "model",
+      header: t("billing.ledgerModel", "Model"),
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.model ?? "—"}</span>,
+    },
+    {
+      id: "tokens",
+      header: t("billing.ledgerTokens", "Tokens"),
+      cell: ({ row }) => {
+        const r = row.original;
+        return r.tokensIn == null ? (
+          "—"
+        ) : (
+          <span className="tabular-nums text-muted-foreground">
+            {r.tokensIn.toLocaleString()} in / {(r.tokensOut ?? 0).toLocaleString()} out
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "credits",
+      header: t("billing.ledgerCredits", "Credits"),
+      cell: ({ row }) => (
+        <span
+          className={cn(
+            "tabular-nums font-medium",
+            row.original.credits < 0 ? "text-danger" : "text-success",
+          )}
+        >
+          {row.original.credits > 0 ? "+" : ""}
+          {row.original.credits.toLocaleString()}
+        </span>
+      ),
+    },
+  ];
+  return (
+    <DataTable
+      columns={columns as DataTableColumn<CreditEntry, unknown>[]}
+      data={rows}
+      getRowId={(r) => r.id}
+      isLoading={isLoading}
+      hasMore={hasMore}
+      isLoadingMore={isLoadingMore}
+      onLoadMore={onLoadMore}
+      emptyTitle={t("billing.ledgerEmpty", "No AI credit activity yet")}
+      maxHeight="24rem"
+    />
+  );
 }
 
 function UsageMeters({ status }: { status: BillingStatus }) {

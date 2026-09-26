@@ -2,7 +2,7 @@ import { CHANNEL_RULES, type ListingContent, type ListingDraft } from "@invai/co
 import { Badge, Button, ChannelBadge, cn, Input, Skeleton, Textarea, toast } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, ArrowLeft, Check, Loader2, RefreshCw, Send, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Copy, Loader2, RefreshCw, Send, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
@@ -179,6 +179,13 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
       },
     }),
   );
+  // AC1: an approved draft is exported by hand onto its channel today (no live listing API), so
+  // a one-click copy of each field saves retyping it there.
+  const canCopy = draft.status === "approved";
+  const copyField = (value: string) =>
+    void navigator.clipboard
+      .writeText(value)
+      .then(() => toast.success(t("listings.copied", "Copied")));
   const addTag = () => {
     const next = parseTags(tagInput);
     const seen = new Set(tags.map((x) => x.toLowerCase()));
@@ -239,8 +246,18 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
             <div className="flex flex-col gap-4">
               <Field
                 label={
-                  <span className="flex w-full justify-between">
-                    {t("listings.title", "Title")} <Counter n={title.length} max={rules.titleMax} />
+                  <span className="flex w-full items-center justify-between">
+                    {t("listings.title", "Title")}
+                    <span className="flex items-center gap-1.5">
+                      <Counter n={title.length} max={rules.titleMax} />
+                      {canCopy && (
+                        <CopyIconButton
+                          value={title}
+                          onCopy={copyField}
+                          label={t("listings.copyTitle", "Copy title")}
+                        />
+                      )}
+                    </span>
                   </span>
                 }
                 htmlFor="d-title"
@@ -258,8 +275,18 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
               <IssueList issues={issuesFor("title")} />
               {rules.tagsMax > 0 && (
                 <div className="flex flex-col gap-1.5">
-                  <span className="flex justify-between text-sm font-medium">
-                    {t("listings.tags", "Tags")} <Counter n={tags.length} max={rules.tagsMax} />
+                  <span className="flex items-center justify-between text-sm font-medium">
+                    {t("listings.tags", "Tags")}
+                    <span className="flex items-center gap-1.5">
+                      <Counter n={tags.length} max={rules.tagsMax} />
+                      {canCopy && (
+                        <CopyIconButton
+                          value={tags.join(", ")}
+                          onCopy={copyField}
+                          label={t("listings.copyTags", "Copy tags")}
+                        />
+                      )}
+                    </span>
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {tags.map((tag, i) => {
@@ -338,9 +365,18 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
               )}
               <Field
                 label={
-                  <span className="flex w-full justify-between">
-                    {t("listings.description", "Description")}{" "}
-                    <Counter n={description.length} max={rules.descriptionMax} />
+                  <span className="flex w-full items-center justify-between">
+                    {t("listings.description", "Description")}
+                    <span className="flex items-center gap-1.5">
+                      <Counter n={description.length} max={rules.descriptionMax} />
+                      {canCopy && (
+                        <CopyIconButton
+                          value={description}
+                          onCopy={copyField}
+                          label={t("listings.copyDescription", "Copy description")}
+                        />
+                      )}
+                    </span>
                   </span>
                 }
                 htmlFor="d-desc"
@@ -448,16 +484,7 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
               </div>
             </Section>
           )}
-          {draft.publishedUrl && (
-            <a
-              href={draft.publishedUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm text-primary hover:underline"
-            >
-              {t("listings.viewPublished", "View the published listing")}
-            </a>
-          )}
+          <PublishStatusSection draft={draft} />
           {can("ai.listings.manage") && draft.status !== "published" && (
             <Section title={t("listings.regenerate", "Regenerate")}>
               <div className="flex flex-col gap-2">
@@ -519,6 +546,82 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
         />
       </ConfirmDialog>
     </div>
+  );
+}
+
+/**
+ * AC3: `ai.listings.publishStatus`, polled while a publish is in flight, so a failure (or the
+ * "channel API not approved yet, exported as CSV instead" note) is always visible, not just at
+ * the moment the publish button was clicked.
+ */
+function PublishStatusSection({ draft }: { draft: ListingDraft }) {
+  const { t } = useTranslation();
+  const show = draft.status === "publishing" || !!draft.publishedUrl || !!draft.publishedListingId;
+  const q = useQuery(
+    orpc.ai.listings.publishStatus.queryOptions({
+      input: { id: draft.id },
+      enabled: show,
+      refetchInterval: (query) => (query.state.data?.status === "publishing" ? 2000 : false),
+    }),
+  );
+  if (!show) return null;
+  const status = q.data;
+  return (
+    <Section title={t("listings.publishStatusTitle", "Publish status")}>
+      {!status ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <div className="flex flex-col gap-2">
+          <DraftStatusBadge status={status.status} />
+          {status.error && (
+            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{status.error}</p>
+          )}
+          {status.pendingApproval && (
+            <p className="text-sm text-muted-foreground">
+              {t(
+                "listings.pendingApproval",
+                "Channel API not approved yet; copy the listing by hand.",
+              )}
+            </p>
+          )}
+          {status.publishedUrl && (
+            <a
+              href={status.publishedUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-primary hover:underline"
+            >
+              {t("listings.viewPublished", "View the published listing")}
+            </a>
+          )}
+        </div>
+      )}
+    </Section>
+  );
+}
+
+/** AC1: a one-click copy of a field's current value, shown once a draft is approved. */
+function CopyIconButton({
+  value,
+  onCopy,
+  label,
+}: {
+  value: string;
+  onCopy: (value: string) => void;
+  label: string;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="size-5"
+      onClick={() => onCopy(value)}
+      aria-label={label}
+      title={label}
+    >
+      <Copy className="size-3" />
+    </Button>
   );
 }
 

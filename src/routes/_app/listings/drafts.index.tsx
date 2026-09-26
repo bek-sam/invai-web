@@ -1,4 +1,10 @@
-import { CHANNELS, type Design, LISTING_DRAFT_STATES, type ListingDraft } from "@invai/contracts";
+import {
+  CHANNELS,
+  type Channel,
+  type Design,
+  LISTING_DRAFT_STATES,
+  type ListingDraft,
+} from "@invai/contracts";
 import {
   Badge,
   Button,
@@ -18,7 +24,7 @@ import {
 } from "@invai/ui";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Loader2, Sparkles } from "lucide-react";
+import { Download, Loader2, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
@@ -26,8 +32,10 @@ import { Field, NativeSelect, Page } from "../../../components/page";
 import { DesignPicker } from "../../../components/pickers";
 import { ErrorState } from "../../../components/states";
 import { DraftStatusBadge } from "../../../features/listings/badges";
+import { errorMessage } from "../../../lib/errors";
 import { useCan } from "../../../lib/me";
-import { orpc } from "../../../lib/rpc";
+import { client, orpc } from "../../../lib/rpc";
+import { openInNewTab } from "../../../lib/upload";
 
 export const Route = createFileRoute("/_app/listings/drafts/")({
   validateSearch: z.object({
@@ -45,6 +53,7 @@ function DraftsPage() {
   const [status, setStatus] = useState("");
   const [channel, setChannel] = useState("");
   const [createOpen, setCreateOpen] = useState(!!search.create);
+  const [selected, setSelected] = useState<Record<string, true>>({});
   const q = useInfiniteQuery(
     orpc.ai.listings.list.infiniteOptions({
       input: (cursor: string | undefined) => ({
@@ -60,6 +69,24 @@ function DraftsPage() {
   );
   const rows = useMemo(() => q.data?.pages.flatMap((p) => p.items) ?? [], [q.data]);
   const counts = q.data?.pages[0]?.counts;
+  const selectedIds = Object.keys(selected).filter((k) => selected[k]);
+  const selectedDrafts = rows.filter((r) => selectedIds.includes(r.id));
+  const selectedChannels = new Set(selectedDrafts.map((r) => r.channel));
+  const exportChannel: Channel | null =
+    selectedChannels.size === 1 ? (selectedDrafts[0]?.channel as Channel) : null;
+  const exportCsv = useMutation({
+    mutationFn: async () => {
+      if (!exportChannel) throw new Error("mixed channels");
+      const { key } = await client.ai.exportCsv({ draftIds: selectedIds, channel: exportChannel });
+      const { url } = await client.files.downloadUrl({ fileKey: key, disposition: "attachment" });
+      return url;
+    },
+    onSuccess: (url) => {
+      openInNewTab(url);
+      setSelected({});
+    },
+    onError: (e) => toast.error(errorMessage(e)),
+  });
   const columns: DataTableColumn<ListingDraft>[] = [
     {
       accessorKey: "designName",
@@ -174,6 +201,20 @@ function DraftsPage() {
             {t("listings.clearDesign", "Show all designs")}
           </Button>
         )}
+        {can("ai.listings.manage") && selectedIds.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!exportChannel || exportCsv.isPending}
+            title={exportChannel ? undefined : t("listings.exportMixedChannel", "")}
+            onClick={() => exportCsv.mutate()}
+          >
+            {exportCsv.isPending ? <Loader2 className="animate-spin" /> : <Download />}
+            {t("listings.exportSelected", "Export {{count}} as CSV", {
+              count: selectedIds.length,
+            })}
+          </Button>
+        )}
       </div>
       {q.isError ? (
         <ErrorState error={q.error} onRetry={() => void q.refetch()} />
@@ -182,6 +223,9 @@ function DraftsPage() {
           columns={columns as DataTableColumn<ListingDraft, unknown>[]}
           data={rows}
           getRowId={(r) => r.id}
+          enableRowSelection={can("ai.listings.manage")}
+          rowSelection={selected}
+          onRowSelectionChange={setSelected}
           isLoading={q.isPending}
           hasMore={!!q.hasNextPage}
           isLoadingMore={q.isFetchingNextPage}
