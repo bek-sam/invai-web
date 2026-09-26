@@ -56,6 +56,11 @@ const newSlot = (i: number): TemplateSlot => ({
   hIn: 1.25,
   fontFamily: "Inter Bold",
   fontSizePt: 72,
+  minFontSizePt: null,
+  maxLines: null,
+  strokeWidthPt: 0,
+  strokeColor: null,
+  fit: "fit",
   color: "#111111",
   align: "center",
   maxChars: 16,
@@ -238,19 +243,30 @@ function TemplateEditor({ template }: { template: PersonalizationTemplate | null
                       }}
                     />
                   </Field>
-                  <Field label={t("pers.sourceQuestion", "Buyer question")} className="col-span-2">
+                  <Field label={t("pers.kind", "Type")}>
+                    <NativeSelect
+                      value={s.kind}
+                      onChange={(e) => setSlot(i, { kind: e.target.value as TemplateSlot["kind"] })}
+                    >
+                      <option value="text">{t("pers.kindText", "Text")}</option>
+                      <option value="photo">{t("pers.kindPhoto", "Photo")}</option>
+                    </NativeSelect>
+                  </Field>
+                  <Field label={t("pers.sourceQuestion", "Buyer question")}>
                     <Input
                       value={s.sourceQuestion ?? ""}
                       placeholder={t("pers.questionPh", "e.g. Name to print")}
                       onChange={(e) => setSlot(i, { sourceQuestion: e.target.value || null })}
                     />
                   </Field>
-                  <Field label={t("pers.sample", "Sample text")} className="col-span-2">
-                    <Input
-                      value={samples[s.name] ?? ""}
-                      onChange={(e) => setSamples({ ...samples, [s.name]: e.target.value })}
-                    />
-                  </Field>
+                  {s.kind === "text" && (
+                    <Field label={t("pers.sample", "Sample text")} className="col-span-2">
+                      <Input
+                        value={samples[s.name] ?? ""}
+                        onChange={(e) => setSamples({ ...samples, [s.name]: e.target.value })}
+                      />
+                    </Field>
+                  )}
                   {(["xIn", "yIn", "wIn", "hIn"] as const).map((k) => (
                     <Field
                       key={k}
@@ -271,61 +287,121 @@ function TemplateEditor({ template }: { template: PersonalizationTemplate | null
                       />
                     </Field>
                   ))}
-                  <Field label={t("pers.font", "Font")} className="col-span-2">
-                    <NativeSelect
-                      value={s.fontFamily}
-                      onChange={(e) => setSlot(i, { fontFamily: e.target.value })}
-                    >
-                      {TEMPLATE_FONTS.map((f) => (
-                        <option key={f} value={f}>
-                          {f}
+                  {s.kind === "photo" ? (
+                    <Field label={t("pers.fit", "Fit")} className="col-span-2">
+                      <NativeSelect
+                        value={s.fit}
+                        onChange={(e) => setSlot(i, { fit: e.target.value as TemplateSlot["fit"] })}
+                      >
+                        <option value="fit">
+                          {t("pers.fitOption", "Fit (whole photo visible)")}
                         </option>
-                      ))}
-                    </NativeSelect>
-                  </Field>
-                  <Field label={t("pers.size", "Size (pt)")}>
-                    <Input
-                      type="number"
-                      value={s.fontSizePt}
-                      onChange={(e) => setSlot(i, { fontSizePt: Number(e.target.value) })}
-                    />
-                  </Field>
-                  <Field label={t("pers.color", "Color")}>
-                    <Input
-                      type="color"
-                      className="p-1"
-                      value={s.color}
-                      onChange={(e) => setSlot(i, { color: e.target.value })}
-                    />
-                  </Field>
-                  <Field label={t("pers.align", "Align")}>
-                    <NativeSelect
-                      value={s.align}
-                      onChange={(e) =>
-                        setSlot(i, { align: e.target.value as TemplateSlot["align"] })
-                      }
-                    >
-                      <option value="left">{t("pers.left", "Left")}</option>
-                      <option value="center">{t("pers.center", "Center")}</option>
-                      <option value="right">{t("pers.right", "Right")}</option>
-                    </NativeSelect>
-                  </Field>
-                  <Field label={t("pers.maxChars", "Max chars")}>
-                    <Input
-                      type="number"
-                      value={s.maxChars ?? ""}
-                      onChange={(e) =>
-                        setSlot(i, { maxChars: e.target.value ? Number(e.target.value) : null })
-                      }
-                    />
-                  </Field>
-                  <label className="col-span-2 flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={s.uppercase}
-                      onCheckedChange={(v) => setSlot(i, { uppercase: !!v })}
-                    />
-                    {t("pers.uppercase", "Uppercase")}
-                  </label>
+                        <option value="fill">{t("pers.fillOption", "Fill (crop to cover)")}</option>
+                      </NativeSelect>
+                    </Field>
+                  ) : (
+                    <>
+                      <Field label={t("pers.font", "Font")} className="col-span-2">
+                        <NativeSelect
+                          value={s.fontFamily}
+                          onChange={(e) =>
+                            setSlot(i, { fontFamily: e.target.value as TemplateSlot["fontFamily"] })
+                          }
+                        >
+                          {TEMPLATE_FONTS.map((f) => (
+                            <option key={f} value={f}>
+                              {f}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      </Field>
+                      <Field label={t("pers.size", "Size (pt)")}>
+                        <Input
+                          type="number"
+                          value={s.fontSizePt}
+                          onChange={(e) => setSlot(i, { fontSizePt: Number(e.target.value) })}
+                        />
+                      </Field>
+                      <Field label={t("pers.minSize", "Min size (pt)")}>
+                        <Input
+                          type="number"
+                          value={s.minFontSizePt ?? ""}
+                          placeholder={t("pers.minSizePh", "60% default")}
+                          onChange={(e) =>
+                            setSlot(i, {
+                              minFontSizePt: e.target.value ? Number(e.target.value) : null,
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field label={t("pers.maxLines", "Max lines")}>
+                        <Input
+                          type="number"
+                          value={s.maxLines ?? ""}
+                          placeholder={t("pers.maxLinesPh", "Unlimited")}
+                          onChange={(e) =>
+                            setSlot(i, { maxLines: e.target.value ? Number(e.target.value) : null })
+                          }
+                        />
+                      </Field>
+                      <Field label={t("pers.color", "Color")}>
+                        <Input
+                          type="color"
+                          className="p-1"
+                          value={s.color}
+                          onChange={(e) => setSlot(i, { color: e.target.value })}
+                        />
+                      </Field>
+                      <Field label={t("pers.align", "Align")}>
+                        <NativeSelect
+                          value={s.align}
+                          onChange={(e) =>
+                            setSlot(i, { align: e.target.value as TemplateSlot["align"] })
+                          }
+                        >
+                          <option value="left">{t("pers.left", "Left")}</option>
+                          <option value="center">{t("pers.center", "Center")}</option>
+                          <option value="right">{t("pers.right", "Right")}</option>
+                        </NativeSelect>
+                      </Field>
+                      <Field label={t("pers.maxChars", "Max chars")}>
+                        <Input
+                          type="number"
+                          value={s.maxChars ?? ""}
+                          onChange={(e) =>
+                            setSlot(i, {
+                              maxChars: e.target.value ? Number(e.target.value) : null,
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field label={t("pers.strokeWidth", "Outline width (pt)")}>
+                        <Input
+                          type="number"
+                          value={s.strokeWidthPt}
+                          onChange={(e) =>
+                            setSlot(i, { strokeWidthPt: Number(e.target.value) || 0 })
+                          }
+                        />
+                      </Field>
+                      <Field label={t("pers.strokeColor", "Outline color")}>
+                        <Input
+                          type="color"
+                          className="p-1"
+                          value={s.strokeColor ?? "#ffffff"}
+                          disabled={!s.strokeWidthPt}
+                          onChange={(e) => setSlot(i, { strokeColor: e.target.value })}
+                        />
+                      </Field>
+                      <label className="col-span-2 flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={s.uppercase}
+                          onCheckedChange={(v) => setSlot(i, { uppercase: !!v })}
+                        />
+                        {t("pers.uppercase", "Uppercase")}
+                      </label>
+                    </>
+                  )}
                   <label className="col-span-2 flex items-center gap-2 text-sm">
                     <Checkbox
                       checked={s.required}
@@ -448,7 +524,7 @@ function LivePreview({
   values: Record<string, string>;
 }) {
   const { t } = useTranslation();
-  const fits = slots.map((s) => fitSlotText(s, values[s.name] ?? ""));
+  const fits = slots.map((s) => (s.kind === "photo" ? null : fitSlotText(s, values[s.name] ?? "")));
   return (
     <div className="flex flex-col gap-2">
       <div className="checkerboard overflow-hidden rounded-md border border-border">
@@ -470,11 +546,41 @@ function LivePreview({
             className="text-muted-foreground"
           />
           {slots.map((s, i) => {
+            if (s.kind === "photo") {
+              return (
+                <g key={s.name}>
+                  <rect
+                    x={s.xIn}
+                    y={s.yIn}
+                    width={s.wIn}
+                    height={s.hIn}
+                    fill="currentColor"
+                    className="fill-muted text-muted stroke-primary/60"
+                    strokeWidth={0.03}
+                  />
+                  <text
+                    x={s.xIn + s.wIn / 2}
+                    y={s.yIn + s.hIn / 2}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={Math.min(s.wIn, s.hIn) * 0.18}
+                    className="fill-muted-foreground"
+                  >
+                    {s.fit === "fill"
+                      ? t("pers.fillOption", "Fill (crop to cover)")
+                      : t("pers.fitOption", "Fit (whole photo visible)")}
+                  </text>
+                </g>
+              );
+            }
             const fit = fits[i];
             if (!fit) return null;
             const anchor = s.align === "left" ? "start" : s.align === "right" ? "end" : "middle";
             const x =
               s.align === "left" ? s.xIn : s.align === "right" ? s.xIn + s.wIn : s.xIn + s.wIn / 2;
+            const lineHeightIn = (fit.fontSizePt / 72) * 1.2;
+            const blockH = lineHeightIn * fit.lines.length;
+            const y0 = s.yIn + s.hIn / 2 - blockH / 2 + lineHeightIn / 2;
             return (
               <g key={s.name}>
                 <rect
@@ -486,20 +592,27 @@ function LivePreview({
                   strokeWidth={0.03}
                   className={fit.overflow || fit.tooLong ? "stroke-danger" : "stroke-primary/60"}
                 />
-                <text
-                  x={x}
-                  y={s.yIn + s.hIn / 2}
-                  textAnchor={anchor}
-                  dominantBaseline="central"
-                  fill={s.color}
-                  fontSize={fit.fontSizePt / 72}
-                  fontFamily={s.fontFamily.replace(/ (Bold|Black)$/, "")}
-                  fontWeight={
-                    /Black/.test(s.fontFamily) ? 900 : /Bold/.test(s.fontFamily) ? 700 : 400
-                  }
-                >
-                  {fit.text}
-                </text>
+                {fit.lines.map((line, li) => (
+                  <text
+                    // biome-ignore lint/suspicious/noArrayIndexKey: line order is stable per render
+                    key={li}
+                    x={x}
+                    y={y0 + li * lineHeightIn}
+                    textAnchor={anchor}
+                    dominantBaseline="central"
+                    fill={s.color}
+                    stroke={s.strokeWidthPt ? (s.strokeColor ?? undefined) : undefined}
+                    strokeWidth={s.strokeWidthPt ? s.strokeWidthPt / 72 : undefined}
+                    paintOrder={s.strokeWidthPt ? "stroke" : undefined}
+                    fontSize={fit.fontSizePt / 72}
+                    fontFamily={s.fontFamily.replace(/ (Bold|Black)$/, "")}
+                    fontWeight={
+                      /Black/.test(s.fontFamily) ? 900 : /Bold/.test(s.fontFamily) ? 700 : 400
+                    }
+                  >
+                    {line}
+                  </text>
+                ))}
               </g>
             );
           })}
@@ -507,6 +620,15 @@ function LivePreview({
       </div>
       <ul className="flex flex-wrap gap-2 text-xs">
         {slots.map((s, i) => {
+          if (s.kind === "photo") {
+            return (
+              <li key={s.name}>
+                <Badge variant="secondary">
+                  {s.name}: {t("pers.kindPhoto", "Photo")}
+                </Badge>
+              </li>
+            );
+          }
           const fit = fits[i];
           if (!fit) return null;
           return (
