@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { connectSrc, requireApiOrigin } from "./src/lib/build/csp.ts";
 
 // T-12-5 (B-24): strict CSP, no 'unsafe-inline'. The built app (dist/) never emits an inline
 // <script> or onclick=, so its script-src is plain 'self'. The Vite dev server is the exception:
@@ -12,7 +13,7 @@ import { defineConfig } from "vite";
 const reactPreambleHash = `'sha256-${createHash("sha256")
   .update(react.preambleCode.replace("__BASE__", "/"))
   .digest("base64")}'`;
-const API_ORIGIN = "http://localhost:3000"; // matches src/lib/env.ts's VITE_API_URL default
+const DEV_API_ORIGIN = "http://localhost:3000"; // matches src/lib/env.ts's VITE_API_URL default
 const S3_ORIGIN = "http://localhost:9000"; // local MinIO; presigned image URLs (SignedImage)
 
 const securityHeaders = {
@@ -29,56 +30,66 @@ const devCsp = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${S3_ORIGIN}`,
   "font-src 'self'",
-  `connect-src 'self' ${API_ORIGIN}`,
-  "object-src 'none'",
-  "base-uri 'none'",
-  "frame-ancestors 'none'",
-].join("; ");
-const prodCsp = [
-  "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
-  "font-src 'self'",
-  "connect-src 'self' https:",
+  `connect-src 'self' ${DEV_API_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'none'",
   "frame-ancestors 'none'",
 ].join("; ");
 
-export default defineConfig({
-  plugins: [tanstackRouter({ target: "react", autoCodeSplitting: true }), react(), tailwindcss()],
-  // @invai/ui and @invai/contracts are linked sibling repos with their own node_modules;
-  // dedupe so there is one React, one i18next singleton and one TanStack Table.
-  resolve: {
-    dedupe: [
-      "react",
-      "react-dom",
-      "i18next",
-      "react-i18next",
-      "@tanstack/react-table",
-      "@tanstack/react-virtual",
-      "zod",
-      "@orpc/contract",
-    ],
-  },
-  // Routes are code-split, so Vite would discover these on first navigation and reload mid-session.
-  optimizeDeps: {
-    include: [
-      "@orpc/client",
-      "@orpc/client/fetch",
-      "@orpc/tanstack-query",
-      "better-auth/react",
-      "better-auth/client/plugins",
-      "react-hook-form",
-      "@hookform/resolvers/zod",
-      "recharts",
-      "qrcode.react",
-      "@tanstack/react-virtual",
-      "zod",
-    ],
-  },
-  server: { port: 5173, headers: { "Content-Security-Policy": devCsp, ...securityHeaders } },
-  preview: { headers: { "Content-Security-Policy": prodCsp, ...securityHeaders } },
-  test: { environment: "node", include: ["src/**/*.test.ts"] },
+export default defineConfig(({ command, isPreview }) => {
+  // Review r1: connect-src was 'https:' (any HTTPS host), not the pinned API origin. `build` and
+  // `preview` both serve/produce the real prodCsp, so both must have a real VITE_API_URL -- a
+  // build without it fails loudly here instead of silently falling back to a broad CSP.
+  const prodConnectSrc =
+    command === "build" || isPreview
+      ? connectSrc(requireApiOrigin(process.env.VITE_API_URL))
+      : "'self'"; // never served: only `devCsp` above governs plain `vite`/`pnpm dev`.
+  const prodCsp = [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self'",
+    `connect-src ${prodConnectSrc}`,
+    "object-src 'none'",
+    "base-uri 'none'",
+    "frame-ancestors 'none'",
+  ].join("; ");
+
+  return {
+    plugins: [tanstackRouter({ target: "react", autoCodeSplitting: true }), react(), tailwindcss()],
+    // @invai/ui and @invai/contracts are linked sibling repos with their own node_modules;
+    // dedupe so there is one React, one i18next singleton and one TanStack Table.
+    resolve: {
+      dedupe: [
+        "react",
+        "react-dom",
+        "i18next",
+        "react-i18next",
+        "@tanstack/react-table",
+        "@tanstack/react-virtual",
+        "zod",
+        "@orpc/contract",
+      ],
+    },
+    // Routes are code-split, so Vite would discover these on first navigation and reload mid-session.
+    optimizeDeps: {
+      include: [
+        "@orpc/client",
+        "@orpc/client/fetch",
+        "@orpc/tanstack-query",
+        "better-auth/react",
+        "better-auth/client/plugins",
+        "react-hook-form",
+        "@hookform/resolvers/zod",
+        "recharts",
+        "qrcode.react",
+        "@tanstack/react-virtual",
+        "zod",
+      ],
+    },
+    server: { port: 5173, headers: { "Content-Security-Policy": devCsp, ...securityHeaders } },
+    preview: { headers: { "Content-Security-Policy": prodCsp, ...securityHeaders } },
+    test: { environment: "node", include: ["src/**/*.test.ts"] },
+  };
 });
