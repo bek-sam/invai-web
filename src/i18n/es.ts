@@ -763,7 +763,6 @@ export const es: Messages = {
     addBullet: "Agregar viñeta",
     addTag: "Agrega una etiqueta y presiona Enter",
     approve: "Aprobar",
-    approveAnyway: "Aprobar de todos modos",
     approved: "Aprobado",
     brief: "Indicaciones (opcional)",
     briefHint: "p. ej. divertido, para mamás de perros, estilo desierto",
@@ -788,8 +787,6 @@ export const es: Messages = {
     exportSelected: "Exportar {{count}} como CSV",
     generate: "Generar",
     generating: "Redactando {{count}} anuncios",
-    highRisk: "Alto riesgo de marca registrada",
-    highRiskHint: "Este anuncio podría chocar con una marca registrada. ¿Aprobar de todos modos?",
     mockup: "Mockup",
     mockups: "Mockups",
     nErrors: "{{count}} errores",
@@ -802,6 +799,7 @@ export const es: Messages = {
     publish: "Publicar",
     publishStatusTitle: "Estado de publicación",
     publishing: "Publicando",
+    recordReview: "Registrar revisión",
     regenHint: "¿Qué debe cambiar? p. ej. título más corto, más enfocado a regalo",
     regenerate: "Regenerar",
     regenerating: "Regenerando",
@@ -814,6 +812,18 @@ export const es: Messages = {
       "La IA redacta títulos, etiquetas y descripciones por canal. Una persona aprueba cada anuncio.",
     tags: "Etiquetas",
     title: "Título",
+    trademarkNoticeHigh:
+      "Riesgo de marca registrada {{score}}/100: este anuncio no puede aprobarse, publicarse ni exportarse hasta cambiar el texto marcado.",
+    trademarkNoticeMedium:
+      "Riesgo de marca registrada {{score}}/100: se requiere una revisión de cumplimiento registrada antes de aprobar, publicar o exportar este anuncio.",
+    trademarkNoticeReviewed:
+      "Riesgo de marca registrada {{score}}/100: revisado por cumplimiento, listo para publicar.",
+    trademarkReviewHint:
+      "Este anuncio tiene un riesgo medio de marca registrada. Se requiere una nota de cumplimiento antes de poder aprobarlo, publicarlo o exportarlo.",
+    trademarkReviewNotePlaceholder: "Por qué es aceptable publicarlo (mínimo 3 caracteres)",
+    trademarkReviewTitle: "Registrar una revisión de marca registrada",
+    trademarkReviewed: "Revisión de marca registrada registrada",
+    trademarkReviewedOn: "Revisado",
     updated: "Actualizado",
     valid: "Válido",
     viewPublished: "Ver el anuncio publicado",

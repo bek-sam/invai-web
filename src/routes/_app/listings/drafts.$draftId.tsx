@@ -1,5 +1,15 @@
 import { CHANNEL_RULES, type ListingContent, type ListingDraft } from "@invai/contracts";
-import { Badge, Button, ChannelBadge, cn, Input, Skeleton, Textarea, toast } from "@invai/ui";
+import {
+  Badge,
+  Button,
+  ChannelBadge,
+  cn,
+  Input,
+  RelativeTime,
+  Skeleton,
+  Textarea,
+  toast,
+} from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, Check, Copy, Loader2, RefreshCw, Send, X } from "lucide-react";
@@ -88,7 +98,8 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
   const [tags, setTags] = useState<string[]>(draft.content.tags);
   const [tagInput, setTagInput] = useState("");
   const [bullets, setBullets] = useState<string[]>(draft.content.bullets);
-  const [riskOpen, setRiskOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewNote, setReviewNote] = useState("");
   const [rejectReason, setRejectReason] = useState("");
   const [rejectOpen, setRejectOpen] = useState(false);
   const [brief, setBrief] = useState("");
@@ -126,18 +137,31 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
       },
     }),
   );
+  // T-8-4: `HIGH_TRADEMARK_RISK` (score >= 60) has no override — the server's own message
+  // ("...cannot be approved, published or exported") is shown as-is, next to the always-visible
+  // trademark panel below that says why. `TRADEMARK_REVIEW_REQUIRED` (25-59) opens the review note
+  // dialog; recording one and re-approving is the only way past it.
   const approve = useMutation(
     orpc.ai.listings.approve.mutationOptions({
       meta: { silent: true },
       onSuccess: () => {
         toast.success(t("listings.approved", "Approved"));
-        setRiskOpen(false);
         invalidate();
       },
       onError: (e) => {
         const info = errorInfo(e);
-        if (info.code === "HIGH_TRADEMARK_RISK") setRiskOpen(true);
+        if (info.code === "TRADEMARK_REVIEW_REQUIRED") setReviewOpen(true);
         else toast.error(info.message);
+      },
+    }),
+  );
+  const recordReview = useMutation(
+    orpc.ai.listings.recordTrademarkReview.mutationOptions({
+      onSuccess: () => {
+        toast.success(t("listings.trademarkReviewed", "Trademark review recorded"));
+        setReviewOpen(false);
+        setReviewNote("");
+        invalidate();
       },
     }),
   );
@@ -166,6 +190,7 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
   );
   const publish = useMutation(
     orpc.ai.listings.publish.mutationOptions({
+      meta: { silent: true },
       onSuccess: (s) => {
         if (s.pendingApproval)
           toast.info(
@@ -176,6 +201,13 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
           );
         else toast.success(t("listings.publishing", "Publishing"));
         invalidate();
+      },
+      // Same gate as approve (T-8-4): re-checked live, so an approved draft can still be blocked
+      // if the risk moved since it was approved.
+      onError: (e) => {
+        const info = errorInfo(e);
+        if (info.code === "TRADEMARK_REVIEW_REQUIRED") setReviewOpen(true);
+        else toast.error(info.message);
       },
     }),
   );
@@ -221,7 +253,7 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
                 {t("listings.reject", "Reject")}
               </Button>
               <Button
-                onClick={() => approve.mutate({ id: draft.id, acknowledgeRisk: false })}
+                onClick={() => approve.mutate({ id: draft.id })}
                 disabled={dirty || errorCount > 0 || approve.isPending}
                 title={dirty ? t("listings.saveFirst", "Save your edits first") : undefined}
               >
@@ -238,6 +270,38 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
       {draft.rejectedReason && (
         <p className="rounded-md bg-muted px-3 py-2 text-sm">
           {t("listings.rejectedBecause", "Rejected: {{reason}}", { reason: draft.rejectedReason })}
+        </p>
+      )}
+      {/* T-8-4 AC1/AC2/AC4: a flagged listing (riskScore >= 25) always shows why, even before the
+          checks panel is opened. High risk has no override; medium is cleared by recording a
+          review below. */}
+      {draft.trademark && draft.trademark.riskScore >= 25 && (
+        <p
+          className={cn(
+            "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
+            draft.trademark.riskLevel === "high"
+              ? "bg-danger/10 text-danger"
+              : "bg-warning/10 text-warning",
+          )}
+        >
+          <AlertTriangle className="size-4 shrink-0" />
+          {draft.trademark.riskLevel === "high"
+            ? t(
+                "listings.trademarkNoticeHigh",
+                "Trademark risk {{score}}/100: this listing cannot be approved, published or exported until the flagged text is changed.",
+                { score: draft.trademark.riskScore },
+              )
+            : draft.trademarkReview
+              ? t(
+                  "listings.trademarkNoticeReviewed",
+                  "Trademark risk {{score}}/100: reviewed by compliance, cleared to publish.",
+                  { score: draft.trademark.riskScore },
+                )
+              : t(
+                  "listings.trademarkNoticeMedium",
+                  "Trademark risk {{score}}/100: a recorded compliance review is required before this listing can be approved, published or exported.",
+                  { score: draft.trademark.riskScore },
+                )}
         </p>
       )}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -439,7 +503,18 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
           </Section>
           {draft.trademark && (
             <Section title={t("nav.trademark")}>
-              <TrademarkResult check={draft.trademark} />
+              <div className="flex flex-col gap-3">
+                <TrademarkResult check={draft.trademark} />
+                {draft.trademarkReview && (
+                  <div className="rounded-md bg-muted px-3 py-2 text-xs">
+                    <p className="font-medium text-foreground">
+                      {t("listings.trademarkReviewedOn", "Reviewed")}{" "}
+                      <RelativeTime value={draft.trademarkReview.reviewedAt} />
+                    </p>
+                    <p className="mt-0.5 text-muted-foreground">{draft.trademarkReview.note}</p>
+                  </div>
+                )}
+              </div>
             </Section>
           )}
           {draft.mockupKeys.length > 0 && (
@@ -517,18 +592,31 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
         </div>
       </div>
       <ConfirmDialog
-        open={riskOpen}
-        onOpenChange={setRiskOpen}
-        title={t("listings.highRisk", "High trademark risk")}
+        open={reviewOpen}
+        onOpenChange={(o) => {
+          setReviewOpen(o);
+          if (!o) setReviewNote("");
+        }}
+        title={t("listings.trademarkReviewTitle", "Record a trademark review")}
         description={t(
-          "listings.highRiskHint",
-          "This listing may conflict with a registered mark. Approve anyway?",
+          "listings.trademarkReviewHint",
+          "This listing has a medium trademark risk. A compliance note is required before it can be approved, published or exported.",
         )}
-        confirmLabel={t("listings.approveAnyway", "Approve anyway")}
-        destructive
-        pending={approve.isPending}
-        onConfirm={() => approve.mutate({ id: draft.id, acknowledgeRisk: true })}
-      />
+        confirmLabel={t("listings.recordReview", "Record review")}
+        pending={recordReview.isPending}
+        confirmDisabled={reviewNote.trim().length < 3}
+        onConfirm={() => recordReview.mutate({ id: draft.id, note: reviewNote.trim() })}
+      >
+        <Textarea
+          rows={3}
+          value={reviewNote}
+          onChange={(e) => setReviewNote(e.target.value)}
+          placeholder={t(
+            "listings.trademarkReviewNotePlaceholder",
+            "Why this is acceptable to publish (at least 3 characters)",
+          )}
+        />
+      </ConfirmDialog>
       <ConfirmDialog
         open={rejectOpen}
         onOpenChange={setRejectOpen}

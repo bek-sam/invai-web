@@ -745,7 +745,6 @@ export const en = {
     addBullet: "Add bullet",
     addTag: "Add a tag and press Enter",
     approve: "Approve",
-    approveAnyway: "Approve anyway",
     approved: "Approved",
     brief: "Brief (optional)",
     briefHint: "e.g. funny, for dog moms, desert vibes",
@@ -770,8 +769,6 @@ export const en = {
     exportSelected: "Export {{count}} as CSV",
     generate: "Generate",
     generating: "Drafting {{count}} listings",
-    highRisk: "High trademark risk",
-    highRiskHint: "This listing may conflict with a registered mark. Approve anyway?",
     mockup: "Mockup",
     mockups: "Mockups",
     nErrors: "{{count}} errors",
@@ -784,6 +781,7 @@ export const en = {
     publish: "Publish",
     publishStatusTitle: "Publish status",
     publishing: "Publishing",
+    recordReview: "Record review",
     regenHint: "What should change? e.g. shorter title, more gift-focused",
     regenerate: "Regenerate",
     regenerating: "Regenerating",
@@ -796,6 +794,18 @@ export const en = {
       "AI drafts titles, tags and descriptions per channel. A person approves every listing.",
     tags: "Tags",
     title: "Title",
+    trademarkNoticeHigh:
+      "Trademark risk {{score}}/100: this listing cannot be approved, published or exported until the flagged text is changed.",
+    trademarkNoticeMedium:
+      "Trademark risk {{score}}/100: a recorded compliance review is required before this listing can be approved, published or exported.",
+    trademarkNoticeReviewed:
+      "Trademark risk {{score}}/100: reviewed by compliance, cleared to publish.",
+    trademarkReviewHint:
+      "This listing has a medium trademark risk. A compliance note is required before it can be approved, published or exported.",
+    trademarkReviewNotePlaceholder: "Why this is acceptable to publish (at least 3 characters)",
+    trademarkReviewTitle: "Record a trademark review",
+    trademarkReviewed: "Trademark review recorded",
+    trademarkReviewedOn: "Reviewed",
     updated: "Updated",
     valid: "Valid",
     viewPublished: "View the published listing",
