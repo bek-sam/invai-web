@@ -1,8 +1,50 @@
 /// <reference types="vitest/config" />
+import { createHash } from "node:crypto";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+
+// T-12-5 (B-24): strict CSP, no 'unsafe-inline'. The built app (dist/) never emits an inline
+// <script> or onclick=, so its script-src is plain 'self'. The Vite dev server is the exception:
+// @vitejs/plugin-react injects one fixed inline <script type="module"> (the Fast Refresh
+// preamble), same bytes on every request, so it's allowed by its exact hash instead of a nonce.
+const reactPreambleHash = `'sha256-${createHash("sha256")
+  .update(react.preambleCode.replace("__BASE__", "/"))
+  .digest("base64")}'`;
+const API_ORIGIN = "http://localhost:3000"; // matches src/lib/env.ts's VITE_API_URL default
+const S3_ORIGIN = "http://localhost:9000"; // local MinIO; presigned image URLs (SignedImage)
+
+const securityHeaders = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "no-referrer",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  // Meaningless over plain http, but a browser only obeys it over https anyway, so it's safe to
+  // always send -- and it must match the API's header exactly once TLS terminates in front of us.
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+};
+const devCsp = [
+  "default-src 'self'",
+  `script-src 'self' ${reactPreambleHash}`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${S3_ORIGIN}`,
+  "font-src 'self'",
+  `connect-src 'self' ${API_ORIGIN}`,
+  "object-src 'none'",
+  "base-uri 'none'",
+  "frame-ancestors 'none'",
+].join("; ");
+const prodCsp = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self'",
+  "connect-src 'self' https:",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "frame-ancestors 'none'",
+].join("; ");
 
 export default defineConfig({
   plugins: [tanstackRouter({ target: "react", autoCodeSplitting: true }), react(), tailwindcss()],
@@ -36,6 +78,7 @@ export default defineConfig({
       "zod",
     ],
   },
-  server: { port: 5173 },
+  server: { port: 5173, headers: { "Content-Security-Policy": devCsp, ...securityHeaders } },
+  preview: { headers: { "Content-Security-Policy": prodCsp, ...securityHeaders } },
   test: { environment: "node", include: ["src/**/*.test.ts"] },
 });
