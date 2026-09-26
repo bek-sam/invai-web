@@ -33,6 +33,10 @@ function CompanyPage() {
   const queryClient = useQueryClient();
   const [name, setName] = useState(me.org.name);
   const [tz, setTz] = useState(me.org.timezone);
+  // Etsy Creativity Standards requires production-partner disclosure (production_partner_ids);
+  // a POD/DTF shop needs this set before it can generate or publish an Etsy listing (T-8-1 AC2).
+  const [partnerName, setPartnerName] = useState(me.org.productionPartner?.name ?? "");
+  const [partnerEtsyId, setPartnerEtsyId] = useState(me.org.productionPartner?.etsyPartnerId ?? "");
   const save = useMutation(
     orpc.me.updateOrg.mutationOptions({
       onSuccess: () => {
@@ -91,10 +95,53 @@ function CompanyPage() {
               [t("company.created", "Created"), formatDateTime(me.org.createdAt)],
             ]}
           />
+          {me.org.type === "shop" && (
+            <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+              <Field
+                label={t("company.productionPartner", "Production partner")}
+                htmlFor="c-partner-name"
+                hint={t(
+                  "company.productionPartnerHint",
+                  "Required to publish DTF listings on Etsy (production_partner_ids)",
+                )}
+              >
+                <Input
+                  id="c-partner-name"
+                  value={partnerName}
+                  onChange={(e) => setPartnerName(e.target.value)}
+                  placeholder={t("company.productionPartnerPlaceholder", "e.g. Cactus Print Co")}
+                  disabled={!editable}
+                />
+              </Field>
+              <Field
+                label={t("company.etsyPartnerId", "Etsy partner ID (optional)")}
+                htmlFor="c-partner-etsy-id"
+                hint={t(
+                  "company.etsyPartnerIdHint",
+                  "From getShopProductionPartners once Etsy is connected",
+                )}
+              >
+                <Input
+                  id="c-partner-etsy-id"
+                  value={partnerEtsyId}
+                  onChange={(e) => setPartnerEtsyId(e.target.value)}
+                  disabled={!editable}
+                />
+              </Field>
+            </div>
+          )}
           {editable && (
             <div className="mt-4 flex justify-end">
               <Button
-                onClick={() => save.mutate({ name: name.trim(), timezone: tz })}
+                onClick={() =>
+                  save.mutate({
+                    name: name.trim(),
+                    timezone: tz,
+                    productionPartner: partnerName.trim()
+                      ? { name: partnerName.trim(), etsyPartnerId: partnerEtsyId.trim() || null }
+                      : null,
+                  })
+                }
                 disabled={!name.trim() || save.isPending}
               >
                 {save.isPending && <Loader2 className="animate-spin" />}
