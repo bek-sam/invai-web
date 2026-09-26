@@ -987,6 +987,7 @@
  "flag.artwork_suspicious_chars": "Caracteres raros en el texto",
  "flag.artwork_typo": "Posible error en la personalización",
  "flag.blank_oversold": "Prenda sin existencias",
+ "flag.channel_edit_after_press": "El canal cambió esto después de imprimirlo",
  "flag.manual_review": "Hay que revisarlo",
  "flag.needs_mapping": "Falta mapeo",
  "flag.personalization_missing": "Falta la personalización",

@@ -88,6 +88,10 @@ export function useFlagLabel() {
     address_invalid: t("flag.address_invalid", "Address needs a fix"),
     reprint: t("flag.reprint", "Reprint"),
     manual_review: t("flag.manual_review", "Needs a look"),
+    channel_edit_after_press: t(
+      "flag.channel_edit_after_press",
+      "The channel changed this after it was pressed",
+    ),
   };
   return (code: FlagCode) => labels[code] ?? code;
 }

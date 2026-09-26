@@ -689,6 +689,7 @@ export const es: Messages = {
     artwork_suspicious_chars: "Caracteres raros en el texto",
     artwork_typo: "Posible error en la personalización",
     blank_oversold: "Prenda sin existencias",
+    channel_edit_after_press: "El canal cambió esto después de imprimirlo",
     manual_review: "Hay que revisarlo",
     needs_mapping: "Falta mapeo",
     personalization_missing: "Falta la personalización",

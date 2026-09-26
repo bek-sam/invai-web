@@ -672,6 +672,7 @@ export const en = {
     artwork_suspicious_chars: "Odd characters in the text",
     artwork_typo: "Possible typo in the personalization",
     blank_oversold: "Blank out of stock",
+    channel_edit_after_press: "The channel changed this after it was pressed",
     manual_review: "Needs a look",
     needs_mapping: "Needs mapping",
     personalization_missing: "Personalization missing",
