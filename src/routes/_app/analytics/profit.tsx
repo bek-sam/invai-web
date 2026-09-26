@@ -155,19 +155,18 @@ function ProfitPage() {
     {
       id: "other",
       header: t("profit.other", "Other"),
-      accessorFn: (r) => r.packagingCost + r.laborCost + r.adsCost + r.refunds,
+      accessorFn: (r) => r.packagingCost + r.laborCost + r.adsCost,
       cell: ({ row }) => (
         <Money
-          cents={
-            -(
-              row.original.packagingCost +
-              row.original.laborCost +
-              row.original.adsCost +
-              row.original.refunds
-            )
-          }
+          cents={-(row.original.packagingCost + row.original.laborCost + row.original.adsCost)}
         />
       ),
+    },
+    {
+      // Refunds on their own line, in the period of the refund's date (T-7-2).
+      accessorKey: "refunds",
+      header: t("profit.refunds", "Refunds"),
+      cell: ({ row }) => <Money cents={-row.original.refunds} />,
     },
     {
       accessorKey: "net",
@@ -258,12 +257,13 @@ function ProfitPage() {
           <ErrorState error={q.error} onRetry={() => void q.refetch()} />
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
               {totals
                 ? [
                     [t("profit.revenue", "Revenue"), totals.revenue],
                     [t("profit.costs", "Costs"), -(totals.revenue - totals.net)],
                     [t("profit.channelFees", "Channel fees"), -totals.channelFees],
+                    [t("profit.refunds", "Refunds"), -totals.refunds],
                     [t("profit.netProfit", "Net profit"), totals.net],
                   ].map(([l, v]) => (
                     <Card key={l as string} className="p-4">
@@ -273,7 +273,7 @@ function ProfitPage() {
                       </p>
                     </Card>
                   ))
-                : ["a", "b", "c", "d"].map((k) => <Skeleton key={k} className="h-[88px]" />)}
+                : ["a", "b", "c", "d", "e"].map((k) => <Skeleton key={k} className="h-[88px]" />)}
               {totals ? (
                 <Card className="p-4">
                   <p className="text-sm text-muted-foreground">{t("profit.margin", "Margin")}</p>

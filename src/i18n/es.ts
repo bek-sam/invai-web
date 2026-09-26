@@ -1280,6 +1280,10 @@ export const es: Messages = {
     recompute: "Recalcular",
     recomputeStarted: "La ganancia se está recalculando",
     refunds: "Reembolsos",
+    recordRefund: "Registrar reembolso",
+    refundAmount: "Monto del reembolso",
+    refundDate: "Fecha del reembolso",
+    refundRecorded: "Reembolso registrado",
     reprint: "reimpresión",
     revenue: "Ingresos",
     subtitle:

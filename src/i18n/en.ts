@@ -1258,6 +1258,10 @@ export const en = {
     recompute: "Recompute",
     recomputeStarted: "Profit is being recomputed",
     refunds: "Refunds",
+    recordRefund: "Record refund",
+    refundAmount: "Refund amount",
+    refundDate: "Refund date",
+    refundRecorded: "Refund recorded",
     reprint: "reprint",
     revenue: "Revenue",
     subtitle:

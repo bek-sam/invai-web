@@ -1,9 +1,75 @@
-import { cn, Money } from "@invai/ui";
-import { useQuery } from "@tanstack/react-query";
+import { Button, cn, Input, Money, toast } from "@invai/ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorState, SkeletonRows } from "../../components/states";
-import { formatPct } from "../../lib/format";
+import { formatPct, parseDollarsToCents } from "../../lib/format";
 import { orpc } from "../../lib/rpc";
+
+/**
+ * T-7-2: record a refund made on the channel (CSV channels whose export has no refund column).
+ * It counts on the day entered, not the order's day.
+ */
+function RecordRefund({ orderId }: { orderId: string }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [amount, setAmount] = useState("");
+  const [day, setDay] = useState(() => new Date().toLocaleDateString("en-CA"));
+  const cents = parseDollarsToCents(amount);
+  const m = useMutation(
+    orpc.finance.refunds.record.mutationOptions({
+      onSuccess: () => {
+        toast.success(t("profit.refundRecorded", "Refund recorded"));
+        setAmount("");
+        void qc.invalidateQueries({ queryKey: orpc.finance.key() });
+      },
+      onError: (e) => toast.error(e.message),
+    }),
+  );
+  const submit = () => {
+    if (!cents || cents <= 0) return;
+    // Noon local time on the chosen day, so the refund stays on that day in any time zone view.
+    const refundedAt = new Date(`${day}T12:00:00`).toISOString();
+    m.mutate({ orderId, orderItemId: null, amountCents: cents, refundedAt, note: null });
+  };
+  return (
+    <form
+      className="flex flex-wrap items-end gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+    >
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        {t("profit.refundAmount", "Refund amount")}
+        <Input
+          inputMode="decimal"
+          className="h-8 w-28"
+          placeholder="0.00"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        {t("profit.refundDate", "Refund date")}
+        <Input
+          type="date"
+          className="h-8 w-40"
+          value={day}
+          onChange={(e) => setDay(e.target.value)}
+        />
+      </label>
+      <Button
+        type="submit"
+        size="sm"
+        variant="outline"
+        disabled={!cents || cents <= 0 || m.isPending}
+      >
+        {t("profit.recordRefund", "Record refund")}
+      </Button>
+    </form>
+  );
+}
 
 /** Every cost line for one order, marking which are estimates. */
 export function OrderProfitBreakdown({ orderId }: { orderId: string }) {
@@ -52,6 +118,7 @@ export function OrderProfitBreakdown({ orderId }: { orderId: string }) {
           </tr>
         </tbody>
       </table>
+      <RecordRefund orderId={orderId} />
       {p.feeBreakdown.length > 0 && (
         <div>
           <p className="mb-1 text-xs font-medium text-muted-foreground">
