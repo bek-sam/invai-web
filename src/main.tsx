@@ -16,15 +16,26 @@ declare module "@tanstack/react-query" {
   }
 }
 
+// These codes already open their own dialog (UpgradePromptHost, VerifyEmailBanner) that explains
+// the problem and offers the fix; a second, generic toast would just repeat it.
+const DIALOG_EXPLAINED_CODES = new Set([
+  "PLAN_LIMIT_REACHED",
+  "PAYMENT_REQUIRED",
+  "CREDITS_EXHAUSTED",
+  "EMAIL_NOT_VERIFIED",
+]);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 30_000, retry: shouldRetry, refetchOnWindowFocus: true },
   },
-  // Every failed mutation gets a toast unless it opts out and shows the error inline.
+  // Every failed mutation gets a toast unless it opts out and shows the error inline, or a
+  // dialog already explains it (see DIALOG_EXPLAINED_CODES).
   mutationCache: new MutationCache({
     onError: (error, _vars, _ctx, mutation) => {
       if (mutation.meta?.silent) return;
       const info = errorInfo(error);
+      if (DIALOG_EXPLAINED_CODES.has(info.code)) return;
       toast.error(mutation.meta?.errorTitle ?? info.message, {
         description: mutation.meta?.errorTitle ? info.message : undefined,
       });

@@ -14,12 +14,20 @@ export function errorInfo(err: unknown): ErrorInfo {
     const e = err as { code?: unknown; status?: unknown; message?: unknown; data?: unknown };
     const code = typeof e.code === "string" ? e.code : "UNKNOWN";
     const status = typeof e.status === "number" ? e.status : null;
-    let message = typeof e.message === "string" && e.message ? e.message : "Something went wrong";
+    let message =
+      typeof e.message === "string" && e.message
+        ? e.message
+        : tr("errors.generic", "Something went wrong");
     if (err instanceof TypeError && /fetch|network/i.test(message)) {
-      return { code: "NETWORK", status: null, message: "Can't reach the server", data: null };
+      return {
+        code: "NETWORK",
+        status: null,
+        message: tr("errors.network", "Can't reach the server"),
+        data: null,
+      };
     }
     if (code === "NOT_IMPLEMENTED" || status === 501) {
-      message = "This part of the API isn't available yet";
+      message = tr("errors.notImplemented", "This part of the API isn't available yet");
       return { code: "NOT_IMPLEMENTED", status: 501, message, data: e.data ?? null };
     }
     if (code === "EMAIL_NOT_VERIFIED") {
@@ -38,7 +46,7 @@ export function errorInfo(err: unknown): ErrorInfo {
   return {
     code: "UNKNOWN",
     status: null,
-    message: String(err ?? "Something went wrong"),
+    message: err == null ? tr("errors.generic", "Something went wrong") : String(err),
     data: null,
   };
 }
