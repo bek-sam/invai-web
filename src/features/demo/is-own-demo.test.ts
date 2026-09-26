@@ -24,9 +24,7 @@ describe("sample shop", () => {
     ).toBe(false);
     // demoOwned is the source of truth, not the slug: a shop that happens to be named
     // `demo-c1` but isn't the caller's own sample workspace is not the sample shop.
-    expect(isOwnDemo({ org: org({ demo: false, demoOwned: false, slug: "demo-c1" }) })).toBe(
-      false,
-    );
+    expect(isOwnDemo({ org: org({ demo: false, demoOwned: false, slug: "demo-c1" }) })).toBe(false);
   });
 
   it("offers leaving only when there is another company", () => {
