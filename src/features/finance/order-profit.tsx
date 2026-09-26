@@ -3,73 +3,149 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorState, SkeletonRows } from "../../components/states";
-import { formatPct, parseDollarsToCents } from "../../lib/format";
+import { errorInfo, errorMessage } from "../../lib/errors";
+import { formatDate, formatPct, parseDollarsToCents } from "../../lib/format";
 import { orpc } from "../../lib/rpc";
 
 /**
  * T-7-2: record a refund made on the channel (CSV channels whose export has no refund column).
  * It counts on the day entered, not the order's day.
  */
-function RecordRefund({ orderId }: { orderId: string }) {
+function RecordRefund({ orderId, remainingCents }: { orderId: string; remainingCents: number }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [amount, setAmount] = useState("");
   const [day, setDay] = useState(() => new Date().toLocaleDateString("en-CA"));
   const cents = parseDollarsToCents(amount);
+  const tooMuch = cents !== null && cents > remainingCents;
+  const refundsQ = useQuery(orpc.finance.refunds.list.queryOptions({ input: { orderId } }));
+  const refresh = () => void qc.invalidateQueries({ queryKey: orpc.finance.key() });
+  const failed = (e: unknown) => {
+    const { code, data } = errorInfo(e);
+    if (code === "REFUND_EXCEEDS_ORDER")
+      return toast.error(
+        t("profit.refundTooMuch", "That's more than is left to refund ({{amount}})", {
+          amount: dollars((data as { remainingCents?: number } | null)?.remainingCents ?? 0),
+        }),
+      );
+    if (code === "REFUND_NOT_MANUAL")
+      return toast.error(t("profit.refundNotManual", "Only a refund recorded here can be voided"));
+    if (code === "REFUND_ALREADY_VOIDED")
+      return toast.error(t("profit.refundAlreadyVoided", "This refund is already voided"));
+    toast.error(errorMessage(e));
+  };
   const m = useMutation(
     orpc.finance.refunds.record.mutationOptions({
       onSuccess: () => {
         toast.success(t("profit.refundRecorded", "Refund recorded"));
         setAmount("");
-        void qc.invalidateQueries({ queryKey: orpc.finance.key() });
+        refresh();
       },
-      onError: (e) => toast.error(e.message),
+      onError: failed,
+    }),
+  );
+  const v = useMutation(
+    orpc.finance.refunds.void.mutationOptions({
+      onSuccess: () => {
+        toast.success(t("profit.refundVoided", "Refund voided"));
+        refresh();
+      },
+      onError: failed,
     }),
   );
   const submit = () => {
-    if (!cents || cents <= 0) return;
+    if (!cents || cents <= 0 || tooMuch) return;
     // Noon local time on the chosen day, so the refund stays on that day in any time zone view.
     const refundedAt = new Date(`${day}T12:00:00`).toISOString();
     m.mutate({ orderId, orderItemId: null, amountCents: cents, refundedAt, note: null });
   };
+  const voidOne = (id: string) => {
+    const reason = window.prompt(t("profit.voidReason", "Why void this refund?"))?.trim();
+    if (reason) v.mutate({ id, reason });
+  };
+  const refunds = refundsQ.data?.items ?? [];
   return (
-    <form
-      className="flex flex-wrap items-end gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        submit();
-      }}
-    >
-      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        {t("profit.refundAmount", "Refund amount")}
-        <Input
-          inputMode="decimal"
-          className="h-8 w-28"
-          placeholder="0.00"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        {t("profit.refundDate", "Refund date")}
-        <Input
-          type="date"
-          className="h-8 w-40"
-          value={day}
-          onChange={(e) => setDay(e.target.value)}
-        />
-      </label>
-      <Button
-        type="submit"
-        size="sm"
-        variant="outline"
-        disabled={!cents || cents <= 0 || m.isPending}
+    <div className="flex flex-col gap-2">
+      {refunds.length > 0 && (
+        <ul className="text-xs">
+          {refunds.map((r) => (
+            <li
+              key={r.id}
+              className={cn(
+                "flex items-center justify-between gap-2 py-0.5",
+                r.voidedAt && "text-muted-foreground line-through",
+              )}
+            >
+              <span>
+                {formatDate(r.refundedAt)} · {t(`profit.refundSource.${r.source}`, r.source)}
+                {r.voidedAt && ` · ${t("profit.voided", "voided")}: ${r.voidReason ?? ""}`}
+              </span>
+              <span className="flex items-center gap-2">
+                <Money cents={-r.amountCents} />
+                {r.source === "manual" && !r.voidedAt && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2"
+                    disabled={v.isPending}
+                    onClick={() => voidOne(r.id)}
+                  >
+                    {t("profit.voidRefund", "Void")}
+                  </Button>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form
+        className="flex flex-wrap items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
       >
-        {t("profit.recordRefund", "Record refund")}
-      </Button>
-    </form>
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          {t("profit.refundAmount", "Refund amount")}
+          <Input
+            inputMode="decimal"
+            className="h-8 w-28"
+            placeholder="0.00"
+            value={amount}
+            aria-invalid={tooMuch || undefined}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          {t("profit.refundDate", "Refund date")}
+          <Input
+            type="date"
+            className="h-8 w-40"
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+          />
+        </label>
+        <Button
+          type="submit"
+          size="sm"
+          variant="outline"
+          disabled={!cents || cents <= 0 || tooMuch || m.isPending}
+        >
+          {t("profit.recordRefund", "Record refund")}
+        </Button>
+        <p className={cn("w-full text-xs text-muted-foreground", tooMuch && "text-danger")}>
+          {t("profit.refundLeft", "Left to refund: {{amount}}", {
+            amount: dollars(Math.max(0, remainingCents)),
+          })}
+        </p>
+      </form>
+    </div>
   );
 }
+
+const dollars = (cents: number) =>
+  new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(cents / 100);
 
 /** Every cost line for one order, marking which are estimates. */
 export function OrderProfitBreakdown({ orderId }: { orderId: string }) {
@@ -118,7 +194,8 @@ export function OrderProfitBreakdown({ orderId }: { orderId: string }) {
           </tr>
         </tbody>
       </table>
-      <RecordRefund orderId={orderId} />
+      {/* Left to refund: what the order sold for (before tax) less every refund so far. */}
+      <RecordRefund orderId={orderId} remainingCents={p.revenue - p.refunds} />
       {p.feeBreakdown.length > 0 && (
         <div>
           <p className="mb-1 text-xs font-medium text-muted-foreground">
