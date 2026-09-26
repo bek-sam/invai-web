@@ -107,6 +107,8 @@ export const es: Messages = {
   alerts: {
     kind: {
       ai_credits_low: "Te quedan pocos créditos de IA",
+      ai_spend_cap_platform: "Se alcanzó el límite de gasto de IA de toda la plataforma",
+      ai_spend_cap_tenant: "Se alcanzó el límite diario de gasto de IA",
       artwork_flagged: "El arte necesita revisión",
       items_need_mapping: "Hay artículos sin SKU vinculado",
       order_at_risk: "Pedido en riesgo de enviarse tarde",
@@ -476,7 +478,7 @@ export const es: Messages = {
     },
     lastImport: "última importación",
     mapNow: "Mapearlos ahora",
-    mock: "sandbox",
+    mock: "entorno de prueba",
     needMapping: "{{n}} artículos necesitan mapeo de SKU.",
     none: "Aún no hay canales",
     noneHint: "Conecta Shopify o agrega un marketplace para importar sus exportaciones CSV.",
@@ -665,7 +667,10 @@ export const es: Messages = {
   },
   errors: {
     forbiddenTitle: "Sin acceso",
+    generic: "Algo salió mal",
+    network: "No se pudo conectar con el servidor",
     networkTitle: "Sin conexión",
+    notImplemented: "Esta parte de la API todavía no está disponible",
     notImplementedTitle: "Próximamente",
     pageNotFoundTitle: "Página no encontrada",
     pageNotFoundDescription: "Esta página no existe o se movió.",
@@ -851,7 +856,7 @@ export const es: Messages = {
     company: "Empresa",
     costs: "Costos y comisiones",
     designs: "Diseños",
-    gangSheets: "Gang sheets",
+    gangSheets: "Hojas de prensado",
     inventory: "Inventario",
     listings: "Anuncios",
     inventorySettings: "Ajustes de inventario",

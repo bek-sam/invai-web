@@ -10,6 +10,7 @@ const org = (over: Partial<{ id: string; slug: string; demo: boolean }>) => ({
   plan: "trial" as const,
   demo: false,
   printsInHouse: false,
+  productionPartner: null,
   createdAt: "2026-09-25T00:00:00Z",
   ...over,
 });

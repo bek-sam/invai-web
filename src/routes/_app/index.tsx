@@ -380,6 +380,10 @@ function alertKindLabel(t: TFunction, kind: Alert["kind"]): string {
       return t("alerts.kind.vendor_sheet_received", "New gang sheet from a shop");
     case "qc_fail_spike":
       return t("alerts.kind.qc_fail_spike", "More QC fails than usual");
+    case "ai_spend_cap_tenant":
+      return t("alerts.kind.ai_spend_cap_tenant", "Daily AI spend cap reached");
+    case "ai_spend_cap_platform":
+      return t("alerts.kind.ai_spend_cap_platform", "Platform-wide AI spend cap reached");
   }
 }
 

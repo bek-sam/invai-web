@@ -104,6 +104,8 @@ export const en = {
   alerts: {
     kind: {
       ai_credits_low: "AI credits running low",
+      ai_spend_cap_platform: "Platform-wide AI spend cap reached",
+      ai_spend_cap_tenant: "Daily AI spend cap reached",
       artwork_flagged: "Artwork needs review",
       items_need_mapping: "Items need SKU mapping",
       order_at_risk: "Order at risk of shipping late",
@@ -648,7 +650,10 @@ export const en = {
   },
   errors: {
     forbiddenTitle: "No access",
+    generic: "Something went wrong",
+    network: "Can't reach the server",
     networkTitle: "Offline",
+    notImplemented: "This part of the API isn't available yet",
     notImplementedTitle: "Coming soon",
     pageNotFoundTitle: "Page not found",
     pageNotFoundDescription: "This page doesn't exist or was moved.",
