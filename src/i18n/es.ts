@@ -1507,9 +1507,10 @@ export const es: Messages = {
     exportTracking: "Exportar rastreo de {{channel}}",
     exportWhere: {
       amazon:
-        "Amazon: Seller Central → Orders → Upload Order Related Files → Shipping Confirmation.",
+        "Amazon: en Seller Central → Orders → Upload Order Related Files → Shipping Confirmation, sube este archivo.",
       etsy: "Etsy: Shop Manager → Orders & Shipping → agrega el rastreo a cada pedido, o usa una app de carga masiva basada en la API de rastreo de Etsy con este archivo.",
-      tiktok: "TikTok Shop: Seller Center → Orders → Manage orders → Upload → Add Tracking No.",
+      tiktok:
+        "TikTok Shop: en Seller Center → Orders → Manage orders → Upload → Add Tracking No., sube este archivo.",
       walmart:
         "Walmart: Seller Center → Order Management → Bulk Order Update, y luego sube este archivo.",
     },
