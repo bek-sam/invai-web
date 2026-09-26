@@ -103,6 +103,7 @@ export const en = {
   },
   alerts: {
     kind: {
+      ai_breaker_fail_open: "AI spend check was skipped",
       ai_credits_low: "AI credits running low",
       ai_spend_cap_platform: "Platform-wide AI spend cap reached",
       ai_spend_cap_tenant: "Daily AI spend cap reached",
@@ -110,8 +111,10 @@ export const en = {
       items_need_mapping: "Items need SKU mapping",
       order_at_risk: "Order at risk of shipping late",
       order_overdue: "Order past its ship-by date",
+      outbox_parked: "A background step was set aside",
       plan_limit_reached: "Plan limit reached",
       qc_fail_spike: "More QC fails than usual",
+      queue_failed_spike: "Background work is failing more than usual",
       sheet_stuck: "Gang sheet waiting on the vendor",
       stock_low: "Low stock",
       sync_broken: "Store connection stopped syncing",

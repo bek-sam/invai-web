@@ -384,6 +384,12 @@ function alertKindLabel(t: TFunction, kind: Alert["kind"]): string {
       return t("alerts.kind.ai_spend_cap_tenant", "Daily AI spend cap reached");
     case "ai_spend_cap_platform":
       return t("alerts.kind.ai_spend_cap_platform", "Platform-wide AI spend cap reached");
+    case "queue_failed_spike":
+      return t("alerts.kind.queue_failed_spike", "Background work is failing more than usual");
+    case "outbox_parked":
+      return t("alerts.kind.outbox_parked", "A background step was set aside");
+    case "ai_breaker_fail_open":
+      return t("alerts.kind.ai_breaker_fail_open", "AI spend check was skipped");
   }
 }
 

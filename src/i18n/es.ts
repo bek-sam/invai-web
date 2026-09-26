@@ -106,6 +106,7 @@ export const es: Messages = {
   },
   alerts: {
     kind: {
+      ai_breaker_fail_open: "Se omitió la revisión del gasto de IA",
       ai_credits_low: "Te quedan pocos créditos de IA",
       ai_spend_cap_platform: "Se alcanzó el límite de gasto de IA de toda la plataforma",
       ai_spend_cap_tenant: "Se alcanzó el límite diario de gasto de IA",
@@ -113,8 +114,10 @@ export const es: Messages = {
       items_need_mapping: "Hay artículos sin SKU vinculado",
       order_at_risk: "Pedido en riesgo de enviarse tarde",
       order_overdue: "Pedido con fecha de envío vencida",
+      outbox_parked: "Un paso en segundo plano quedó en pausa",
       plan_limit_reached: "Llegaste al límite de tu plan",
       qc_fail_spike: "Más fallas de control de calidad de lo normal",
+      queue_failed_spike: "Hay más fallas de lo normal en segundo plano",
       sheet_stuck: "Gang sheet esperando al proveedor",
       stock_low: "Poco inventario",
       sync_broken: "La conexión con la tienda dejó de sincronizar",
