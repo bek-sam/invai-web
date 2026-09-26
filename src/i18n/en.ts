@@ -1267,6 +1267,7 @@ export const en = {
     units: "Units",
   },
   pushStatus: {
+    exported_manual: "Tracking uploaded (manual)",
     failed: "Failed",
     not_required: "Not needed",
     pending: "Pending",
@@ -1465,6 +1466,18 @@ export const en = {
     days: "{{n}} days",
     defaults: "Defaults",
     error: "Error",
+    exportChannel: "Channel",
+    exportDone: "{{n}} shipments exported for {{channel}}",
+    exportEmpty: "Nothing new to export for {{channel}}",
+    exportTracking: "Export tracking for {{channel}}",
+    exportWhere: {
+      amazon:
+        "Amazon: Seller Central → Orders → Upload Order Related Files → Shipping Confirmation.",
+      etsy: "Etsy: Shop Manager → Orders & Shipping → add tracking to each order, or use a bulk-upload app built on Etsy's tracking API with this file.",
+      tiktok: "TikTok Shop: Seller Center → Orders → Manage orders → Upload → Add Tracking No.",
+      walmart:
+        "Walmart: Seller Center → Order Management → Bulk Order Update, then upload this file.",
+    },
     fastest: "Fastest",
     fromAddress: "Ship-from address",
     getRates: "Get rates",

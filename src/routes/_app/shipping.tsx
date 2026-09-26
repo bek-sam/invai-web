@@ -1,4 +1,9 @@
-import { BATCH_STRATEGIES, type Shipment, type ShipQueueEntry } from "@invai/contracts";
+import {
+  BATCH_STRATEGIES,
+  CHANNEL_RULES,
+  type Shipment,
+  type ShipQueueEntry,
+} from "@invai/contracts";
 import {
   Badge,
   Button,
@@ -26,7 +31,16 @@ import {
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
-import { AlertTriangle, Loader2, Printer, RotateCw, Settings2, Tag, Zap } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  Loader2,
+  Printer,
+  RotateCw,
+  Settings2,
+  Tag,
+  Zap,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
@@ -42,6 +56,18 @@ import { client, orpc } from "../../lib/rpc";
 import { openInNewTab } from "../../lib/upload";
 
 const TABS = ["queue", "shipments", "tracking", "settings"] as const;
+
+/** The four CSV-only (pendingApproval-adapter) channels `shipping.exportTracking` supports. */
+const EXPORT_CHANNELS = ["etsy", "amazon", "tiktok", "walmart"] as const;
+type ExportChannel = (typeof EXPORT_CHANNELS)[number];
+
+/** Where to upload each marketplace's file, checked against its current seller help docs. */
+const EXPORT_WHERE: Record<ExportChannel, string> = {
+  etsy: "Etsy: Shop Manager → Orders & Shipping → add tracking to each order, or use a bulk-upload app built on Etsy's tracking API with this file.",
+  amazon: "Amazon: Seller Central → Orders → Upload Order Related Files → Shipping Confirmation.",
+  tiktok: "TikTok Shop: Seller Center → Orders → Manage orders → Upload → Add Tracking No.",
+  walmart: "Walmart: Seller Center → Order Management → Bulk Order Update, then upload this file.",
+};
 
 export const Route = createFileRoute("/_app/shipping")({
   validateSearch: z.object({ tab: z.enum(TABS).optional().catch(undefined) }),
@@ -104,6 +130,7 @@ function ShippingPage() {
           <Shipments />
         </TabsContent>
         <TabsContent value="tracking">
+          <ExportTracking />
           <TrackingPush />
         </TabsContent>
         <TabsContent value="settings">
@@ -584,6 +611,16 @@ function Shipments() {
       id: "push",
       header: t("ship.pushed", "Pushed to channel"),
       cell: ({ row }) => {
+        // T-7-1 (B-68): once a CSV-only channel's shipment went into a tracking export, it
+        // reads as "uploaded" regardless of the underlying push status (which is always
+        // `not_required` for these channels -- there's no API to push to).
+        if (row.original.exportedAt) {
+          return (
+            <Badge variant="success" title={formatDate(row.original.exportedAt)}>
+              {t("pushStatus.exported_manual", "Tracking uploaded (manual)")}
+            </Badge>
+          );
+        }
         const p = row.original.trackingPush;
         const tone =
           p.status === "pushed"
@@ -767,6 +804,66 @@ function VoidLabelDialog({
         </p>
       )}
     </ConfirmDialog>
+  );
+}
+
+/** T-7-1 (B-68): download a CSV/TSV of tracking, in the marketplace's own upload format, for
+ * shipments labeled since the channel's last export (or a chosen range). */
+function ExportTracking() {
+  const { t } = useTranslation();
+  const can = useCan();
+  const invalidate = useInvalidateShipping();
+  const [channel, setChannel] = useState<ExportChannel>("etsy");
+  const label = CHANNEL_RULES[channel].label;
+  const exportMutation = useMutation({
+    mutationFn: async () => {
+      const out = await client.shipping.exportTracking({ channel, since: null });
+      if (out.count > 0) {
+        const dl = await client.files.downloadUrl({ fileKey: out.key, disposition: "attachment" });
+        openInNewTab(dl.url);
+      }
+      return out;
+    },
+    onSuccess: (out) => {
+      toast[out.count > 0 ? "success" : "info"](
+        out.count > 0
+          ? t("ship.exportDone", "{{n}} shipments exported for {{channel}}", {
+              n: out.count,
+              channel: label,
+            })
+          : t("ship.exportEmpty", "Nothing new to export for {{channel}}", { channel: label }),
+      );
+      invalidate();
+    },
+  });
+  if (!can("shipping.manage")) return null;
+  return (
+    <div className="mb-3 flex flex-col gap-2 rounded-lg border border-border p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <NativeSelect
+          aria-label={t("ship.exportChannel", "Channel")}
+          value={channel}
+          onChange={(e) => setChannel(e.target.value as ExportChannel)}
+        >
+          {EXPORT_CHANNELS.map((c) => (
+            <option key={c} value={c}>
+              {CHANNEL_RULES[c].label}
+            </option>
+          ))}
+        </NativeSelect>
+        <Button
+          variant="outline"
+          onClick={() => exportMutation.mutate()}
+          disabled={exportMutation.isPending}
+        >
+          {exportMutation.isPending ? <Loader2 className="animate-spin" /> : <Download />}
+          {t("ship.exportTracking", "Export tracking for {{channel}}", { channel: label })}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t(`ship.exportWhere.${channel}`, EXPORT_WHERE[channel])}
+      </p>
+    </div>
   );
 }
 

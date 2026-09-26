@@ -1289,6 +1289,7 @@ export const es: Messages = {
     units: "Unidades",
   },
   pushStatus: {
+    exported_manual: "Rastreo cargado (manual)",
     failed: "Falló",
     not_required: "No requerido",
     pending: "Pendiente",
@@ -1487,6 +1488,18 @@ export const es: Messages = {
     days: "{{n}} días",
     defaults: "Valores predeterminados",
     error: "Error",
+    exportChannel: "Canal",
+    exportDone: "{{n}} envíos exportados para {{channel}}",
+    exportEmpty: "Nada nuevo para exportar de {{channel}}",
+    exportTracking: "Exportar rastreo de {{channel}}",
+    exportWhere: {
+      amazon:
+        "Amazon: Seller Central → Orders → Upload Order Related Files → Shipping Confirmation.",
+      etsy: "Etsy: Shop Manager → Orders & Shipping → agrega el rastreo a cada pedido, o usa una app de carga masiva basada en la API de rastreo de Etsy con este archivo.",
+      tiktok: "TikTok Shop: Seller Center → Orders → Manage orders → Upload → Add Tracking No.",
+      walmart:
+        "Walmart: Seller Center → Order Management → Bulk Order Update, y luego sube este archivo.",
+    },
     fastest: "Más rápido",
     fromAddress: "Dirección de origen",
     getRates: "Obtener tarifas",
