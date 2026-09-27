@@ -30,7 +30,7 @@ const devCsp = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${S3_ORIGIN}`,
   "font-src 'self'",
-  `connect-src 'self' ${DEV_API_ORIGIN}`,
+  `connect-src 'self' ${DEV_API_ORIGIN} ${S3_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'none'",
   "frame-ancestors 'none'",

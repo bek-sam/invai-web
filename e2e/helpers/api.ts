@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Contract } from "@invai/contracts";
+import { CONTRACT_VERSION, CONTRACT_VERSION_HEADER, type Contract } from "@invai/contracts";
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import type { ContractRouterClient } from "@orpc/contract";
@@ -82,11 +82,17 @@ export async function signUpCompany(company: string): Promise<{ session: Session
 }
 
 export function stationSession(token: string): Session {
-  return new Session({ authorization: `Station ${token}` });
+  return new Session({
+    authorization: `Station ${token}`,
+    [CONTRACT_VERSION_HEADER]: CONTRACT_VERSION,
+  });
 }
 
 export function floorSession(sessionToken: string): Session {
-  return new Session({ authorization: `Bearer ${sessionToken}` });
+  return new Session({
+    authorization: `Bearer ${sessionToken}`,
+    [CONTRACT_VERSION_HEADER]: CONTRACT_VERSION,
+  });
 }
 
 export function seedOutput(): {
