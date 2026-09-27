@@ -134,6 +134,9 @@ export const es: Messages = {
     rendered: "Generado",
   },
   assistant: {
+    badge: {
+      sample: "Datos de muestra",
+    },
     credits: "Quedan {{n}} créditos de IA",
     "new": "Nuevo chat",
     placeholder: "Pregunta por ganancias, pedidos, inventario…",
@@ -141,6 +144,9 @@ export const es: Messages = {
     starter: {
       ads: "¿Me está funcionando la publicidad?",
       designs: "¿Qué diseños están subiendo o bajando?",
+      marketPrice: "¿Mi precio en Amazon está bien?",
+      marketSeason: "¿Cuándo debo prepararme para las fiestas?",
+      marketTrend: "¿Cuáles de mis diseños están en tendencia?",
       review: "Dame un resumen semanal del negocio",
       shipping: "¿Estoy enviando a tiempo?",
     },
@@ -155,10 +161,14 @@ export const es: Messages = {
       get_design_insights: "Revisó tendencias de diseño",
       get_fulfillment_health: "Revisó envíos",
       get_listing_performance: "Revisó anuncios",
+      get_market_trend: "Tendencia del mercado",
       get_orders_summary: "Revisó pedidos",
+      get_price_position: "Posición de precio",
       get_production_status: "Revisó producción",
       get_profit: "Revisó ganancias",
+      get_seasonality: "Temporada",
       get_stock: "Revisó inventario",
+      simulate_price: "Simulación de precio",
     },
   },
   audit: {
@@ -837,6 +847,48 @@ export const es: Messages = {
     valid: "Válido",
     viewPublished: "Ver el anuncio publicado",
     writing: "Claude está redactando este borrador…",
+  },
+  market: {
+    action: {
+      r1: "Publica {{design}} en {{channels}} y surte {{blank}} antes de {{peak}}.",
+      r2: "Prueba un precio de {{price}} en {{channel}} por 2 semanas.",
+      r3: "Sube {{design}} a por lo menos {{floor}}, o detén sus anuncios.",
+      r4: "Crea 1 o 2 diseños nuevos para el nicho {{niche}}.",
+      r5: "Pausa los anuncios de {{design}} y bájalo en tu lista.",
+    },
+    band: {
+      high: "Confianza alta",
+      low: "No hay suficientes datos",
+      medium: "Confianza media: pruébalo",
+    },
+    channels: {
+      connected: "tus canales conectados",
+    },
+    niche: {
+      change: "Cambiar",
+      label: "Nicho",
+      labelPlural: "Nichos",
+      none: "Aún sin nicho. Elige uno para ver señales del mercado.",
+      pick: "Elige un nicho",
+      pickerHint: "Elige hasta 2",
+      pickerTitle: "Elige nichos",
+      saveFailed: "No se pudo guardar",
+      saved: "Nichos guardados",
+      search: "Buscar nichos…",
+    },
+    rec: {
+      sample:
+        "Datos de muestra, no tu mercado real: todavía no hay una fuente del mercado conectada.",
+    },
+    stale: {
+      note: "Estos datos son más viejos de lo normal; tómalos con cuidado.",
+    },
+    vote: {
+      done: "Hecho",
+      doneAria: "Marca '{{action}}' como hecho",
+      notUseful: "No me sirve",
+      notUsefulAria: "Marca '{{action}}' como que no sirve",
+    },
   },
   mismatch: {
     already_processed: "Ya procesado",

@@ -131,6 +131,9 @@ export const en = {
     rendered: "Rendered",
   },
   assistant: {
+    badge: {
+      sample: "Sample data",
+    },
     credits: "{{n}} AI credits left",
     "new": "New chat",
     placeholder: "Ask about profit, orders, stock…",
@@ -138,6 +141,9 @@ export const en = {
     starter: {
       ads: "Are my ads paying off?",
       designs: "Which designs are rising or falling?",
+      marketPrice: "Am I priced right on Amazon?",
+      marketSeason: "When should I get ready for the holidays?",
+      marketTrend: "Which of my designs are trending?",
       review: "Give me a weekly business review",
       shipping: "Am I shipping on time?",
     },
@@ -152,10 +158,14 @@ export const en = {
       get_design_insights: "Checked design trends",
       get_fulfillment_health: "Checked shipping",
       get_listing_performance: "Checked listings",
+      get_market_trend: "Market trend",
       get_orders_summary: "Checked orders",
+      get_price_position: "Price position",
       get_production_status: "Checked production",
       get_profit: "Checked profit",
+      get_seasonality: "Seasonality",
       get_stock: "Checked stock",
+      simulate_price: "Price simulation",
     },
   },
   audit: {
@@ -819,6 +829,47 @@ export const en = {
     valid: "Valid",
     viewPublished: "View the published listing",
     writing: "Claude is writing this draft…",
+  },
+  market: {
+    action: {
+      r1: "List {{design}} on {{channels}} and stock {{blank}} before {{peak}}.",
+      r2: "Test a price of {{price}} on {{channel}} for 2 weeks.",
+      r3: "Raise {{design}} to at least {{floor}}, or stop its ads.",
+      r4: "Make 1–2 new designs for the {{niche}} niche.",
+      r5: "Pause ads on {{design}} and move it down your list.",
+    },
+    band: {
+      high: "High confidence",
+      low: "Not enough data",
+      medium: "Medium confidence: test it",
+    },
+    channels: {
+      connected: "your connected channels",
+    },
+    niche: {
+      change: "Change",
+      label: "Niche",
+      labelPlural: "Niches",
+      none: "No niche yet. Pick one to get market signals.",
+      pick: "Pick a niche",
+      pickerHint: "Choose up to 2",
+      pickerTitle: "Pick niches",
+      saveFailed: "Couldn't save",
+      saved: "Niches saved",
+      search: "Search niches…",
+    },
+    rec: {
+      sample: "Sample data, not your real market: no market source is connected yet.",
+    },
+    stale: {
+      note: "This data is older than usual, so treat it with care.",
+    },
+    vote: {
+      done: "Done",
+      doneAria: "Mark '{{action}}' done",
+      notUseful: "Not useful",
+      notUsefulAria: "Mark '{{action}}' not useful",
+    },
   },
   mismatch: {
     already_processed: "Already done",

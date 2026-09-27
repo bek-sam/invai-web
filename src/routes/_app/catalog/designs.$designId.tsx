@@ -15,6 +15,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { QA_TONE } from "../../../components/badges";
+import { NicheChip } from "../../../components/market/niche-chip";
 import { Field, NativeSelect, Section } from "../../../components/page";
 import { SignedImage } from "../../../components/signed-image";
 import { ErrorState, SkeletonRows } from "../../../components/states";
@@ -255,6 +256,7 @@ function DesignEditor({ design }: { design: Design | null }) {
           </div>
         )}
       </div>
+      {design && <NicheChip designId={design.id} canManage={can("market.niches.manage")} />}
       <Section title={t("designs.details", "Details")}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field

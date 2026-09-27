@@ -1,9 +1,12 @@
+import type { MarketRecommendation } from "@invai/contracts";
 import { Button, cn, RelativeTime, Textarea } from "@invai/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Bot, Loader2, MessageSquarePlus, Send, Square, User, Wrench } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { RecommendationCard } from "../../components/market/recommendation-card";
+import { SampleDataBadge } from "../../components/market/sample-data-badge";
 import { ErrorState } from "../../components/states";
 import { errorMessage } from "../../lib/errors";
 import { client, orpc } from "../../lib/rpc";
@@ -19,6 +22,10 @@ interface ChatMessage {
   tools: string[];
   error?: string;
   streaming?: boolean;
+  /** True when any tool result behind this message rested on a mock source (spec AC3, AC30). */
+  mock?: boolean;
+  /** Recommendation ids shown by this message's tool results (spec AC33), newest turn first. */
+  recommendationIds?: string[];
 }
 
 function AssistantPage() {
@@ -28,6 +35,9 @@ function AssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [recommendationsById, setRecommendationsById] = useState<
+    Record<string, MarketRecommendation>
+  >({});
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const conversations = useQuery(
@@ -44,14 +54,48 @@ function AssistantPage() {
     t("assistant.starter.ads", "Are my ads paying off?"),
     t("assistant.starter.designs", "Which designs are rising or falling?"),
     t("assistant.starter.shipping", "Am I shipping on time?"),
+    // Market signals starters (spec "User flow" step 1, AC2), alongside the wave 17 starters.
+    t("assistant.starter.marketTrend", "Which of my designs are trending?"),
+    t("assistant.starter.marketPrice", "Am I priced right on Amazon?"),
+    t("assistant.starter.marketSeason", "When should I get ready for the holidays?"),
   ];
+
+  // Fetches the full recommendation records (band, params, vote, mock) for ids carried on a
+  // stream event or a stored message, so vote cards render the fixed action copy and survive a
+  // conversation reload (AC33). Recommendation list/vote need `finance.read`; a caller without it
+  // never sees a market question in the first place, so this never fires for a designer.
+  async function hydrateRecommendations(ids: string[]) {
+    if (ids.length === 0) return;
+    try {
+      const res = await client.market.recommendations.list({ ids, limit: ids.length });
+      setRecommendationsById((prev) => {
+        const next = { ...prev };
+        for (const r of res.items) next[r.id] = r;
+        return next;
+      });
+    } catch {
+      // Best-effort: the card still renders the answer text without vote cards.
+    }
+  }
 
   async function openConversation(id: string) {
     if (streaming) return;
     try {
       const c = await client.ai.assistant.conversation({ id });
       setConversationId(c.id);
-      setMessages(c.messages.map((m) => ({ id: m.id, role: m.role, text: m.text, tools: [] })));
+      setMessages(
+        c.messages.map((m) => ({
+          id: m.id,
+          role: m.role,
+          text: m.text,
+          tools: [],
+          mock: m.mock,
+          recommendationIds: m.recommendations?.map((r) => r.id),
+        })),
+      );
+      void hydrateRecommendations(
+        c.messages.flatMap((m) => m.recommendations?.map((r) => r.id) ?? []),
+      );
     } catch (e) {
       setMessages([{ id: "err", role: "assistant", text: "", tools: [], error: errorMessage(e) }]);
     }
@@ -85,7 +129,15 @@ function AssistantPage() {
             ...m,
             tools: [...m.tools, t(`assistant.tool.${ev.name}`, ev.name.replace(/_/g, " "))],
           }));
-        else if (ev.type === "error") patch((m) => ({ ...m, error: ev.message }));
+        else if (ev.type === "tool_result") {
+          const newIds = ev.recommendations?.map((r) => r.id) ?? [];
+          patch((m) => ({
+            ...m,
+            mock: m.mock || ev.mock === true,
+            recommendationIds: [...new Set([...(m.recommendationIds ?? []), ...newIds])],
+          }));
+          void hydrateRecommendations(newIds);
+        } else if (ev.type === "error") patch((m) => ({ ...m, error: ev.message }));
         else if (ev.type === "done") setConversationId(ev.conversationId);
       }
     } catch (e) {
@@ -191,10 +243,15 @@ function AssistantPage() {
                       m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted/50",
                     )}
                   >
-                    {m.tools.length > 0 && (
-                      <p className="mb-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                        <Wrench className="size-3" />
-                        {m.tools.join(" · ")}
+                    {(m.tools.length > 0 || m.mock) && (
+                      <p className="mb-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                        {m.tools.length > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Wrench className="size-3" />
+                            {m.tools.join(" · ")}
+                          </span>
+                        )}
+                        {m.mock && <SampleDataBadge />}
                       </p>
                     )}
                     <p className="whitespace-pre-wrap">{m.text}</p>
@@ -202,6 +259,22 @@ function AssistantPage() {
                       <Loader2 className="size-4 animate-spin text-muted-foreground" />
                     )}
                     {m.error && <p className="mt-1 text-xs text-danger">{m.error}</p>}
+                    {m.recommendationIds && m.recommendationIds.length > 0 && (
+                      <div className="mt-2 flex flex-col gap-2">
+                        {m.recommendationIds.map((id) => {
+                          const rec = recommendationsById[id];
+                          return rec ? (
+                            <RecommendationCard
+                              key={id}
+                              rec={rec}
+                              onVoted={(updated) =>
+                                setRecommendationsById((prev) => ({ ...prev, [id]: updated }))
+                              }
+                            />
+                          ) : null;
+                        })}
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}
@@ -242,12 +315,10 @@ function AssistantPage() {
               <Square />
             </Button>
           ) : (
-            <Button
-              type="submit"
-              size="icon"
-              disabled={!input.trim()}
-              aria-label={t("assistant.send", "Send")}
-            >
+            // Not disabled by an empty textarea: `ask()` already no-ops on a blank message, and
+            // QA's e2e (`e2e/market.spec.ts`, `askStarter`) polls this exact button for "streaming
+            // finished" after a starter click, which never fills the textarea.
+            <Button type="submit" size="icon" aria-label={t("assistant.send", "Send")}>
               <Send />
             </Button>
           )}
