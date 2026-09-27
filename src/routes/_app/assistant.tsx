@@ -39,12 +39,11 @@ function AssistantPage() {
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, []);
 
-  const suggestions = [
-    t("assistant.q1", "What was my TikTok margin this week?"),
-    t("assistant.q2", "Which designs made the most profit last month?"),
-    t("assistant.q3", "Which blanks will run out in the next 7 days?"),
-    t("assistant.q4", "How many orders are at risk of shipping late?"),
-    t("assistant.q5", "Compare Etsy and Amazon late-shipment rates."),
+  const starters = [
+    t("assistant.starter.review", "Give me a weekly business review"),
+    t("assistant.starter.ads", "Are my ads paying off?"),
+    t("assistant.starter.designs", "Which designs are rising or falling?"),
+    t("assistant.starter.shipping", "Am I shipping on time?"),
   ];
 
   async function openConversation(id: string) {
@@ -159,7 +158,7 @@ function AssistantPage() {
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-2">
-                {suggestions.map((s) => (
+                {starters.map((s) => (
                   <button
                     key={s}
                     type="button"
