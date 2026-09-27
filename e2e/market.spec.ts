@@ -26,18 +26,57 @@ const STARTERS_EN = [
 const main = (page: Page) => page.locator("main");
 const doneButtons = (scope: Locator) => scope.getByRole("button", { name: /done$/i });
 const notUsefulButtons = (scope: Locator) => scope.getByRole("button", { name: /not useful$/i });
+// The page nests two `<aside>`s: the app's own left nav, and (inside /assistant) the
+// conversation-history sidebar, whose sibling is the actual chat pane the starter pills live in
+// (`page.locator("aside ~ div")` matches both asides' following siblings; the chat pane is the
+// second/last one, not the first, which is the whole-app wrapper that still *contains* the
+// sidebar as a descendant). Once a conversation with the same title exists, the sidebar grows a
+// history button with the same text ("… 1 second ago"), so an unscoped or non-exact locator for a
+// starter's text can match both and throw a strict-mode violation. Scope to the true chat pane
+// (excludes the sidebar entirely) and match the pill's text exactly.
+const chatPane = (page: Page) => page.locator("aside ~ div").last();
+const starterButton = (page: Page, text: string) =>
+  chatPane(page).getByRole("button", { name: text, exact: true });
 
 /** Sends a question and waits for the stream to finish (Send re-enabled, no spinner). */
 async function askStarter(page: Page, text: string) {
-  await page.getByRole("button", { name: text }).click();
+  await starterButton(page, text).click();
   await expect(main(page)).toContainText(text);
   await expect.poll(() => page.locator("main .animate-spin").count(), { timeout: 45_000 }).toBe(0);
   await expect(page.getByRole("button", { name: /^(Send|Enviar)$/ })).toBeEnabled();
 }
 
-/** Asks the starters in turn until an answer carries vote cards; the seed must yield at least one. */
-async function firstAnswerWithVotes(page: Page): Promise<string> {
-  for (const s of STARTERS_EN) {
+// On the Desert Bloom seed, only the seasonality/holidays starter reliably yields
+// recommendations (B-130: the other two lack enough history). Trying it first, instead of
+// looping through the starters that are known to come up empty, matters beyond speed: every
+// `ai.assistant.ask` (plus the sidebar's own conversation-list refresh after it) spends one
+// token from the per-company `ai` rate-limit bucket (20/min, `RATE_BUCKET_LIMITS.ai` in
+// invai-backend/src/lib/ratelimit.ts) that `ai.credits.balance`/`ai.assistant.conversations`
+// reads share too (`bucketFor` in `src/api/orpc.ts` sends every `ai.*` path there, cheap reads
+// included). Two tests each looping through all 3 starters was enough real, legitimate traffic
+// to trip that limiter mid-suite (reproduced: the sidebar's conversation list failed with
+// "Too many requests" right after a reload, confirmed via the API log's 6
+// `assistant answer check` lines for what should have needed at most 2). Filed to
+// backend-foundation/architect (filed via this wave's QA review; reads under `ai.*` should not
+// share the small `ai` bucket with actual model calls). Until then, this keeps the suite's own
+// footprint small.
+const VOTE_STARTER = STARTERS_EN[2] ?? "";
+
+/**
+ * Asks `candidates` in turn until an answer carries vote cards, trying the known-vote starter
+ * first (see above) and falling back through the rest so a future seed change still passes.
+ * The starter pills only exist in the empty state (no messages yet), so a starter already asked
+ * in the still-open conversation can't be asked again through this helper -- pass the remaining
+ * candidates (excluding it) when the caller already asked and checked the first one itself.
+ */
+async function firstAnswerWithVotes(
+  page: Page,
+  candidates: string[] = STARTERS_EN,
+): Promise<string> {
+  const ordered = candidates.includes(VOTE_STARTER)
+    ? [VOTE_STARTER, ...candidates.filter((s) => s !== VOTE_STARTER)]
+    : candidates;
+  for (const s of ordered) {
     await askStarter(page, s);
     if ((await notUsefulButtons(main(page)).count()) > 0) return s;
     await page.getByRole("button", { name: /^(New chat|Chat nuevo)$/ }).click();
@@ -66,7 +105,14 @@ test("market chips, the Sample data badge and vote cards render from the stream 
   await expect(m).toContainText(
     /(Google Trends|Pinterest|Census|Jungle Scout)[^.\n]{0,80}\d{4}-\d{2}-\d{2}/,
   );
-  const asked = await firstAnswerWithVotes(page);
+  // The starter above already sent one message; check its own votes before asking again (the
+  // starter pill it used no longer exists once a conversation has a first message, so
+  // `firstAnswerWithVotes` can only search the *other* starters from here).
+  let asked = STARTERS_EN[0] ?? "";
+  if ((await notUsefulButtons(m).count()) === 0) {
+    await page.getByRole("button", { name: /^(New chat|Chat nuevo)$/ }).click();
+    asked = await firstAnswerWithVotes(page, STARTERS_EN.slice(1));
+  }
   const done = doneButtons(m);
   const no = notUsefulButtons(m);
   expect(await done.count(), asked).toBeGreaterThan(0);
@@ -131,15 +177,16 @@ test("in Spanish the starter, chips, badge and vote buttons are Spanish (AC15)",
   const issues = watchPage(page);
   await page.goto("/assistant");
   await settled(page);
+  // Check another starter's Spanish label before sending the first message: the empty-state
+  // pills (where this button lives) are replaced by the chat history once a message is sent
+  // (`askStarter`'s docstring above), so this has to run first, not after.
+  await expect(starterButton(page, "¿Mi precio en Amazon está bien?")).toHaveCount(1);
   await askStarter(page, "¿Cuáles de mis diseños están en tendencia?");
   const m = main(page);
   await expect(m.getByText("Tendencia del mercado").first()).toBeVisible();
   await expect(m.getByText("Datos de muestra").first()).toBeVisible();
   await expect(m).not.toContainText("Sample data");
   await expect(m).not.toContainText("Market trend");
-  await expect(page.getByRole("button", { name: "¿Mi precio en Amazon está bien?" })).toHaveCount(
-    1,
-  );
   const es = m.getByRole("button", { name: /(hecho|no me sirve)$/i });
   const en = m.getByRole("button", { name: /(done|not useful)$/i });
   expect(await en.count()).toBe(0);
@@ -164,10 +211,22 @@ test("the design page shows the niche chip with 0, 1 and 2 niches; one picker ed
   const m = main(page);
   const chip = m.getByText(/^(Niche: |Niches: |No niche yet\.)/).first();
   await expect(chip).toBeVisible();
+  // Whatever this design already carries (the nightly jobs may have classified it), the chip
+  // reflects it correctly.
   if (original.niches.length === 0)
     await expect(chip).toContainText("No niche yet. Pick one to get market signals.");
   if (original.niches.length === 1) await expect(chip).toContainText(/^Niche: /);
   if (original.niches.length === 2) await expect(chip).toContainText(/^Niches: .+, .+/);
+
+  // Start the deterministic "pick two, refuse a third" part from a known state (0 niches),
+  // regardless of what this design already carries, so the exact-2 assertions below don't
+  // depend on the seed or the nightly classifier having already used one of the two slots.
+  if (original.niches.length > 0) {
+    await api.api.market.niches.set({ designId, niches: [] });
+    await page.reload();
+    await settled(page);
+  }
+  await expect(chip).toContainText("No niche yet. Pick one to get market signals.");
 
   const change = m.getByRole("button", { name: /^(Change|Pick a niche)$/ });
   await change.click();
