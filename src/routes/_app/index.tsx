@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AnyLink } from "../../components/any-link";
+import { DigestTodayCard } from "../../components/digest/today-card";
 import { Page, Section } from "../../components/page";
 import { ErrorState, SkeletonRows } from "../../components/states";
 import { isOwnDemo } from "../../features/demo/is-own-demo";
@@ -52,6 +53,7 @@ function TodayPage() {
     >
       <div className="flex flex-col gap-4">
         {me.onboarding && <OnboardingChecklist checklist={me.onboarding} isDemo={isOwnDemo(me)} />}
+        {can("finance.read") && <DigestTodayCard />}
         {summary.isError ? (
           <ErrorState error={summary.error} onRetry={() => void summary.refetch()} />
         ) : (

@@ -70,6 +70,8 @@ export function keysForEvent(name: string): QueryKey[] {
       return [orpc.today.key()];
     case "vendor.sheet_received":
       return [orpc.vendorPortal.key()];
+    case "digest.ready":
+      return [orpc.digest.key(), orpc.today.key()];
     default:
       return [];
   }

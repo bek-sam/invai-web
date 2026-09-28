@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { DigestEmailToggleSection } from "../../components/digest/email-toggle-section";
 import { Page } from "../../components/page";
 import { ErrorState, SkeletonRows } from "../../components/states";
 import { PasswordSection } from "../../features/account/password-section";
@@ -28,6 +29,7 @@ function AccountPage() {
       ) : (
         <div className="flex flex-col gap-4">
           <ProfileSection user={auth.session.user} />
+          <DigestEmailToggleSection />
           <PasswordSection email={auth.session.user.email} />
           <TwoFactorSection user={auth.session.user} />
           <SessionsSection currentToken={auth.session.session.token} />

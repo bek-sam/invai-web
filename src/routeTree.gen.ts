@@ -14,6 +14,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAccountRouteImport } from './routes/_app/account'
@@ -25,6 +26,8 @@ import { Route as AppAnalyticsProfitRouteImport } from './routes/_app/analytics/
 import { Route as AppCatalogBlanksRouteImport } from './routes/_app/catalog/blanks'
 import { Route as AppCatalogProductsRouteImport } from './routes/_app/catalog/products'
 import { Route as AppCatalogSkuMappingRouteImport } from './routes/_app/catalog/sku-mapping'
+import { Route as AppDigestsIndexRouteImport } from './routes/_app/digests/index'
+import { Route as AppDigestsWeekKeyRouteImport } from './routes/_app/digests/$weekKey'
 import { Route as AppInventoryStockRouteImport } from './routes/_app/inventory/stock'
 import { Route as AppListingsTrademarkRouteImport } from './routes/_app/listings/trademark'
 import { Route as AppOrdersIndexRouteImport } from './routes/_app/orders/index'
@@ -38,6 +41,7 @@ import { Route as AppSettingsChannelsRouteImport } from './routes/_app/settings/
 import { Route as AppSettingsCompanyRouteImport } from './routes/_app/settings/company'
 import { Route as AppSettingsCostsRouteImport } from './routes/_app/settings/costs'
 import { Route as AppSettingsInventoryRouteImport } from './routes/_app/settings/inventory'
+import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings/notifications'
 import { Route as AppSettingsShippingRouteImport } from './routes/_app/settings/shipping'
 import { Route as AppSettingsStationsRouteImport } from './routes/_app/settings/stations'
 import { Route as AppSettingsTeamRouteImport } from './routes/_app/settings/team'
@@ -78,6 +82,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -134,6 +143,16 @@ const AppCatalogProductsRoute = AppCatalogProductsRouteImport.update({
 const AppCatalogSkuMappingRoute = AppCatalogSkuMappingRouteImport.update({
   id: '/catalog/sku-mapping',
   path: '/catalog/sku-mapping',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDigestsIndexRoute = AppDigestsIndexRouteImport.update({
+  id: '/digests/',
+  path: '/digests/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDigestsWeekKeyRoute = AppDigestsWeekKeyRouteImport.update({
+  id: '/digests/$weekKey',
+  path: '/digests/$weekKey',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInventoryStockRoute = AppInventoryStockRouteImport.update({
@@ -201,6 +220,12 @@ const AppSettingsInventoryRoute = AppSettingsInventoryRouteImport.update({
   path: '/settings/inventory',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsNotificationsRoute =
+  AppSettingsNotificationsRouteImport.update({
+    id: '/settings/notifications',
+    path: '/settings/notifications',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSettingsShippingRoute = AppSettingsShippingRouteImport.update({
   id: '/settings/shipping',
   path: '/settings/shipping',
@@ -301,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AppAccountRoute
   '/assistant': typeof AppAssistantRoute
@@ -311,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/catalog/blanks': typeof AppCatalogBlanksRoute
   '/catalog/products': typeof AppCatalogProductsRoute
   '/catalog/sku-mapping': typeof AppCatalogSkuMappingRoute
+  '/digests/$weekKey': typeof AppDigestsWeekKeyRoute
   '/inventory/stock': typeof AppInventoryStockRoute
   '/listings/trademark': typeof AppListingsTrademarkRoute
   '/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -323,11 +350,13 @@ export interface FileRoutesByFullPath {
   '/settings/company': typeof AppSettingsCompanyRoute
   '/settings/costs': typeof AppSettingsCostsRoute
   '/settings/inventory': typeof AppSettingsInventoryRoute
+  '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/shipping': typeof AppSettingsShippingRoute
   '/settings/stations': typeof AppSettingsStationsRoute
   '/settings/team': typeof AppSettingsTeamRoute
   '/settings/vendors': typeof AppSettingsVendorsRoute
   '/vendor/shops': typeof AppVendorShopsRoute
+  '/digests/': typeof AppDigestsIndexRoute
   '/orders/': typeof AppOrdersIndexRoute
   '/vendor/': typeof AppVendorIndexRoute
   '/catalog/designs/$designId': typeof AppCatalogDesignsDesignIdRoute
@@ -347,6 +376,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AppAccountRoute
   '/assistant': typeof AppAssistantRoute
@@ -358,6 +388,7 @@ export interface FileRoutesByTo {
   '/catalog/blanks': typeof AppCatalogBlanksRoute
   '/catalog/products': typeof AppCatalogProductsRoute
   '/catalog/sku-mapping': typeof AppCatalogSkuMappingRoute
+  '/digests/$weekKey': typeof AppDigestsWeekKeyRoute
   '/inventory/stock': typeof AppInventoryStockRoute
   '/listings/trademark': typeof AppListingsTrademarkRoute
   '/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -370,11 +401,13 @@ export interface FileRoutesByTo {
   '/settings/company': typeof AppSettingsCompanyRoute
   '/settings/costs': typeof AppSettingsCostsRoute
   '/settings/inventory': typeof AppSettingsInventoryRoute
+  '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/shipping': typeof AppSettingsShippingRoute
   '/settings/stations': typeof AppSettingsStationsRoute
   '/settings/team': typeof AppSettingsTeamRoute
   '/settings/vendors': typeof AppSettingsVendorsRoute
   '/vendor/shops': typeof AppVendorShopsRoute
+  '/digests': typeof AppDigestsIndexRoute
   '/orders': typeof AppOrdersIndexRoute
   '/vendor': typeof AppVendorIndexRoute
   '/catalog/designs/$designId': typeof AppCatalogDesignsDesignIdRoute
@@ -396,6 +429,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_app/account': typeof AppAccountRoute
   '/_app/assistant': typeof AppAssistantRoute
@@ -407,6 +441,7 @@ export interface FileRoutesById {
   '/_app/catalog/blanks': typeof AppCatalogBlanksRoute
   '/_app/catalog/products': typeof AppCatalogProductsRoute
   '/_app/catalog/sku-mapping': typeof AppCatalogSkuMappingRoute
+  '/_app/digests/$weekKey': typeof AppDigestsWeekKeyRoute
   '/_app/inventory/stock': typeof AppInventoryStockRoute
   '/_app/listings/trademark': typeof AppListingsTrademarkRoute
   '/_app/orders/$orderId': typeof AppOrdersOrderIdRoute
@@ -419,11 +454,13 @@ export interface FileRoutesById {
   '/_app/settings/company': typeof AppSettingsCompanyRoute
   '/_app/settings/costs': typeof AppSettingsCostsRoute
   '/_app/settings/inventory': typeof AppSettingsInventoryRoute
+  '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
   '/_app/settings/shipping': typeof AppSettingsShippingRoute
   '/_app/settings/stations': typeof AppSettingsStationsRoute
   '/_app/settings/team': typeof AppSettingsTeamRoute
   '/_app/settings/vendors': typeof AppSettingsVendorsRoute
   '/_app/vendor/shops': typeof AppVendorShopsRoute
+  '/_app/digests/': typeof AppDigestsIndexRoute
   '/_app/orders/': typeof AppOrdersIndexRoute
   '/_app/vendor/': typeof AppVendorIndexRoute
   '/_app/catalog/designs/$designId': typeof AppCatalogDesignsDesignIdRoute
@@ -446,6 +483,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/verify-email'
     | '/account'
     | '/assistant'
@@ -456,6 +494,7 @@ export interface FileRouteTypes {
     | '/catalog/blanks'
     | '/catalog/products'
     | '/catalog/sku-mapping'
+    | '/digests/$weekKey'
     | '/inventory/stock'
     | '/listings/trademark'
     | '/orders/$orderId'
@@ -468,11 +507,13 @@ export interface FileRouteTypes {
     | '/settings/company'
     | '/settings/costs'
     | '/settings/inventory'
+    | '/settings/notifications'
     | '/settings/shipping'
     | '/settings/stations'
     | '/settings/team'
     | '/settings/vendors'
     | '/vendor/shops'
+    | '/digests/'
     | '/orders/'
     | '/vendor/'
     | '/catalog/designs/$designId'
@@ -492,6 +533,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/verify-email'
     | '/account'
     | '/assistant'
@@ -503,6 +545,7 @@ export interface FileRouteTypes {
     | '/catalog/blanks'
     | '/catalog/products'
     | '/catalog/sku-mapping'
+    | '/digests/$weekKey'
     | '/inventory/stock'
     | '/listings/trademark'
     | '/orders/$orderId'
@@ -515,11 +558,13 @@ export interface FileRouteTypes {
     | '/settings/company'
     | '/settings/costs'
     | '/settings/inventory'
+    | '/settings/notifications'
     | '/settings/shipping'
     | '/settings/stations'
     | '/settings/team'
     | '/settings/vendors'
     | '/vendor/shops'
+    | '/digests'
     | '/orders'
     | '/vendor'
     | '/catalog/designs/$designId'
@@ -540,6 +585,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/verify-email'
     | '/_app/account'
     | '/_app/assistant'
@@ -551,6 +597,7 @@ export interface FileRouteTypes {
     | '/_app/catalog/blanks'
     | '/_app/catalog/products'
     | '/_app/catalog/sku-mapping'
+    | '/_app/digests/$weekKey'
     | '/_app/inventory/stock'
     | '/_app/listings/trademark'
     | '/_app/orders/$orderId'
@@ -563,11 +610,13 @@ export interface FileRouteTypes {
     | '/_app/settings/company'
     | '/_app/settings/costs'
     | '/_app/settings/inventory'
+    | '/_app/settings/notifications'
     | '/_app/settings/shipping'
     | '/_app/settings/stations'
     | '/_app/settings/team'
     | '/_app/settings/vendors'
     | '/_app/vendor/shops'
+    | '/_app/digests/'
     | '/_app/orders/'
     | '/_app/vendor/'
     | '/_app/catalog/designs/$designId'
@@ -589,6 +638,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   AcceptInviteInvitationIdRoute: typeof AcceptInviteInvitationIdRoute
 }
@@ -628,6 +678,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify-email': {
@@ -705,6 +762,20 @@ declare module '@tanstack/react-router' {
       path: '/catalog/sku-mapping'
       fullPath: '/catalog/sku-mapping'
       preLoaderRoute: typeof AppCatalogSkuMappingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/digests/': {
+      id: '/_app/digests/'
+      path: '/digests'
+      fullPath: '/digests/'
+      preLoaderRoute: typeof AppDigestsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/digests/$weekKey': {
+      id: '/_app/digests/$weekKey'
+      path: '/digests/$weekKey'
+      fullPath: '/digests/$weekKey'
+      preLoaderRoute: typeof AppDigestsWeekKeyRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/inventory/stock': {
@@ -796,6 +867,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/inventory'
       fullPath: '/settings/inventory'
       preLoaderRoute: typeof AppSettingsInventoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/notifications': {
+      id: '/_app/settings/notifications'
+      path: '/settings/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AppSettingsNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/shipping': {
@@ -930,6 +1008,7 @@ interface AppRouteChildren {
   AppCatalogBlanksRoute: typeof AppCatalogBlanksRoute
   AppCatalogProductsRoute: typeof AppCatalogProductsRoute
   AppCatalogSkuMappingRoute: typeof AppCatalogSkuMappingRoute
+  AppDigestsWeekKeyRoute: typeof AppDigestsWeekKeyRoute
   AppInventoryStockRoute: typeof AppInventoryStockRoute
   AppListingsTrademarkRoute: typeof AppListingsTrademarkRoute
   AppOrdersOrderIdRoute: typeof AppOrdersOrderIdRoute
@@ -942,11 +1021,13 @@ interface AppRouteChildren {
   AppSettingsCompanyRoute: typeof AppSettingsCompanyRoute
   AppSettingsCostsRoute: typeof AppSettingsCostsRoute
   AppSettingsInventoryRoute: typeof AppSettingsInventoryRoute
+  AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
   AppSettingsShippingRoute: typeof AppSettingsShippingRoute
   AppSettingsStationsRoute: typeof AppSettingsStationsRoute
   AppSettingsTeamRoute: typeof AppSettingsTeamRoute
   AppSettingsVendorsRoute: typeof AppSettingsVendorsRoute
   AppVendorShopsRoute: typeof AppVendorShopsRoute
+  AppDigestsIndexRoute: typeof AppDigestsIndexRoute
   AppOrdersIndexRoute: typeof AppOrdersIndexRoute
   AppVendorIndexRoute: typeof AppVendorIndexRoute
   AppCatalogDesignsDesignIdRoute: typeof AppCatalogDesignsDesignIdRoute
@@ -972,6 +1053,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCatalogBlanksRoute: AppCatalogBlanksRoute,
   AppCatalogProductsRoute: AppCatalogProductsRoute,
   AppCatalogSkuMappingRoute: AppCatalogSkuMappingRoute,
+  AppDigestsWeekKeyRoute: AppDigestsWeekKeyRoute,
   AppInventoryStockRoute: AppInventoryStockRoute,
   AppListingsTrademarkRoute: AppListingsTrademarkRoute,
   AppOrdersOrderIdRoute: AppOrdersOrderIdRoute,
@@ -984,11 +1066,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsCompanyRoute: AppSettingsCompanyRoute,
   AppSettingsCostsRoute: AppSettingsCostsRoute,
   AppSettingsInventoryRoute: AppSettingsInventoryRoute,
+  AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
   AppSettingsShippingRoute: AppSettingsShippingRoute,
   AppSettingsStationsRoute: AppSettingsStationsRoute,
   AppSettingsTeamRoute: AppSettingsTeamRoute,
   AppSettingsVendorsRoute: AppSettingsVendorsRoute,
   AppVendorShopsRoute: AppVendorShopsRoute,
+  AppDigestsIndexRoute: AppDigestsIndexRoute,
   AppOrdersIndexRoute: AppOrdersIndexRoute,
   AppVendorIndexRoute: AppVendorIndexRoute,
   AppCatalogDesignsDesignIdRoute: AppCatalogDesignsDesignIdRoute,
@@ -1013,6 +1097,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   AcceptInviteInvitationIdRoute: AcceptInviteInvitationIdRoute,
 }
