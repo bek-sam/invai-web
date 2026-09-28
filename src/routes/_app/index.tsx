@@ -390,6 +390,8 @@ function alertKindLabel(t: TFunction, kind: Alert["kind"]): string {
       return t("alerts.kind.outbox_parked", "A background step was set aside");
     case "ai_breaker_fail_open":
       return t("alerts.kind.ai_breaker_fail_open", "AI spend check was skipped");
+    case "ai_summary_breaker":
+      return t("alerts.kind.ai_summary_breaker", "AI weekly summaries paused");
   }
 }
 

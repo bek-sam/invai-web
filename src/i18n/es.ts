@@ -110,6 +110,7 @@ export const es: Messages = {
       ai_credits_low: "Te quedan pocos créditos de IA",
       ai_spend_cap_platform: "Se alcanzó el límite de gasto de IA de toda la plataforma",
       ai_spend_cap_tenant: "Se alcanzó el límite diario de gasto de IA",
+      ai_summary_breaker: "Se pausaron los resúmenes semanales con IA",
       artwork_flagged: "El arte necesita revisión",
       items_need_mapping: "Hay artículos sin SKU vinculado",
       order_at_risk: "Pedido en riesgo de enviarse tarde",

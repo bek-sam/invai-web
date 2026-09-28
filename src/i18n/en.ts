@@ -107,6 +107,7 @@ export const en = {
       ai_credits_low: "AI credits running low",
       ai_spend_cap_platform: "Platform-wide AI spend cap reached",
       ai_spend_cap_tenant: "Daily AI spend cap reached",
+      ai_summary_breaker: "AI weekly summaries paused",
       artwork_flagged: "Artwork needs review",
       items_need_mapping: "Items need SKU mapping",
       order_at_risk: "Order at risk of shipping late",
