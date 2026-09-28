@@ -49,7 +49,7 @@ export function DigestInsightCard({
       <div className="flex flex-col gap-1.5">
         {source && (
           <p className="text-xs text-muted-foreground">
-            {sourceDateText(t, source.source, source.asOf)}
+            {sourceDateText(t, i18n.language, source.source, source.asOf)}
           </p>
         )}
         <RecommendationCard rec={rec} />
@@ -104,7 +104,7 @@ export function DigestInsightCard({
 /** The digest's one `win` (D8): a celebration line, no button (spec: `none` is a win, celebrate). */
 export function DigestWinCard({ digestId, insight }: { digestId: string; insight: DigestInsight }) {
   const { t, i18n } = useTranslation();
-  const text = digestWinText(t, insight);
+  const text = digestWinText(t, i18n.language, insight);
   return (
     <div className="flex flex-col gap-2 rounded-md border border-success/40 bg-success/5 p-3 text-sm">
       {insight.impactCents != null && (

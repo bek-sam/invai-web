@@ -51,7 +51,7 @@ export function timezoneLabel(timezone: string, lang: string): string {
 export function digestActionText(
   t: TFunction,
   lang: string,
-  insight: Pick<DigestInsight, "action" | "recommendation" | "templateKey">,
+  insight: Pick<DigestInsight, "action" | "recommendation" | "templateKey" | "facts">,
   nicheLabel: (key: string) => string,
 ): string {
   const { kind, params } = insight.action;
@@ -63,7 +63,7 @@ export function digestActionText(
       return t("digest.action.seeWhatChanged", "See what changed");
     case "review_costs":
       return t("digest.action.reviewCosts", "Review {{costLine}} costs", {
-        costLine: params.costLine ?? "",
+        costLine: params.costLine ? costLineLabel(t, params.costLine) : "",
       });
     case "review_ads":
       return t("digest.action.reviewAds", "Review ads on {{channel}}", { channel });
@@ -89,28 +89,64 @@ export function digestActionText(
         ? recommendationActionText(t, lang, insight.recommendation, nicheLabel)
         : "";
     case "none":
-      return digestWinText(t, insight);
+      return digestWinText(t, lang, insight);
   }
 }
 
 /**
- * D8 win headline. The contract's `templateKey` is a free string with no enumerated values and
- * the spec's Copy table has no win-shaped rows (only D1-D7 action rows), so these three keys are
- * this card's own choice (reported to the tech lead for T-19-3 to match or for a follow-up
- * contract enum). Anything else, including a key T-19-3 didn't coordinate on, falls back to a
- * generic celebration line rather than a raw key or blank space.
+ * D3's cost-line word (`digest.costLine.*`, mirroring the backend email renderer's
+ * `costLine.*` table in `invai-backend/src/modules/digest/render.ts`), never the raw
+ * `CostLine` enum value (`channelFees`, `blankCost`, ...). An enum value this card doesn't
+ * know about still gets a real English word via `fallback`, never the bare identifier.
  */
-export function digestWinText(t: TFunction, insight: Pick<DigestInsight, "templateKey">): string {
-  switch (insight.templateKey) {
-    case "win.best_net_week":
-      return t("digest.win.bestNetWeek", "Best net week in a while. Nice work.");
-    case "win.on_time_record":
-      return t("digest.win.onTimeRecord", "Your best on-time rate on record.");
-    case "win.design_milestone":
-      return t("digest.win.designMilestone", "One of your designs hit a new milestone.");
-    default:
-      return t("digest.win.generic", "Something worth celebrating this week.");
+const COST_LINE_KEYS: Record<string, string> = {
+  channelFees: "channel fee",
+  blankCost: "blank",
+  transferCost: "transfer",
+  labelCost: "shipping label",
+  packagingCost: "packaging",
+  laborCost: "labor",
+  adsCost: "ad",
+  refunds: "refund",
+};
+
+function costLineLabel(t: TFunction, costLine: string): string {
+  const fallback = COST_LINE_KEYS[costLine] ?? costLine;
+  return t(`digest.costLine.${costLine}`, fallback);
+}
+
+/**
+ * D8 win headline. `templateKey` is the real wire value the backend sends for every D8 win
+ * (`invai-backend/src/modules/digest/detectors.ts:d8Wins`: both the best-net-week and the
+ * on-time-record candidate use the literal `"D8 win"`); the two cases are told apart only by
+ * which facts are present, exactly like the backend's own email renderer
+ * (`render.ts:actionPart`'s `default` branch: `factOf(i, "d8.net")` truthy -> best net week,
+ * else on-time rate). Anything that isn't a real `"D8 win"` insight, or has neither fact, falls
+ * back to a generic celebration line rather than a raw key or blank space.
+ */
+export function digestWinText(
+  t: TFunction,
+  lang: string,
+  insight: Pick<DigestInsight, "templateKey" | "facts">,
+): string {
+  if (insight.templateKey === "D8 win") {
+    const lk = lang.startsWith("es") ? "es" : "en";
+    const net = insight.facts.find((f) => f.id === "d8.net");
+    if (net) {
+      const weeks = insight.facts.find((f) => f.id === "d8.weeks");
+      return t("digest.win.bestNetWeek", "Your best net week in {{n}} weeks: {{net}}", {
+        n: weeks?.formatted[lk] ?? "",
+        net: net.formatted[lk] ?? "",
+      });
+    }
+    const onTimeRate = insight.facts.find((f) => f.id === "d8.onTimeRate");
+    if (onTimeRate) {
+      return t("digest.win.onTimeRecord", "Your best on-time rate yet: {{rate}}", {
+        rate: onTimeRate.formatted[lk] ?? "",
+      });
+    }
   }
+  return t("digest.win.generic", "Something worth celebrating this week.");
 }
 
 const SOURCE_LABEL_KEY: Record<SignalSource, string> = {
@@ -135,9 +171,20 @@ const SOURCE_DEFAULT: Record<SignalSource, string> = {
   jungle_scout: "Jungle Scout",
 };
 
-/** "Google Trends, week ending Sep 20" (spec Market watch: source, then the date it describes). */
-export function sourceDateText(t: TFunction, source: SignalSource, asOf: string): string {
+/**
+ * "Google Trends, week ending Sep 20" (spec Market watch: source, then the date it describes).
+ * Formats the date from the app's chosen language (`i18n.language`), not the browser's locale.
+ */
+export function sourceDateText(
+  t: TFunction,
+  lang: string,
+  source: SignalSource,
+  asOf: string,
+): string {
   const label = t(SOURCE_LABEL_KEY[source], SOURCE_DEFAULT[source]);
-  const date = new Date(asOf).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const date = new Date(asOf).toLocaleDateString(lang.startsWith("es") ? "es" : "en", {
+    month: "short",
+    day: "numeric",
+  });
   return t("digest.source.dateLine", "{{source}}, week ending {{date}}", { source: label, date });
 }
