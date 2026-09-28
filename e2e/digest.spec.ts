@@ -66,17 +66,21 @@ test.describe("Digest page: glance, actions, market watch, feedback, en/es", () 
     await settled(page);
 
     await expect(page.getByText(/net profit|Net profit/i)).toBeVisible();
-    const actionButtons = page.getByRole("button", {
-      name: /Ship|Reconnect|Review|List|Reorder/i,
+    // Actions render as links ("Ship 13 overdue orders", "Reorder ..."); each carries two
+    // thumbs buttons named "Helpful: <action>" / "Not helpful: <action>", and Market watch
+    // items carry "Mark '<text>' ..." vote buttons, so counting buttons by verb over-counts
+    // (gate 2026-09-28: 10 buttons for 3 actions). Count the action links themselves.
+    const actionLinks = page.getByRole("link", {
+      name: /^(Ship|Reconnect|Review|List|Reorder)\b/,
     });
-    expect(await actionButtons.count()).toBeLessThanOrEqual(3);
+    const actionCount = await actionLinks.count();
+    expect(actionCount).toBeGreaterThanOrEqual(1);
+    expect(actionCount).toBeLessThanOrEqual(3);
 
-    const upvote = page.getByRole("button", { name: /thumbs up|👍/i }).first();
-    if (await upvote.count()) {
-      const downvote = page.getByRole("button", { name: /thumbs down|👎/i }).first();
-      await downvote.click();
-      await expect(page.getByText(/Not relevant/i)).toBeVisible();
-    }
+    const downvote = page.getByRole("button", { name: /^Not helpful:/ }).first();
+    await expect(downvote).toBeVisible();
+    await downvote.click();
+    await expect(page.getByText(/Not relevant/i)).toBeVisible();
     expect(issues).toEqual([]);
   });
 
