@@ -884,6 +884,11 @@ export const es: Messages = {
     personalization_missing: "Falta la personalización",
     reprint: "Reimpresión",
   },
+  help: {
+    backToHelp: "Volver a ayuda",
+    screenshotLabel: "Captura de pantalla",
+    updated: "Actualizado el {{date}}",
+  },
   holdReason: {
     address_check: "Revisar dirección",
     artwork_review: "Revisión de arte",
@@ -937,6 +942,9 @@ export const es: Messages = {
       running: "En proceso",
     },
     unknown: "estado desconocido",
+  },
+  legal: {
+    draftBanner: "Borrador, pendiente de revisión legal",
   },
   listings: {
     addBullet: "Agregar viñeta",
@@ -1729,6 +1737,7 @@ export const es: Messages = {
     companies: "Empresas",
     dark: "Oscuro",
     demo: "Demo",
+    help: "Centro de ayuda",
     language: "Idioma",
     light: "Claro",
     newCompany: "Crear otra empresa",
@@ -1907,10 +1916,14 @@ export const es: Messages = {
     voided: "Anulado",
   },
   signup: {
+    agreeAnd: "y la",
+    agreeBefore: "Al crear una cuenta, aceptas los",
     badEmail: "Escribe un correo válido",
     failed: "No se pudo crear tu cuenta. Inténtalo de nuevo.",
     orgFailed: "No se pudo crear la empresa. Inténtalo de nuevo.",
+    privacyLink: "Política de Privacidad",
     required: "Obligatorio",
+    termsLink: "Términos",
   },
   sku: {
     accept: "Aceptar",

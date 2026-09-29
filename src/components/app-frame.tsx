@@ -26,6 +26,7 @@ import {
   Bell,
   Check,
   ChevronsUpDown,
+  HelpCircle,
   Laptop,
   LogOut,
   Moon,
@@ -312,6 +313,12 @@ function UserMenu() {
           <Link to="/account">
             <UserCog className="size-4" />
             {t("shell.accountSettings", "Account and security")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/help">
+            <HelpCircle className="size-4" />
+            {t("shell.help", "Help center")}
           </Link>
         </DropdownMenuItem>
         <DemoMenuItems />

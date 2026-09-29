@@ -172,6 +172,29 @@ function SignupPage() {
             {error}
           </p>
         )}
+        {!signedIn && (
+          <p className="text-xs text-muted-foreground">
+            {t("signup.agreeBefore", "By creating an account you agree to the")}{" "}
+            <Link
+              to="/legal/$slug"
+              params={{ slug: "terms" }}
+              target="_blank"
+              className="font-medium text-primary hover:underline"
+            >
+              {t("signup.termsLink", "Terms")}
+            </Link>{" "}
+            {t("signup.agreeAnd", "and")}{" "}
+            <Link
+              to="/legal/$slug"
+              params={{ slug: "privacy" }}
+              target="_blank"
+              className="font-medium text-primary hover:underline"
+            >
+              {t("signup.privacyLink", "Privacy Policy")}
+            </Link>
+            .
+          </p>
+        )}
         <Button type="submit" disabled={isSubmitting || session.isPending} className="w-full">
           {isSubmitting && <Loader2 className="animate-spin" />}
           {t("auth.createCompany", "Create a company")}

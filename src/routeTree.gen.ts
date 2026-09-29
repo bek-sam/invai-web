@@ -21,6 +21,9 @@ import { Route as AppAccountRouteImport } from './routes/_app/account'
 import { Route as AppAssistantRouteImport } from './routes/_app/assistant'
 import { Route as AppShippingRouteImport } from './routes/_app/shipping'
 import { Route as AcceptInviteInvitationIdRouteImport } from './routes/accept-invite.$invitationId'
+import { Route as HelpIndexRouteImport } from './routes/help/index'
+import { Route as HelpSlugRouteImport } from './routes/help/$slug'
+import { Route as LegalSlugRouteImport } from './routes/legal/$slug'
 import { Route as AppAnalyticsAdSpendRouteImport } from './routes/_app/analytics/ad-spend'
 import { Route as AppAnalyticsProfitRouteImport } from './routes/_app/analytics/profit'
 import { Route as AppCatalogBlanksRouteImport } from './routes/_app/catalog/blanks'
@@ -120,6 +123,21 @@ const AcceptInviteInvitationIdRoute =
     path: '/accept-invite/$invitationId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const HelpIndexRoute = HelpIndexRouteImport.update({
+  id: '/help/',
+  path: '/help/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpSlugRoute = HelpSlugRouteImport.update({
+  id: '/help/$slug',
+  path: '/help/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalSlugRoute = LegalSlugRouteImport.update({
+  id: '/legal/$slug',
+  path: '/legal/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppAnalyticsAdSpendRoute = AppAnalyticsAdSpendRouteImport.update({
   id: '/analytics/ad-spend',
   path: '/analytics/ad-spend',
@@ -332,6 +350,9 @@ export interface FileRoutesByFullPath {
   '/assistant': typeof AppAssistantRoute
   '/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
+  '/help/$slug': typeof HelpSlugRoute
+  '/legal/$slug': typeof LegalSlugRoute
+  '/help/': typeof HelpIndexRoute
   '/analytics/ad-spend': typeof AppAnalyticsAdSpendRoute
   '/analytics/profit': typeof AppAnalyticsProfitRoute
   '/catalog/blanks': typeof AppCatalogBlanksRoute
@@ -382,7 +403,10 @@ export interface FileRoutesByTo {
   '/assistant': typeof AppAssistantRoute
   '/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
+  '/help/$slug': typeof HelpSlugRoute
+  '/legal/$slug': typeof LegalSlugRoute
   '/': typeof AppIndexRoute
+  '/help': typeof HelpIndexRoute
   '/analytics/ad-spend': typeof AppAnalyticsAdSpendRoute
   '/analytics/profit': typeof AppAnalyticsProfitRoute
   '/catalog/blanks': typeof AppCatalogBlanksRoute
@@ -435,7 +459,10 @@ export interface FileRoutesById {
   '/_app/assistant': typeof AppAssistantRoute
   '/_app/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
+  '/help/$slug': typeof HelpSlugRoute
+  '/legal/$slug': typeof LegalSlugRoute
   '/_app/': typeof AppIndexRoute
+  '/help/': typeof HelpIndexRoute
   '/_app/analytics/ad-spend': typeof AppAnalyticsAdSpendRoute
   '/_app/analytics/profit': typeof AppAnalyticsProfitRoute
   '/_app/catalog/blanks': typeof AppCatalogBlanksRoute
@@ -489,6 +516,9 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/shipping'
     | '/accept-invite/$invitationId'
+    | '/help/$slug'
+    | '/legal/$slug'
+    | '/help/'
     | '/analytics/ad-spend'
     | '/analytics/profit'
     | '/catalog/blanks'
@@ -539,7 +569,10 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/shipping'
     | '/accept-invite/$invitationId'
+    | '/help/$slug'
+    | '/legal/$slug'
     | '/'
+    | '/help'
     | '/analytics/ad-spend'
     | '/analytics/profit'
     | '/catalog/blanks'
@@ -591,7 +624,10 @@ export interface FileRouteTypes {
     | '/_app/assistant'
     | '/_app/shipping'
     | '/accept-invite/$invitationId'
+    | '/help/$slug'
+    | '/legal/$slug'
     | '/_app/'
+    | '/help/'
     | '/_app/analytics/ad-spend'
     | '/_app/analytics/profit'
     | '/_app/catalog/blanks'
@@ -641,6 +677,9 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   AcceptInviteInvitationIdRoute: typeof AcceptInviteInvitationIdRoute
+  HelpSlugRoute: typeof HelpSlugRoute
+  LegalSlugRoute: typeof LegalSlugRoute
+  HelpIndexRoute: typeof HelpIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -727,6 +766,27 @@ declare module '@tanstack/react-router' {
       path: '/accept-invite/$invitationId'
       fullPath: '/accept-invite/$invitationId'
       preLoaderRoute: typeof AcceptInviteInvitationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help/': {
+      id: '/help/'
+      path: '/help'
+      fullPath: '/help/'
+      preLoaderRoute: typeof HelpIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help/$slug': {
+      id: '/help/$slug'
+      path: '/help/$slug'
+      fullPath: '/help/$slug'
+      preLoaderRoute: typeof HelpSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/$slug': {
+      id: '/legal/$slug'
+      path: '/legal/$slug'
+      fullPath: '/legal/$slug'
+      preLoaderRoute: typeof LegalSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/analytics/ad-spend': {
@@ -1100,6 +1160,9 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   AcceptInviteInvitationIdRoute: AcceptInviteInvitationIdRoute,
+  HelpSlugRoute: HelpSlugRoute,
+  LegalSlugRoute: LegalSlugRoute,
+  HelpIndexRoute: HelpIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

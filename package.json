@@ -14,7 +14,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests",
-    "i18n": "python3 scripts/gen-i18n.py && biome format --write src/i18n"
+    "i18n": "python3 scripts/gen-i18n.py && biome format --write src/i18n",
+    "sync:content": "node scripts/sync-content.mjs",
+    "check:content": "node scripts/sync-content.mjs --check"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.116",

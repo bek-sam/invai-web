@@ -866,6 +866,11 @@ export const en = {
     personalization_missing: "Personalization missing",
     reprint: "Reprint",
   },
+  help: {
+    backToHelp: "Back to help",
+    screenshotLabel: "Screenshot",
+    updated: "Updated {{date}}",
+  },
   holdReason: {
     address_check: "Address check",
     artwork_review: "Artwork review",
@@ -918,6 +923,9 @@ export const en = {
       running: "Running",
     },
     unknown: "status unknown",
+  },
+  legal: {
+    draftBanner: "Draft, pending legal review",
   },
   listings: {
     addBullet: "Add bullet",
@@ -1704,6 +1712,7 @@ export const en = {
     companies: "Companies",
     dark: "Dark",
     demo: "Demo",
+    help: "Help center",
     language: "Language",
     light: "Light",
     newCompany: "Create another company",
@@ -1875,10 +1884,14 @@ export const en = {
     voided: "Voided",
   },
   signup: {
+    agreeAnd: "and",
+    agreeBefore: "By creating an account you agree to the",
     badEmail: "Enter a valid email",
     failed: "Couldn't create your account. Try again.",
     orgFailed: "Couldn't create the company. Try again.",
+    privacyLink: "Privacy Policy",
     required: "Required",
+    termsLink: "Terms",
   },
   sku: {
     accept: "Accept",
