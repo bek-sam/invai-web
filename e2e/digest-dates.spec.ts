@@ -45,6 +45,9 @@ test.describe("AC1 (T-20-2): the Spanish digest heading never shows an English w
     expect(listHeading).toMatch(ES_WEEKDAY_OR_MONTH);
 
     await rows.first().click();
+    // The list page is already "settled" (no skeletons), so wait for the route change itself:
+    // otherwise `h1` can still be the list's own "Resúmenes" heading (wave 20 gate, run 2).
+    await page.waitForURL(/\/digests\/\d{4}-W\d{2}/);
     await settled(page);
     const pageHeading = (await page.locator("h1").first().innerText()).trim();
     expect(pageHeading).not.toMatch(EN_WEEKDAY_OR_MONTH);
