@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
-import { connectSrc, requireApiOrigin } from "./src/lib/build/csp.ts";
+import { connectSrc, requireApiOrigin, uploadOrigin } from "./src/lib/build/csp.ts";
 
 // T-12-5 (B-24): strict CSP, no 'unsafe-inline'. The built app (dist/) never emits an inline
 // <script> or onclick=, so its script-src is plain 'self'. The Vite dev server is the exception:
@@ -40,9 +40,14 @@ export default defineConfig(({ command, isPreview }) => {
   // Review r1: connect-src was 'https:' (any HTTPS host), not the pinned API origin. `build` and
   // `preview` both serve/produce the real prodCsp, so both must have a real VITE_API_URL -- a
   // build without it fails loudly here instead of silently falling back to a broad CSP.
+  // B-190: plus the stage's S3 origin for presigned upload PUTs (`VITE_S3_ORIGIN`, set by the
+  // SST config). A local `vite preview` defaults to MinIO, the only S3 it can reach.
   const prodConnectSrc =
     command === "build" || isPreview
-      ? connectSrc(requireApiOrigin(process.env.VITE_API_URL))
+      ? connectSrc(
+          requireApiOrigin(process.env.VITE_API_URL),
+          uploadOrigin(process.env.VITE_S3_ORIGIN ?? (isPreview ? S3_ORIGIN : undefined)),
+        )
       : "'self'"; // never served: only `devCsp` above governs plain `vite`/`pnpm dev`.
   const prodCsp = [
     "default-src 'self'",

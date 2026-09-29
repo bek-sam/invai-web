@@ -24,10 +24,31 @@ export function requireApiOrigin(raw: string | undefined): string {
 }
 
 /**
- * `'self'` plus the API origin when it's cross-origin. SSE rides the same origin/path as RPC
- * calls (both `EventSource` and `fetch` are governed by `connect-src`), so no extra host is
- * needed for it.
+ * B-190 (wave 20 gate issue 1): the browser PUTs uploads straight to a presigned S3 URL
+ * (`src/lib/upload.ts`), so the production `connect-src` must also allow the stage's bucket
+ * origin. `raw` is `process.env.VITE_S3_ORIGIN`, set per stage by invai-infra's SST config
+ * (`https://<bucket>.s3.<region>.amazonaws.com`). Unset or blank means "no upload origin": the
+ * CSP stays at `'self'` + API and uploads are refused, never widened to a wildcard. Only https
+ * origins are accepted, except plain-http localhost (local MinIO for `vite preview`).
  */
-export function connectSrc(apiOrigin: string): string {
-  return apiOrigin ? `'self' ${apiOrigin}` : "'self'";
+export function uploadOrigin(raw: string | undefined): string {
+  if (raw === undefined || raw.trim() === "") return "";
+  const url = new URL(raw.trim());
+  const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  const wildcard = url.hostname.includes("*");
+  if (wildcard || (url.protocol !== "https:" && !(url.protocol === "http:" && local))) {
+    throw new Error(
+      `VITE_S3_ORIGIN must be one https origin (or http://localhost), no wildcard; got "${raw}"`,
+    );
+  }
+  return url.origin;
+}
+
+/**
+ * `'self'` plus the API origin when it's cross-origin, plus the upload (S3) origin when given.
+ * SSE rides the same origin/path as RPC calls (both `EventSource` and `fetch` are governed by
+ * `connect-src`), so no extra host is needed for it.
+ */
+export function connectSrc(apiOrigin: string, s3Origin = ""): string {
+  return ["'self'", apiOrigin, s3Origin].filter(Boolean).join(" ");
 }
