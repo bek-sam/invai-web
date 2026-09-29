@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest";
 import { errorInfo, isUnauthorized, shouldRetry, upgradeReason } from "./errors";
 
 describe("errorInfo", () => {
-  it("reads oRPC-style errors", () => {
-    const err = Object.assign(new Error("Missing permission"), { code: "FORBIDDEN", status: 403 });
-    expect(errorInfo(err)).toMatchObject({
+  it("never passes the server's raw permission string through for FORBIDDEN (wave 20 gate issue 5)", () => {
+    const err = Object.assign(new Error("Missing permission org.manage for digest.settings.get"), {
       code: "FORBIDDEN",
       status: 403,
-      message: "Missing permission",
     });
+    expect(errorInfo(err)).toMatchObject({ code: "FORBIDDEN", status: 403 });
+    expect(errorInfo(err).message).toMatch(/don't have access to this page/);
+    expect(errorInfo(err).message).not.toContain("Missing permission");
   });
 
   it("turns NOT_IMPLEMENTED into a friendly message", () => {

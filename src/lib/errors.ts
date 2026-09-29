@@ -39,6 +39,12 @@ export function errorInfo(err: unknown): ErrorInfo {
     }
     if (code === "DEMO_MODE")
       return { code, status, message: demoModeMessage(), data: e.data ?? null };
+    if (code === "FORBIDDEN") {
+      // Every screen gets the plain-language message, never the backend's raw permission string
+      // ("Missing permission org.manage for digest.settings.get", wave 20 gate issue 5).
+      message = tr("errors.forbiddenMessage", "You don't have access to this page. Ask the owner.");
+      return { code, status, message, data: e.data ?? null };
+    }
     const upgrade = upgradeReasonOf(code, e.data);
     if (upgrade) return { code, status, message: upgradeMessage(upgrade), data: e.data ?? null };
     return { code, status, message, data: e.data ?? null };

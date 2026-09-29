@@ -849,6 +849,7 @@ export const es: Messages = {
     rejected: "Rechazado",
   },
   errors: {
+    forbiddenMessage: "No tienes acceso a esta página. Pídeselo al dueño.",
     forbiddenTitle: "Sin acceso",
     generic: "Algo salió mal",
     network: "No se pudo conectar con el servidor",
@@ -1010,6 +1011,8 @@ export const es: Messages = {
   market: {
     action: {
       r1: "Publica {{design}} en {{channels}} y surte {{blank}} antes de {{peak}}.",
+      r1UnderWay:
+        "La temporada de {{niche}} ya empezó. Asegúrate de que {{design}} esté publicado y con inventario.",
       r2: "Prueba un precio de {{price}} en {{channel}} por 2 semanas.",
       r3: "Sube {{design}} a por lo menos {{floor}}, o detén sus anuncios.",
       r4: "Crea 1 o 2 diseños nuevos para el nicho {{niche}}.",

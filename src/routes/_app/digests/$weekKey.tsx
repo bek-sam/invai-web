@@ -3,12 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Bot, CalendarClock, PartyPopper } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { localeNumber, weekOfLabel } from "../../../components/digest/digest-copy";
 import { DigestGlanceGrid } from "../../../components/digest/glance-grid";
 import { DigestInsightCard, DigestWinCard } from "../../../components/digest/insight-card";
 import { Page, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { errorInfo } from "../../../lib/errors";
-import { formatDay } from "../../../lib/format";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
 
@@ -80,7 +80,7 @@ function DigestDetailPage() {
   return (
     <Page
       wide={false}
-      title={t("digest.page.title", "Week of {{day}}", { day: formatDay(d.weekStart) })}
+      title={t("digest.page.title", "Week of {{day}}", { day: weekOfLabel(d.weekStart, lang) })}
       description={
         d.net
           ? `${d.net.formatted[lang]}${d.netChange ? ` (${d.netChange.formatted[lang]})` : ""}`
@@ -142,12 +142,15 @@ function DigestDetailPage() {
           <Section title={t("digest.plan.title", "Plan usage")}>
             <p className="text-sm text-muted-foreground">
               {t("digest.plan.orders", "{{used}} of {{limit}} orders used this billing period", {
-                used: d.planUsage.ordersUsed,
-                limit: d.planUsage.ordersLimit ?? t("digest.plan.unlimited", "unlimited"),
+                used: localeNumber(d.planUsage.ordersUsed, lang),
+                limit:
+                  d.planUsage.ordersLimit == null
+                    ? t("digest.plan.unlimited", "unlimited")
+                    : localeNumber(d.planUsage.ordersLimit, lang),
               })}
               {" · "}
               {t("digest.plan.aiCredits", "{{n}} AI credits left", {
-                n: d.planUsage.aiCreditsRemaining,
+                n: localeNumber(d.planUsage.aiCreditsRemaining, lang),
               })}
             </p>
           </Section>

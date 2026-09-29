@@ -43,6 +43,45 @@ export function timezoneLabel(timezone: string, lang: string): string {
 }
 
 /**
+ * The digest list row and detail-page heading ("Mon, Sep 21" / "lun 21 sep"), for a `YYYY-MM-DD`
+ * week-start date. Uses `Intl` with the app's chosen language (wave 20 gate issue 2), never
+ * `toLocaleDateString(undefined, ...)` (the runtime's default locale, `lib/format.ts`'s `formatDay`
+ * -- a file this card doesn't own). Spanish uses `es-MX` (T-20-1's precedent for short dates: plain
+ * `es`/`es-US` write the month as "sept").
+ */
+export function weekOfLabel(weekStart: string, lang: string): string {
+  const [y, m, d] = weekStart.split("-").map(Number);
+  if (!y || !m || !d) return weekStart;
+  const date = new Date(y, m - 1, d);
+  return new Intl.DateTimeFormat(lang.startsWith("es") ? "es-MX" : "en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+/**
+ * A count with the app language's thousands separator ("10,000" / "10.000"; wave 20 gate issue 5).
+ * Spanish uses the bare `es` locale here (period grouping), not `es-MX`/`es-US` (which group like
+ * English, comma) -- the approved wave-20 exception for plan-limit numbers.
+ */
+export function localeNumber(n: number, lang: string): string {
+  return new Intl.NumberFormat(lang.startsWith("es") ? "es" : "en").format(n);
+}
+
+/**
+ * Arrow direction for a glance-grid delta, from the raw `changePct` the backend sends (points for
+ * `marginPct`/`onTimeRate`, relative percent otherwise). `null` means no arrow at all: either there
+ * is no comparable prior week, or the change is exactly zero ("unchanged" / "sin cambio", wave 20
+ * gate issue 3) -- `@invai/ui`'s `StatCard` has no such "no direction" state (it always draws an
+ * arrow whenever `delta` is set), so the glance grid renders its own delta row instead of using it.
+ */
+export function glanceChangeDirection(changePct: number | null): "up" | "down" | null {
+  if (changePct == null || changePct === 0) return null;
+  return changePct > 0 ? "up" : "down";
+}
+
+/**
  * The fixed action text per detector (spec `specs/weekly-digest.md` "Copy": D1..D7 action), built
  * only from `action.kind` + `action.params` — never free text (plan-review P1: every rendered
  * string comes from a template key plus formatted facts). A `market` insight delegates to T-18-5's

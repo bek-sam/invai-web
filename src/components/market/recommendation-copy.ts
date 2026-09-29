@@ -34,6 +34,18 @@ export function recommendationActionText(
   const design = p.designName ?? rec.target.designName ?? "";
   switch (rec.rule) {
     case "R1": {
+      // Peak under way (wave 20, fixes wave 19 gate issue 1): a peak month with no act-by date
+      // means the act-by date already passed and today is inside the peak, so there's nothing to
+      // count down to -- "before {{peak}}" would read as if the peak were still ahead. `niche` is
+      // the design's own niche (`params.niche`, set by the backend only for this case), not R4's
+      // cross-design niche pointer.
+      if (p.peakMonth != null && p.actByDate == null) {
+        return t(
+          "market.action.r1UnderWay",
+          "The {{niche}} season is on now. Make sure {{design}} is listed and in stock.",
+          { niche: p.niche ? nicheLabel(p.niche) : "", design },
+        );
+      }
       const channels = (p.channels ?? [])
         .map((c) => t(`channel.${c}`, c))
         .join(lang.startsWith("es") ? " y " : " and ");

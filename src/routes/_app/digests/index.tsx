@@ -6,9 +6,9 @@ import { CalendarCheck, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { AnyLink } from "../../../components/any-link";
+import { weekOfLabel } from "../../../components/digest/digest-copy";
 import { Page } from "../../../components/page";
 import { ErrorState } from "../../../components/states";
-import { formatDay } from "../../../lib/format";
 import { orpc } from "../../../lib/rpc";
 
 export const Route = createFileRoute("/_app/digests/")({
@@ -62,7 +62,7 @@ function DigestsPage() {
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <span className="font-medium">
                     {t("digest.list.weekOf", "Week of {{day}}", {
-                      day: formatDay(d.weekStart),
+                      day: weekOfLabel(d.weekStart, lang),
                     })}
                   </span>
                   <span className="text-sm text-muted-foreground">

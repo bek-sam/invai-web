@@ -1,7 +1,14 @@
 import type { DigestInsight } from "@invai/contracts";
 import type { TFunction } from "i18next";
 import { describe, expect, it } from "vitest";
-import { digestActionText, digestWinText, sourceDateText } from "./digest-copy";
+import {
+  digestActionText,
+  digestWinText,
+  glanceChangeDirection,
+  localeNumber,
+  sourceDateText,
+  weekOfLabel,
+} from "./digest-copy";
 
 /** A minimal stand-in for i18next's `t`: interpolates `{{key}}` into the given fallback text. */
 function fakeT(_key: string, fallback: unknown, opts?: Record<string, unknown>): string {
@@ -125,5 +132,43 @@ describe("sourceDateText", () => {
     const es = sourceDateText(t, "es", "google_trends", "2026-09-20T00:00:00.000Z");
     expect(en).toContain("Sep");
     expect(es).not.toBe(en);
+  });
+});
+
+describe("weekOfLabel", () => {
+  const EN_WEEKDAY_OR_MONTH = /\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Sep)\b/;
+  const ES_WEEKDAY_OR_MONTH = /\b(lun|mar|mié|jue|vie|sáb|dom|sep)\b/i;
+
+  it("never shows an English weekday or month in Spanish (wave 20 gate issue 2)", () => {
+    // 2026-09-21 is a Monday.
+    const en = weekOfLabel("2026-09-21", "en");
+    const es = weekOfLabel("2026-09-21", "es");
+    expect(en).toMatch(EN_WEEKDAY_OR_MONTH);
+    expect(es).not.toMatch(EN_WEEKDAY_OR_MONTH);
+    expect(es).toMatch(ES_WEEKDAY_OR_MONTH);
+  });
+
+  it("reads the date as local, not shifted by a UTC parse of the bare YYYY-MM-DD", () => {
+    // A UTC parse of "2026-09-21" can render as Sunday the 20th in a negative-offset zone.
+    expect(weekOfLabel("2026-09-21", "en")).toContain("21");
+  });
+});
+
+describe("localeNumber", () => {
+  it("groups thousands with the locale's separator, not always a comma (wave 20 gate issue 5)", () => {
+    expect(localeNumber(10000, "en")).toBe("10,000");
+    expect(localeNumber(10000, "es")).toBe("10.000");
+  });
+});
+
+describe("glanceChangeDirection", () => {
+  it("has no direction for null (no prior week) or exactly zero (unchanged)", () => {
+    expect(glanceChangeDirection(null)).toBeNull();
+    expect(glanceChangeDirection(0)).toBeNull();
+  });
+
+  it("points up for a positive change and down for a negative one", () => {
+    expect(glanceChangeDirection(6.9)).toBe("up");
+    expect(glanceChangeDirection(-6.9)).toBe("down");
   });
 });

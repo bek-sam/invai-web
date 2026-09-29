@@ -41,7 +41,9 @@ function rec(overrides: Partial<MarketRecommendation>): MarketRecommendation {
 }
 
 describe("recommendationActionText", () => {
-  it("fills R1 with channels, blank and peak month", () => {
+  it("fills R1 with channels, blank and peak month, before the act-by date", () => {
+    // A real "before {{peak}}" R1 always carries an act-by date (wave 20: `peakMonth` with no
+    // `actByDate` means the peak is already under way -- see the test below).
     const r = rec({
       rule: "R1",
       params: {
@@ -49,16 +51,33 @@ describe("recommendationActionText", () => {
         channels: ["amazon", "walmart"],
         blankName: "Gildan G64000 White M",
         peakMonth: 12,
+        actByDate: "2026-11-01",
       },
     });
     const text = recommendationActionText(t, "en", r, (k) => k);
     expect(text).toContain("Cactus Mama");
     expect(text).toContain("Gildan G64000 White M");
     expect(text).toContain("December");
+    expect(text).not.toContain("season is on now");
+  });
+
+  it("uses the peak-under-way wording for R1 when the act-by date is absent (wave 20)", () => {
+    const r = rec({
+      rule: "R1",
+      params: { designName: "Blessed & Sun-Kissed", peakMonth: 9, niche: "faith" },
+    });
+    const text = recommendationActionText(t, "en", r, (key) => (key === "faith" ? "Faith" : key));
+    expect(text).toBe(
+      "The Faith season is on now. Make sure Blessed & Sun-Kissed is listed and in stock.",
+    );
+    expect(text).not.toContain("before");
   });
 
   it("falls back to a generic channel phrase when R1 has none listed", () => {
-    const r = rec({ rule: "R1", params: { designName: "X", blankName: "Blank", peakMonth: 1 } });
+    const r = rec({
+      rule: "R1",
+      params: { designName: "X", blankName: "Blank", peakMonth: 1, actByDate: "2026-12-10" },
+    });
     const text = recommendationActionText(t, "en", r, (k) => k);
     expect(text).toContain("your connected channels");
   });

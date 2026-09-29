@@ -831,6 +831,7 @@ export const en = {
     rejected: "Rejected",
   },
   errors: {
+    forbiddenMessage: "You don't have access to this page. Ask the owner.",
     forbiddenTitle: "No access",
     generic: "Something went wrong",
     network: "Can't reach the server",
@@ -991,6 +992,7 @@ export const en = {
   market: {
     action: {
       r1: "List {{design}} on {{channels}} and stock {{blank}} before {{peak}}.",
+      r1UnderWay: "The {{niche}} season is on now. Make sure {{design}} is listed and in stock.",
       r2: "Test a price of {{price}} on {{channel}} for 2 weeks.",
       r3: "Raise {{design}} to at least {{floor}}, or stop its ads.",
       r4: "Make 1–2 new designs for the {{niche}} niche.",
