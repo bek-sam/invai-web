@@ -144,26 +144,48 @@ test.describe("AC3 (T-20-2): office@ sees a translated no-access message, never 
   });
 });
 
-test.describe("AC4 (T-20-2): plan usage renders limits with the locale's thousands separator", () => {
+/*
+ * AC4 (T-20-2), amended 2026-09-28 by the tech lead: the fix targets the digest page's own "Plan
+ * usage" block (gate issue 5), not `settings/billing.tsx` (out of scope, backlog B-184). Per the
+ * PM's es-US decision on T-20-1 (`reviews/T-20-1-product-manager-r1.md`,
+ * `specs/weekly-digest.md`: es-US throughout the digest, no mixed separators), Spanish digest
+ * numbers group like English -- "10,000", never the bare-`es` "10.000" the old AC4 expected.
+ */
+test.describe("AC4 (T-20-2): digest plan usage renders limits with a grouped thousands separator", () => {
   test("English: the growth plan's 10,000 orders/mo limit shows a comma", async ({ page }) => {
     await loginAs(page, OWNER);
-    await page.goto("/settings/billing");
+    await page.goto("/digests");
     await settled(page);
-    await expect(page.getByText("10,000", { exact: false }).first()).toBeVisible({
-      timeout: 15_000,
-    });
+    const rows = page.locator('a[href^="/digests/"]');
+    await expect(rows.first()).toBeVisible({ timeout: 15_000 });
+    await rows.first().click();
+    await settled(page);
+
+    const planUsage = page
+      .locator("h2", { hasText: /^Plan usage$/ })
+      .locator("xpath=ancestor::section[1]");
+    await expect(planUsage).toBeVisible({ timeout: 15_000 });
+    await expect(planUsage.getByText("10,000", { exact: false })).toBeVisible();
+    await expect(planUsage.getByText("10.000", { exact: false })).toHaveCount(0);
   });
 
-  test("Spanish: the same limit shows a period, not a comma (10.000, not 10,000)", async ({
+  test("Spanish: the same limit shows a grouped 10,000 too, per the es-US decision (never 10.000)", async ({
     page,
   }) => {
     await page.addInitScript(() => localStorage.setItem("invai.lang", "es"));
     await loginAs(page, OWNER);
-    await page.goto("/settings/billing");
+    await page.goto("/digests");
     await settled(page);
-    await expect(page.getByText("10.000", { exact: false }).first()).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByText("10,000", { exact: false })).toHaveCount(0);
+    const rows = page.locator('a[href^="/digests/"]');
+    await expect(rows.first()).toBeVisible({ timeout: 15_000 });
+    await rows.first().click();
+    await settled(page);
+
+    const planUsage = page
+      .locator("h2", { hasText: /^Uso del plan$/ })
+      .locator("xpath=ancestor::section[1]");
+    await expect(planUsage).toBeVisible({ timeout: 15_000 });
+    await expect(planUsage.getByText("10,000", { exact: false })).toBeVisible();
+    await expect(planUsage.getByText("10.000", { exact: false })).toHaveCount(0);
   });
 });
