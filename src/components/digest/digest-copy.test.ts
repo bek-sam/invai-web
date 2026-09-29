@@ -155,9 +155,10 @@ describe("weekOfLabel", () => {
 });
 
 describe("localeNumber", () => {
-  it("groups thousands with the locale's separator, not always a comma (wave 20 gate issue 5)", () => {
+  it("uses the digest's one es-US convention in both languages, never a mixed separator (round 2, AC4)", () => {
     expect(localeNumber(10000, "en")).toBe("10,000");
-    expect(localeNumber(10000, "es")).toBe("10.000");
+    expect(localeNumber(10000, "es")).toBe("10,000");
+    expect(localeNumber(1950, "es")).toBe("1,950");
   });
 });
 

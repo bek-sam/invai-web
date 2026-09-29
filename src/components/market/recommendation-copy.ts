@@ -38,12 +38,14 @@ export function recommendationActionText(
       // means the act-by date already passed and today is inside the peak, so there's nothing to
       // count down to -- "before {{peak}}" would read as if the peak were still ahead. `niche` is
       // the design's own niche (`params.niche`, set by the backend only for this case), not R4's
-      // cross-design niche pointer.
+      // cross-design niche pointer. R1 can also fire from the design's own sales seasonality with
+      // no niche mapping (round 2, reviewer finding 1): fall back to the peak month name in the
+      // app language, like the backend's `digest/render.ts` `marketPart()`, never an empty slot.
       if (p.peakMonth != null && p.actByDate == null) {
         return t(
           "market.action.r1UnderWay",
           "The {{niche}} season is on now. Make sure {{design}} is listed and in stock.",
-          { niche: p.niche ? nicheLabel(p.niche) : "", design },
+          { niche: p.niche ? nicheLabel(p.niche) : monthName(p.peakMonth, lang), design },
         );
       }
       const channels = (p.channels ?? [])

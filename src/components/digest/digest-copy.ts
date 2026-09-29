@@ -61,12 +61,13 @@ export function weekOfLabel(weekStart: string, lang: string): string {
 }
 
 /**
- * A count with the app language's thousands separator ("10,000" / "10.000"; wave 20 gate issue 5).
- * Spanish uses the bare `es` locale here (period grouping), not `es-MX`/`es-US` (which group like
- * English, comma) -- the approved wave-20 exception for plan-limit numbers.
+ * A count with the digest's one number convention ("10,000" in both languages; wave 20 gate issue
+ * 5, amended 2026-09-28 by the tech lead per the PM's T-20-1 decision, `specs/weekly-digest.md`:
+ * `es-US` throughout the digest so a rendered line never mixes separators with the backend's
+ * `es-US` money and points formatting).
  */
 export function localeNumber(n: number, lang: string): string {
-  return new Intl.NumberFormat(lang.startsWith("es") ? "es" : "en").format(n);
+  return new Intl.NumberFormat(lang.startsWith("es") ? "es-US" : "en-US").format(n);
 }
 
 /**

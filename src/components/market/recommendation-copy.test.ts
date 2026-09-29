@@ -73,6 +73,23 @@ describe("recommendationActionText", () => {
     expect(text).not.toContain("before");
   });
 
+  it("falls back to the peak month name for R1 peak-under-way when there is no niche (round 2)", () => {
+    // R1 can fire from the design's own sales seasonality with no niche mapping (reviewer r1
+    // finding 1): the sentence must never render an empty slot ("The  season is on now...").
+    const r = rec({
+      rule: "R1",
+      params: { designName: "Cactus Mama", peakMonth: 9 },
+    });
+    const en = recommendationActionText(t, "en", r, (k) => k);
+    expect(en).toBe(
+      "The September season is on now. Make sure Cactus Mama is listed and in stock.",
+    );
+    const es = recommendationActionText(t, "es", r, (k) => k);
+    expect(es).toContain("septiembre");
+    expect(es).not.toContain("The  season");
+    expect(es).not.toMatch(/\bThe\s{2,}/);
+  });
+
   it("falls back to a generic channel phrase when R1 has none listed", () => {
     const r = rec({
       rule: "R1",
