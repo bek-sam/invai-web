@@ -106,7 +106,7 @@ export function ShippingMarginView({
         />
       ) : (
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
             <KpiTile
               label={t("profitV2.labeledOrders", "Labeled orders")}
               value={q.data.totals.labeledOrders}

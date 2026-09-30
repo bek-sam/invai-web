@@ -60,7 +60,7 @@ export function BreakEvenView({ period }: { period: { from: string; to: string }
           )}
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
           <KpiTile
             label={t("profitV2.fixedMonthlyCents", "Fixed monthly costs")}
             value={<Money cents={q.data.fixedMonthlyCents ?? 0} />}

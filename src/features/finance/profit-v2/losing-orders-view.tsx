@@ -93,7 +93,7 @@ export function LosingOrdersView({
       ) : (
         <div className="flex flex-col gap-4">
           <OrdersWithoutProfitLineBanner count={q.data?.ordersWithoutProfitLine ?? 0} />
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
             <KpiTile
               label={t("profitV2.losingOrdersCount", "Losing orders")}
               value={q.data?.losingOrders ?? "—"}

@@ -314,17 +314,3 @@ export function formatPctNumberLocale(pct: number | null | undefined, digits = 1
   if (pct === null || pct === undefined || Number.isNaN(pct)) return "—";
   return formatRatioPctLocale(pct / 100, digits);
 }
-
-/**
- * A percent-point change, always signed: 6.9 -> "+6.9 pts" / "+6,9 pts" (spec rule 10's own
- * example). For a difference between two `*Pct` numbers, never for a plain percent snapshot.
- */
-export function formatPercentPoints(points: number | null | undefined, digits = 1): string {
-  if (points === null || points === undefined || Number.isNaN(points)) return "—";
-  const n = new Intl.NumberFormat(numberLocale(), {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(Math.abs(points));
-  const sign = points < 0 ? "-" : points > 0 ? "+" : "";
-  return `${sign}${n} pts`;
-}

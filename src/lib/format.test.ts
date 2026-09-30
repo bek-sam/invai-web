@@ -8,7 +8,6 @@ import {
   formatMoneyShortLocale,
   formatPct,
   formatPctNumberLocale,
-  formatPercentPoints,
   formatRatioPctLocale,
   freightProgress,
   parseDollarsToCents,
@@ -94,21 +93,6 @@ describe("format helpers", () => {
       i18n.language = "es";
       expect(formatRatioPctLocale(0.873)).toContain("87");
       expect(formatPctNumberLocale(31.6)).toContain("31,6");
-    } finally {
-      i18n.language = original;
-    }
-  });
-
-  it("signs percent-point changes and keeps the spec's '+6,9 pts' style in Spanish", () => {
-    const original = i18n.language;
-    try {
-      i18n.language = "en";
-      expect(formatPercentPoints(6.9)).toBe("+6.9 pts");
-      expect(formatPercentPoints(-3.2)).toBe("-3.2 pts");
-      expect(formatPercentPoints(0)).toBe("0.0 pts");
-      expect(formatPercentPoints(null)).toBe("—");
-      i18n.language = "es";
-      expect(formatPercentPoints(6.9)).toBe("+6,9 pts");
     } finally {
       i18n.language = original;
     }

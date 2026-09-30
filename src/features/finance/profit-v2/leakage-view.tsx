@@ -50,7 +50,7 @@ export function LeakageView({
       ) : (
         <div className="flex flex-col gap-4">
           <OrdersWithoutProfitLineBanner count={q.data.ordersWithoutProfitLine} />
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
             <KpiTile
               label={t("profitV2.grossSales", "Gross sales")}
               value={<Money cents={q.data.grossSales} />}
