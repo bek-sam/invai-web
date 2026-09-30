@@ -25,6 +25,8 @@ const SHOP_ROUTES = [
   "/listings/drafts",
   "/listings/trademark",
   "/analytics/profit",
+  "/analytics/operations",
+  "/analytics/inventory",
   "/assistant",
   "/settings/company",
   "/settings/team",
