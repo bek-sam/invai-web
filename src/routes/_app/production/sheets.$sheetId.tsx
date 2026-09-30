@@ -21,12 +21,13 @@ import {
   Download,
   FileDown,
   Loader2,
+  Mail,
   PackageCheck,
   Printer,
   RefreshCw,
   Send,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SheetStatusBadge } from "../../../components/badges";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
@@ -34,6 +35,7 @@ import { DefList, Field, NativeSelect, Section } from "../../../components/page"
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { PlacementList } from "../../../features/production/placement-list";
 import { SheetPreview } from "../../../features/production/sheet-preview";
+import { errorInfo, errorMessage } from "../../../lib/errors";
 import { formatDateTime, formatInches, formatPct } from "../../../lib/format";
 import { useCan, useMe } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
@@ -251,6 +253,9 @@ function SheetActions({ sheet }: { sheet: GangSheetDetail }) {
           {t("sheets.markReceived", "Mark received")}
         </Button>
       )}
+      {can("vendors.manage") && sheet.vendorConnectionId && sheet.sentAt && (
+        <ResendEmailButton sheetId={sheet.id} />
+      )}
       {manage && (s === "ready" || s === "failed") && (
         <Button
           size="sm"
@@ -290,6 +295,63 @@ function SheetActions({ sheet }: { sheet: GangSheetDetail }) {
         onConfirm={() => cancel.mutate({ id: sheet.id })}
       />
     </div>
+  );
+}
+
+/**
+ * T-22-5's `resendEmail` (B-102): a deliberate second send, rate-limited 10 minutes per sheet by
+ * the backend (`RESEND_TOO_SOON`, which carries `retryAfterSec`). Disabled with a live countdown
+ * for that window rather than a plain error, so the office can see when it'll be ready again.
+ */
+function ResendEmailButton({ sheetId }: { sheetId: string }) {
+  const { t } = useTranslation();
+  const [retryAt, setRetryAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!retryAt) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [retryAt]);
+  const remaining = retryAt ? Math.max(0, Math.ceil((retryAt - now) / 1000)) : 0;
+  useEffect(() => {
+    if (retryAt && remaining === 0) setRetryAt(null);
+  }, [retryAt, remaining]);
+  const resend = useMutation(
+    orpc.vendors.sheets.resendEmail.mutationOptions({
+      meta: { silent: true },
+      onSuccess: () => {
+        toast.success(t("sheets.resendSent", "Email sent again"));
+        setRetryAt(Date.now() + 10 * 60_000);
+      },
+      onError: (err) => {
+        const info = errorInfo(err);
+        if (info.code === "RESEND_TOO_SOON") {
+          const data = info.data as { retryAfterSec?: number } | undefined;
+          setRetryAt(Date.now() + (data?.retryAfterSec ?? 0) * 1000);
+        } else if (info.code === "VENDOR_USES_PORTAL") {
+          toast.info(
+            t("sheets.resendPortalOnly", "This vendor gets sheets in their portal, not by email."),
+          );
+        } else {
+          toast.error(errorMessage(err));
+        }
+      },
+    }),
+  );
+  const mm = String(Math.floor(remaining / 60)).padStart(1, "0");
+  const ss = String(remaining % 60).padStart(2, "0");
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={() => resend.mutate({ sheetId })}
+      disabled={resend.isPending || remaining > 0}
+    >
+      {resend.isPending ? <Loader2 className="animate-spin" /> : <Mail />}
+      {remaining > 0
+        ? t("sheets.resendWait", "Send the sheet email again ({{time}})", { time: `${mm}:${ss}` })
+        : t("sheets.resend", "Send the sheet email again")}
+    </Button>
   );
 }
 
