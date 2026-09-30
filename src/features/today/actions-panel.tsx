@@ -1,7 +1,7 @@
 import type { DigestInsight } from "@invai/contracts";
 import { Badge, buttonVariants, Card, cn, EmptyState, formatMoney, Skeleton } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PartyPopper } from "lucide-react";
+import { Check, PartyPopper } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AnyLink } from "../../components/any-link";
 import { digestActionText, digestMoneyLang } from "../../components/digest/digest-copy";
@@ -107,6 +107,12 @@ export function TodayActionsPanel() {
                 >
                   {text}
                 </AnyLink>
+                {action.clickedAt != null && (
+                  <span className="inline-flex w-fit items-center gap-1 text-xs text-success">
+                    <Check className="size-3.5" aria-hidden />
+                    {t("digest.opened", "Opened")}
+                  </span>
+                )}
               </Card>
             );
           })}
