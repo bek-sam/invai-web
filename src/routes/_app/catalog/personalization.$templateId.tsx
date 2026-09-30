@@ -1,16 +1,19 @@
 import { type PersonalizationTemplate, TEMPLATE_FONTS, type TemplateSlot } from "@invai/contracts";
-import { Badge, Button, Checkbox, Input, Skeleton, toast } from "@invai/ui";
+import { Badge, Button, Checkbox, FileDrop, Input, Skeleton, toast } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Eye, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Plus, Trash2, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
 import { Field, NativeSelect, Section } from "../../../components/page";
+import { SignedImage, useSignedUrl } from "../../../components/signed-image";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { fitSlotText } from "../../../features/personalization/fit";
+import { errorMessage } from "../../../lib/errors";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
+import { uploadFile } from "../../../lib/upload";
 
 export const Route = createFileRoute("/_app/catalog/personalization/$templateId")({
   component: TemplatePage,
@@ -246,7 +249,13 @@ function TemplateEditor({ template }: { template: PersonalizationTemplate | null
                   <Field label={t("pers.kind", "Type")}>
                     <NativeSelect
                       value={s.kind}
-                      onChange={(e) => setSlot(i, { kind: e.target.value as TemplateSlot["kind"] })}
+                      onChange={(e) => {
+                        const kind = e.target.value as TemplateSlot["kind"];
+                        // Switching kinds: a text sample isn't a valid file key, and a photo's
+                        // file key isn't sample text, so the sample for this slot starts over.
+                        setSamples((prev) => ({ ...prev, [s.name]: "" }));
+                        setSlot(i, { kind });
+                      }}
                     >
                       <option value="text">{t("pers.kindText", "Text")}</option>
                       <option value="photo">{t("pers.kindPhoto", "Photo")}</option>
@@ -264,6 +273,14 @@ function TemplateEditor({ template }: { template: PersonalizationTemplate | null
                       <Input
                         value={samples[s.name] ?? ""}
                         onChange={(e) => setSamples({ ...samples, [s.name]: e.target.value })}
+                      />
+                    </Field>
+                  )}
+                  {s.kind === "photo" && (
+                    <Field label={t("pers.samplePhoto", "Sample photo")} className="col-span-2">
+                      <SamplePhotoUpload
+                        fileKey={samples[s.name] || null}
+                        onUploaded={(key) => setSamples({ ...samples, [s.name]: key })}
                       />
                     </Field>
                   )}
@@ -508,8 +525,119 @@ function TemplateEditor({ template }: { template: PersonalizationTemplate | null
   );
 }
 
+/**
+ * A sample photo for a photo slot's preview (B-81), through the existing presigned upload flow
+ * (`uploadFile("photo", ...)`): presign, PUT to storage, get back a file key. Server-side type and
+ * size limits (`FILE_KINDS.photo`: png/jpeg/webp/heic, 25 MB) apply either way; the accept
+ * attribute is only a hint. Preview is a real `<img>` (`SignedImage`), never inline SVG markup.
+ */
+function SamplePhotoUpload({
+  fileKey,
+  onUploaded,
+}: {
+  fileKey: string | null;
+  onUploaded: (key: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [uploading, setUploading] = useState(false);
+  const onFile = async (file: File) => {
+    setUploading(true);
+    try {
+      const key = await uploadFile("photo", file);
+      onUploaded(key);
+    } catch (e) {
+      toast.error(t("pers.photoUploadFailed", "Photo upload failed"), {
+        description: errorMessage(e),
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+  if (fileKey) {
+    return (
+      <div className="flex items-center gap-2">
+        <SignedImage
+          fileKey={fileKey}
+          alt={t("pers.samplePhoto", "Sample photo")}
+          className="h-16 w-24"
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => onUploaded("")}
+          aria-label={t("pers.removePhoto", "Remove photo")}
+        >
+          <X />
+          {t("pers.replacePhoto", "Replace")}
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <FileDrop
+      accept="image/png,image/jpeg,image/webp,image/heic"
+      disabled={uploading}
+      onFiles={(files) => files[0] && void onFile(files[0])}
+      label={
+        uploading
+          ? t("pers.photoUploading", "Uploading…")
+          : t("pers.photoDropHint", "Drop a sample photo here, or click to browse")
+      }
+      hint={t("pers.photoLimits", "PNG, JPEG, WebP or HEIC, up to 25 MB")}
+      className="py-4"
+    />
+  );
+}
+
 function dirtyish(template: PersonalizationTemplate, slots: TemplateSlot[]) {
   return JSON.stringify(template.slots) !== JSON.stringify(slots);
+}
+
+/** One photo slot in the live preview: the uploaded sample (a real `<image>`, no inline SVG
+ * markup from anywhere untrusted) once one exists, else the same placeholder box as before. */
+function PhotoSlotPreview({ slot: s, fileKey }: { slot: TemplateSlot; fileKey: string | null }) {
+  const { t } = useTranslation();
+  const signed = useSignedUrl(fileKey);
+  if (fileKey && signed.data) {
+    return (
+      <image
+        href={signed.data.url}
+        x={s.xIn}
+        y={s.yIn}
+        width={s.wIn}
+        height={s.hIn}
+        preserveAspectRatio={s.fit === "fill" ? "xMidYMid slice" : "xMidYMid meet"}
+      />
+    );
+  }
+  return (
+    <g>
+      <rect
+        x={s.xIn}
+        y={s.yIn}
+        width={s.wIn}
+        height={s.hIn}
+        fill="currentColor"
+        className="fill-muted text-muted stroke-primary/60"
+        strokeWidth={0.03}
+      />
+      <text
+        x={s.xIn + s.wIn / 2}
+        y={s.yIn + s.hIn / 2}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={Math.min(s.wIn, s.hIn) * 0.18}
+        className="fill-muted-foreground"
+      >
+        {fileKey && signed.isPending
+          ? t("common.loading", "Loading…")
+          : s.fit === "fill"
+            ? t("pers.fillOption", "Fill (crop to cover)")
+            : t("pers.fitOption", "Fit (whole photo visible)")}
+      </text>
+    </g>
+  );
 }
 
 function LivePreview({
@@ -547,31 +675,7 @@ function LivePreview({
           />
           {slots.map((s, i) => {
             if (s.kind === "photo") {
-              return (
-                <g key={s.name}>
-                  <rect
-                    x={s.xIn}
-                    y={s.yIn}
-                    width={s.wIn}
-                    height={s.hIn}
-                    fill="currentColor"
-                    className="fill-muted text-muted stroke-primary/60"
-                    strokeWidth={0.03}
-                  />
-                  <text
-                    x={s.xIn + s.wIn / 2}
-                    y={s.yIn + s.hIn / 2}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize={Math.min(s.wIn, s.hIn) * 0.18}
-                    className="fill-muted-foreground"
-                  >
-                    {s.fit === "fill"
-                      ? t("pers.fillOption", "Fill (crop to cover)")
-                      : t("pers.fitOption", "Fit (whole photo visible)")}
-                  </text>
-                </g>
-              );
+              return <PhotoSlotPreview key={s.name} slot={s} fileKey={values[s.name] || null} />;
             }
             const fit = fits[i];
             if (!fit) return null;
