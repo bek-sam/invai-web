@@ -55,7 +55,7 @@ import { pollJob } from "../../lib/poll-job";
 import { client, orpc } from "../../lib/rpc";
 import { openInNewTab } from "../../lib/upload";
 
-const TABS = ["queue", "shipments", "tracking", "settings"] as const;
+const TABS = ["queue", "shipments", "scanForms", "tracking", "settings"] as const;
 
 /** The four CSV-only (pendingApproval-adapter) channels `shipping.exportTracking` supports. */
 const EXPORT_CHANNELS = ["etsy", "amazon", "tiktok", "walmart"] as const;
@@ -121,6 +121,7 @@ function ShippingPage() {
         <TabsList className="mb-3">
           <TabsTrigger value="queue">{t("ship.queue", "Ready to ship")}</TabsTrigger>
           <TabsTrigger value="shipments">{t("ship.shipments", "Shipments")}</TabsTrigger>
+          <TabsTrigger value="scanForms">{t("ship.scanForms", "End of day")}</TabsTrigger>
           <TabsTrigger value="tracking">{t("ship.tracking", "Tracking push")}</TabsTrigger>
         </TabsList>
         <TabsContent value="queue">
@@ -128,6 +129,9 @@ function ShippingPage() {
         </TabsContent>
         <TabsContent value="shipments">
           <Shipments />
+        </TabsContent>
+        <TabsContent value="scanForms">
+          <ScanForms />
         </TabsContent>
         <TabsContent value="tracking">
           <ExportTracking />
@@ -417,16 +421,10 @@ function RatesDialog({ entry, onClose }: { entry: ShipQueueEntry; onClose: () =>
   const [weight, setWeight] = useState(String(entry.estimatedWeightOz.toFixed(1)));
   const rates = useMutation(orpc.shipping.rates.mutationOptions({ meta: { silent: true } }));
   const [rateId, setRateId] = useState<string | null>(null);
-  const buy = useMutation(
-    orpc.shipping.buy.mutationOptions({
-      onSuccess: async (s) => {
-        toast.success(t("ship.bought", "Label bought: {{code}}", { code: s.trackingCode ?? "" }));
-        invalidate();
-        await printLabels([s.id]).catch(() => undefined);
-        onClose();
-      },
-    }),
-  );
+  // B-25: a rate can expire (carrier quotes are time-limited) between fetching and buying. Rather
+  // than a generic error toast, buy again re-fetches at the current price and asks the office to
+  // confirm it, so they always see what they're about to pay.
+  const [expired, setExpired] = useState(false);
   const fetchRates = () =>
     rates.mutate(
       {
@@ -435,10 +433,31 @@ function RatesDialog({ entry, onClose }: { entry: ShipQueueEntry; onClose: () =>
         parcel: Number(weight) > 0 ? { weightOz: Number(weight) } : undefined,
       },
       {
-        onSuccess: (r) =>
-          setRateId(r.rates.find((x) => x.cheapest)?.rateId ?? r.rates[0]?.rateId ?? null),
+        onSuccess: (r) => {
+          setExpired(false);
+          setRateId(r.rates.find((x) => x.cheapest)?.rateId ?? r.rates[0]?.rateId ?? null);
+        },
       },
     );
+  const buy = useMutation(
+    orpc.shipping.buy.mutationOptions({
+      meta: { silent: true },
+      onSuccess: async (s) => {
+        toast.success(t("ship.bought", "Label bought: {{code}}", { code: s.trackingCode ?? "" }));
+        invalidate();
+        await printLabels([s.id]).catch(() => undefined);
+        onClose();
+      },
+      onError: (err) => {
+        if (errorInfo(err).code === "RATE_EXPIRED") {
+          setExpired(true);
+          fetchRates();
+        } else {
+          toast.error(errorMessage(err));
+        }
+      },
+    }),
+  );
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
@@ -482,6 +501,15 @@ function RatesDialog({ entry, onClose }: { entry: ShipQueueEntry; onClose: () =>
           {rates.data ? t("ship.refreshRates", "Refresh rates") : t("ship.getRates", "Get rates")}
         </Button>
         {rates.isError && <ErrorState error={rates.error} compact />}
+        {expired && (
+          <p className="flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm text-warning">
+            <AlertTriangle className="size-4 shrink-0" aria-hidden />
+            {t(
+              "ship.rateExpired",
+              "That rate expired. Here's the current price -- check it and buy again.",
+            )}
+          </p>
+        )}
         {rates.data && (
           <ul className="flex flex-col gap-1.5" aria-label={t("ship.rates", "Rates")}>
             {rates.data.rates.map((r) => (
@@ -708,6 +736,118 @@ function Shipments() {
         onClose={() => setVoiding(null)}
         onConfirm={(s) => voidLabel.mutate({ id: s.id })}
       />
+    </div>
+  );
+}
+
+/**
+ * USPS end-of-day SCAN form (B-25): one barcode the carrier scans at pickup to accept every label
+ * bought today at once. `create` is idempotent per carrier + day (the backend returns the
+ * existing form on a second click), so there's no confirm dialog -- clicking it twice is safe.
+ */
+function ScanForms() {
+  const { t } = useTranslation();
+  const can = useCan();
+  const queryClient = useQueryClient();
+  const q = useInfiniteQuery(
+    orpc.shipping.scanForms.list.infiniteOptions({
+      input: (cursor: string | undefined) => ({ cursor, limit: 50 }),
+      initialPageParam: undefined,
+      getNextPageParam: (last) => last.nextCursor ?? undefined,
+    }),
+  );
+  const rows = useMemo(() => q.data?.pages.flatMap((p) => p.items) ?? [], [q.data]);
+  const create = useMutation(
+    orpc.shipping.scanForms.create.mutationOptions({
+      meta: { silent: true },
+      onSuccess: (f) => {
+        toast.success(
+          t("ship.scanFormCreated", "SCAN form ready: {{n}} labels", { n: f.labelCount }),
+        );
+        void queryClient.invalidateQueries({ queryKey: orpc.shipping.scanForms.key() });
+      },
+      onError: (err) => {
+        if (errorInfo(err).code === "NO_LABELS_TO_MANIFEST") {
+          toast.info(
+            t("ship.noLabelsToManifest", "No labels for today are waiting for a SCAN form."),
+          );
+        } else {
+          toast.error(errorMessage(err));
+        }
+      },
+    }),
+  );
+  const download = useMutation({
+    mutationFn: (fileKey: string) =>
+      client.files.downloadUrl({ fileKey, disposition: "attachment" }),
+    onSuccess: (d) => openInNewTab(d.url),
+  });
+  const columns: DataTableColumn<(typeof rows)[number]>[] = [
+    {
+      accessorKey: "date",
+      header: t("ship.scanFormDate", "Date"),
+      cell: ({ row }) => formatDate(row.original.date),
+    },
+    {
+      accessorKey: "carrier",
+      header: t("ship.scanFormCarrier", "Carrier"),
+      cell: ({ row }) => row.original.carrier.toUpperCase(),
+    },
+    { accessorKey: "labelCount", header: t("ship.scanFormLabels", "Labels") },
+    {
+      id: "download",
+      header: "",
+      cell: ({ row }) =>
+        row.original.fileKey ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              download.mutate(row.original.fileKey as string);
+            }}
+            disabled={download.isPending}
+          >
+            <Download />
+            {t("ship.downloadForm", "Download")}
+          </Button>
+        ) : (
+          <span className="text-xs text-muted-foreground">{t("ship.noFormFile", "No file")}</span>
+        ),
+    },
+  ];
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          {t(
+            "ship.scanFormsHint",
+            "One barcode the carrier scans at pickup to accept every label bought today.",
+          )}
+        </p>
+        {can("shipping.manage") && (
+          <Button onClick={() => create.mutate({ carrier: "usps" })} disabled={create.isPending}>
+            {create.isPending ? <Loader2 className="animate-spin" /> : <Printer />}
+            {t("ship.createScanForm", "Create today's SCAN form")}
+          </Button>
+        )}
+      </div>
+      {q.isError ? (
+        <ErrorState error={q.error} onRetry={() => void q.refetch()} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={rows}
+          getRowId={(r) => r.id}
+          isLoading={q.isPending}
+          hasMore={!!q.hasNextPage}
+          isLoadingMore={q.isFetchingNextPage}
+          onLoadMore={() => void q.fetchNextPage()}
+          emptyTitle={t("ship.noScanForms", "No SCAN forms yet")}
+          emptyDescription={t("ship.noScanFormsHint", "Create one once today's labels are bought.")}
+          maxHeight="calc(100dvh - 20rem)"
+        />
+      )}
     </div>
   );
 }

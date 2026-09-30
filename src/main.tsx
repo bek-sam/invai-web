@@ -23,6 +23,9 @@ const DIALOG_EXPLAINED_CODES = new Set([
   "PAYMENT_REQUIRED",
   "CREDITS_EXHAUSTED",
   "EMAIL_NOT_VERIFIED",
+  // The rates dialog (T-23-1, B-25) shows its own inline "rates changed" notice and re-fetches;
+  // a second generic toast would just repeat it.
+  "RATE_EXPIRED",
 ]);
 
 const queryClient = new QueryClient({

@@ -1,4 +1,5 @@
 import {
+  type AddressVerification,
   type Design,
   type ITEM_FLAG_CODES,
   type OrderItem,
@@ -30,8 +31,10 @@ import {
 } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   Ban,
   Check,
+  CheckCircle2,
   Circle,
   ExternalLink,
   FileText,
@@ -41,6 +44,7 @@ import {
   MapPin,
   Pencil,
   Plus,
+  ShieldCheck,
   Tag,
   X,
   Zap,
@@ -782,8 +786,31 @@ export function AddressSection({ order }: { order: OrderWithItems }) {
   const { t } = useTranslation();
   const can = useCan();
   const shipments = useOrderShipments(order.id);
+  const invalidate = useInvalidateOrders();
+  const queryClient = useQueryClient();
   const addressHold = order.hold?.reason === "address_check";
   const [editing, setEditing] = useState(addressHold);
+  const [check, setCheck] = useState<AddressVerification | null>(null);
+  const verify = useMutation(
+    orpc.shipping.verifyAddress.mutationOptions({
+      meta: { silent: true },
+      onSuccess: (r) => {
+        setCheck(r);
+        void invalidate();
+      },
+      onError: (err) => toast.error(errorMessage(err)),
+    }),
+  );
+  const useSuggested = useMutation(
+    orpc.orders.updateAddress.mutationOptions({
+      onSuccess: () => {
+        toast.success(t("orders.addressSaved", "Address saved"));
+        setCheck(null);
+        void invalidate();
+        void queryClient.invalidateQueries({ queryKey: orpc.shipping.key() });
+      },
+    }),
+  );
   if (!can("orders.manage")) return null;
   const finished =
     order.status === "shipped" || order.status === "delivered" || order.status === "cancelled";
@@ -795,15 +822,74 @@ export function AddressSection({ order }: { order: OrderWithItems }) {
       className={cn(addressHold && "border-warning")}
       actions={
         !finished &&
-        !editing &&
-        !hasLabel && (
-          <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
-            <Pencil />
-            {t("orders.editAddress", "Edit address")}
-          </Button>
+        !editing && (
+          <div className="flex gap-1">
+            {can("shipping.manage") && !!a && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => verify.mutate({ orderId: order.id })}
+                disabled={verify.isPending}
+              >
+                {verify.isPending ? <Loader2 className="animate-spin" /> : <ShieldCheck />}
+                {t("orders.checkAddress", "Check address")}
+              </Button>
+            )}
+            {!hasLabel && (
+              <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+                <Pencil />
+                {t("orders.editAddress", "Edit address")}
+              </Button>
+            )}
+          </div>
         )
       }
     >
+      {check && (
+        <div
+          className={cn(
+            "mb-3 flex flex-col gap-2 rounded-md px-3 py-2 text-sm",
+            check.status === "verified" ? "bg-success/10" : "bg-warning/10",
+          )}
+        >
+          <p className="flex items-start gap-2">
+            {check.status === "verified" ? (
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+            ) : (
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
+            )}
+            {check.status === "verified"
+              ? t("orders.addressVerified", "The carrier confirmed this address.")
+              : check.status === "corrected"
+                ? t("orders.addressCorrected", "The carrier suggests a corrected address (below).")
+                : t("orders.addressCheckFailed", "The carrier couldn't verify this address.")}
+          </p>
+          {check.detail && <p className="text-xs text-muted-foreground">{check.detail}</p>}
+          {check.status === "corrected" && check.suggestion && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2">
+              <address className="text-xs not-italic leading-5">
+                {check.suggestion.name}
+                <br />
+                {check.suggestion.street1}
+                {check.suggestion.street2 ? `, ${check.suggestion.street2}` : ""}
+                <br />
+                {check.suggestion.city}, {check.suggestion.state} {check.suggestion.zip}
+              </address>
+              <Button
+                size="sm"
+                onClick={() =>
+                  check.suggestion &&
+                  useSuggested.mutate({ id: order.id, address: check.suggestion })
+                }
+                disabled={useSuggested.isPending}
+              >
+                {useSuggested.isPending ? <Loader2 className="animate-spin" /> : <Check />}
+                {t("orders.useSuggestedAddress", "Use suggested address")}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
       {addressHold && (
         <p className="mb-3 flex items-start gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm">
           <MapPin className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
