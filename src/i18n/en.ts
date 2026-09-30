@@ -731,6 +731,7 @@ export const en = {
       seeBreakEven: "See your break-even pace",
       seeReprints: "See reprints",
       seeWhatChanged: "See what changed",
+      seeWhatChangedMover: "See what changed: {{mover}} moved your profit the most",
       shipOverdue: "Ship {{n}} overdue orders",
     },
     actions: {
@@ -1254,10 +1255,29 @@ export const en = {
       personalized: "Personalized",
       rush: "Rush",
     },
+    driverValue: {
+      blockedOver24h: {
+        no: "No wait over 24 h for mapping or artwork",
+        yes: "Waited over 24 h for mapping or artwork",
+      },
+      multiUnit: {
+        no: "One unit",
+        yes: "More than one unit",
+      },
+      personalized: {
+        no: "Not personalized",
+        yes: "Personalized",
+      },
+      rush: {
+        no: "Not rush",
+        yes: "Rush",
+      },
+    },
     entries: "Entries",
     filmUse: "Film use",
     filmWaste: "Film waste",
     filmWasteHint: "Sheet cost lost to unused film area, by vendor.",
+    inHouse: "In-house",
     lateDrivers: "Late-shipment drivers",
     lateDriversHint: "Which cuts of orders were more often late, not what caused it.",
     lateOrders: "Late orders",
@@ -1265,6 +1285,7 @@ export const en = {
     measuredMinutes: "Measured min/unit",
     medianHours: "Median hrs",
     noBottleneck: "Not enough entries yet to name a bottleneck",
+    noStation: "No station",
     notEnoughItems: "Not enough items pressed yet",
     notEnoughOrders: "Not enough orders yet",
     notEnoughScans: "Not enough scans yet",
@@ -1300,6 +1321,7 @@ export const en = {
     stillWaiting: "Still waiting",
     subtitle: "Reprints, film waste, waits and late-shipment drivers, by station and vendor.",
     timedUnits: "Timed units",
+    unknownVendor: "Unknown",
     updateLaborSetting: "Update labor setting",
     value: "Value",
     vendor: "Vendor",

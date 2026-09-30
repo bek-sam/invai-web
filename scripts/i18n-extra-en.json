@@ -71,6 +71,7 @@
   "designs.lifecycle.trend.rising": "Rising", "designs.lifecycle.trend.falling": "Falling", "designs.lifecycle.trend.flat": "Flat",
   "opsV2.state.imported": "Imported", "opsV2.state.needsMapping": "Needs mapping", "opsV2.state.ready": "Ready", "opsV2.state.needsArtwork": "Needs artwork", "opsV2.state.onSheet": "On sheet", "opsV2.state.transferIn": "At vendor", "opsV2.state.pressed": "Pressed", "opsV2.state.packed": "Packed", "opsV2.state.shipped": "Shipped", "opsV2.state.delivered": "Delivered", "opsV2.state.onHold": "On hold", "opsV2.state.cancelled": "Cancelled",
   "opsV2.driverName.channel": "Channel", "opsV2.driverName.personalized": "Personalized", "opsV2.driverName.rush": "Rush", "opsV2.driverName.multiUnit": "Multi-unit", "opsV2.driverName.blockedOver24h": "Blocked over 24h",
+  "opsV2.driverValue.personalized.yes": "Personalized", "opsV2.driverValue.personalized.no": "Not personalized", "opsV2.driverValue.rush.yes": "Rush", "opsV2.driverValue.rush.no": "Not rush", "opsV2.driverValue.multiUnit.yes": "More than one unit", "opsV2.driverValue.multiUnit.no": "One unit", "opsV2.driverValue.blockedOver24h.yes": "Waited over 24 h for mapping or artwork", "opsV2.driverValue.blockedOver24h.no": "No wait over 24 h for mapping or artwork",
   "supplier.submitCount": "Submit count",
   "upgrade.limitShort": "Your plan's limit is reached. Go to Billing to upgrade.", "upgrade.paymentShort": "This needs an active plan. Go to Billing to choose one."
 }

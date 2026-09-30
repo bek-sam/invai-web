@@ -750,6 +750,7 @@ export const es: Messages = {
       seeBreakEven: "Consulta tu ritmo de punto de equilibrio",
       seeReprints: "Ver reimpresiones",
       seeWhatChanged: "Ver qué cambió",
+      seeWhatChangedMover: "Ver qué cambió: {{mover}} fue lo que más movió tu ganancia",
       shipOverdue: "Envía {{n}} pedidos atrasados",
     },
     actions: {
@@ -1279,10 +1280,29 @@ export const es: Messages = {
       personalized: "Personalizado",
       rush: "Urgente",
     },
+    driverValue: {
+      blockedOver24h: {
+        no: "No esperó más de 24 h por mapeo o arte",
+        yes: "Esperó más de 24 h por mapeo o arte",
+      },
+      multiUnit: {
+        no: "Una unidad",
+        yes: "Más de una unidad",
+      },
+      personalized: {
+        no: "No personalizado",
+        yes: "Personalizado",
+      },
+      rush: {
+        no: "No urgente",
+        yes: "Urgente",
+      },
+    },
     entries: "Entradas",
     filmUse: "Uso de film",
     filmWaste: "Desperdicio de film",
     filmWasteHint: "Costo de sábana perdido en área de film sin usar, por proveedor.",
+    inHouse: "Interno",
     lateDrivers: "Motivos de envíos tardíos",
     lateDriversHint: "Qué cortes de pedidos se retrasaron más seguido, no qué lo causó.",
     lateOrders: "Pedidos tardíos",
@@ -1290,6 +1310,7 @@ export const es: Messages = {
     measuredMinutes: "Min/unidad medidos",
     medianHours: "Horas (mediana)",
     noBottleneck: "Aún no hay suficientes entradas para nombrar un cuello de botella",
+    noStation: "Sin estación",
     notEnoughItems: "Aún no hay suficientes artículos prensados",
     notEnoughOrders: "Aún no hay suficientes pedidos",
     notEnoughScans: "Aún no hay suficientes escaneos",
@@ -1327,6 +1348,7 @@ export const es: Messages = {
     subtitle:
       "Reimpresiones, desperdicio de film, esperas y motivos de envíos tardíos, por estación y proveedor.",
     timedUnits: "Unidades cronometradas",
+    unknownVendor: "Desconocido",
     updateLaborSetting: "Actualizar configuración de mano de obra",
     value: "Valor",
     vendor: "Proveedor",

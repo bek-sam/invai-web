@@ -187,6 +187,28 @@ describe("digestActionText D9-D13 (0.10.0)", () => {
   });
 });
 
+describe("digestActionText see_what_changed (D2, AC9)", () => {
+  it("names the mover when the action carries a profit-bridge topMover", () => {
+    const i = insight({
+      action: {
+        kind: "see_what_changed",
+        params: { designName: "Desert Sunset Tee" },
+        href: "/analytics/profit",
+      },
+    });
+    expect(digestActionText(t, "en", i, (k) => k)).toBe(
+      "See what changed: Desert Sunset Tee moved your profit the most",
+    );
+  });
+
+  it("falls back to the plain wording when there is no mover", () => {
+    const i = insight({
+      action: { kind: "see_what_changed", params: {}, href: "/analytics/profit" },
+    });
+    expect(digestActionText(t, "en", i, (k) => k)).toBe("See what changed");
+  });
+});
+
 describe("sourceDateText", () => {
   it("formats the date from the app language, not the runtime default locale", () => {
     const en = sourceDateText(t, "en", "google_trends", "2026-09-20T00:00:00.000Z");

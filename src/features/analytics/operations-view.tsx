@@ -6,11 +6,38 @@ import type {
 } from "@invai/contracts";
 import { Button, Money } from "@invai/ui";
 import { Link } from "@tanstack/react-router";
+import type { TFunction } from "i18next";
 import { AlertTriangle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Section } from "../../components/page";
 import { formatPctNumberLocale } from "../../lib/format";
 import { KpiTile, MiniTable, NotEnoughHistoryBanner } from "./shared";
+
+/**
+ * AC8: the backend's `key`/`label` fields carry fixed English vocabulary for its sentinel groups
+ * ("no station", "no vendor"/"in-house") — translate those; a real station or vendor name (the
+ * shop typed it) passes through as-is.
+ */
+function stationLabel(t: TFunction, row: { key: string; label: string }): string {
+  return row.key === "none" ? t("opsV2.noStation", "No station") : row.label;
+}
+
+function vendorLabel(t: TFunction, row: { key: string; label: string }): string {
+  if (row.key === "unknown") return t("opsV2.unknownVendor", "Unknown");
+  if (row.key === "in_house") return t("opsV2.inHouse", "In-house");
+  return row.label;
+}
+
+/**
+ * AC8: `LateDriverRow.label` is the backend's fixed English value ("Personalized", "Rush", the
+ * 24h-wait sentence) for the boolean drivers, or a channel name for the `channel` driver (which
+ * already has `channel.*` keys). Keyed on `driver`+`value`, never the label text itself.
+ */
+function driverValueLabel(t: TFunction, row: LateDriverRow): string {
+  return row.driver === "channel"
+    ? t(`channel.${row.value}`, row.label)
+    : t(`opsV2.driverValue.${row.driver}.${row.value}`, row.label);
+}
 
 /**
  * AC-B1/B2/B3: reprint cost, film waste, waits and the bottleneck step, measured press minutes
@@ -85,7 +112,11 @@ function ReprintCostSection({ data }: { data: Operations }) {
             rows={r.byStation}
             rowKey={(row) => row.key}
             columns={[
-              { key: "label", header: t("opsV2.station", "Station"), cell: (row) => row.label },
+              {
+                key: "label",
+                header: t("opsV2.station", "Station"),
+                cell: (row) => stationLabel(t, row),
+              },
               {
                 key: "reprints",
                 header: t("opsV2.count", "Count"),
@@ -105,7 +136,11 @@ function ReprintCostSection({ data }: { data: Operations }) {
             rows={r.byVendor}
             rowKey={(row) => row.key}
             columns={[
-              { key: "label", header: t("opsV2.vendor", "Vendor"), cell: (row) => row.label },
+              {
+                key: "label",
+                header: t("opsV2.vendor", "Vendor"),
+                cell: (row) => vendorLabel(t, row),
+              },
               {
                 key: "reprints",
                 header: t("opsV2.count", "Count"),
@@ -156,7 +191,11 @@ function FilmWasteSection({ data }: { data: Operations }) {
           rows={f.byVendor}
           rowKey={(row) => row.key}
           columns={[
-            { key: "label", header: t("opsV2.vendor", "Vendor"), cell: (row) => row.label },
+            {
+              key: "label",
+              header: t("opsV2.vendor", "Vendor"),
+              cell: (row) => vendorLabel(t, row),
+            },
             {
               key: "sheets",
               header: t("opsV2.sheets", "Sheets"),
@@ -343,7 +382,11 @@ function LateDriversSection({ data }: { data: Operations }) {
               header: t("opsV2.driver", "Cut"),
               cell: (row) => t(`opsV2.driverName.${row.driver}`, row.driver),
             },
-            { key: "value", header: t("opsV2.value", "Value"), cell: (row) => row.label },
+            {
+              key: "value",
+              header: t("opsV2.value", "Value"),
+              cell: (row) => driverValueLabel(t, row),
+            },
             {
               key: "shipped",
               header: t("opsV2.shippedOrders", "Shipped orders"),

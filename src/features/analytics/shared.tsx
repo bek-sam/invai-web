@@ -11,7 +11,10 @@ import { client } from "../../lib/rpc";
  * A plain KPI tile, T-A6's `profit-v2/kpi-tile.tsx` pattern copied into this feature (that folder
  * is read-only; `@invai/ui`'s `StatCard` still has no neutral/no-arrow state, reported as a kit
  * gap by T-A6, not fixed here). Same B-226 guard: a long Spanish money string ("12.345,67 US$",
- * non-breaking) must never split mid-number, so the value stays `whitespace-nowrap`.
+ * non-breaking) must never split mid-number, so the value stays `whitespace-nowrap`. T-A6's own
+ * grid gives a tile the full row below `sm`; this feature's grids stay 2-up there (r1 review:
+ * "12.441,31 US$" touched the tile edge at 390 px es), so the value starts one size down
+ * (`text-lg`) and only grows to T-A6's sizes from `sm` up, where the narrowest 2-up tile is wider.
  */
 export function KpiTile({
   label,
@@ -27,7 +30,7 @@ export function KpiTile({
   return (
     <Card className={cn("min-w-0 p-4", className)}>
       <p className="truncate text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 whitespace-nowrap text-xl font-semibold tabular-nums sm:text-2xl">
+      <p className="mt-1 whitespace-nowrap text-lg font-semibold tabular-nums sm:text-xl md:text-2xl">
         {value}
       </p>
       {caption && <p className="mt-1 truncate text-xs text-muted-foreground">{caption}</p>}

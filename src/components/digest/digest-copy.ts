@@ -110,7 +110,13 @@ export function digestActionText(
     case "reconnect_channel":
       return t("digest.action.reconnectChannel", "Reconnect {{channel}}", { channel });
     case "see_what_changed":
-      return t("digest.action.seeWhatChanged", "See what changed");
+      return params.designName
+        ? t(
+            "digest.action.seeWhatChangedMover",
+            "See what changed: {{mover}} moved your profit the most",
+            { mover: params.designName },
+          )
+        : t("digest.action.seeWhatChanged", "See what changed");
     case "review_costs":
       return t("digest.action.reviewCosts", "Review {{costLine}} costs", {
         costLine: params.costLine ? costLineLabel(t, params.costLine) : "",
