@@ -93,6 +93,29 @@ export default defineConfig(({ command, isPreview }) => {
         "zod",
       ],
     },
+    // B-107: Rollup's default chunking merges every module two or more route chunks share into
+    // one growing "common" vendor blob -- react, react-dom, radix-ui and lucide-react all end up
+    // in a single chunk well past Vite's 500 kB (raw) warning, since nearly every route touches
+    // at least one of them. Splitting by logical vendor group keeps each chunk small and cacheable
+    // without changing what loads eagerly vs. per-route (`autoCodeSplitting` above still governs
+    // that); it does not reduce total bytes shipped, only how they're grouped into files.
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes("node_modules")) return undefined;
+            if (/[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return "vendor-react";
+            if (/[\\/](@tanstack)[\\/]/.test(id)) return "vendor-tanstack";
+            if (/[\\/](radix-ui|@radix-ui)[\\/]/.test(id)) return "vendor-radix";
+            if (/[\\/]lucide-react[\\/]/.test(id)) return "vendor-icons";
+            if (/[\\/](recharts|d3-[a-z-]+|victory-vendor)[\\/]/.test(id)) return "vendor-charts";
+            if (/[\\/](i18next|react-i18next)[\\/]/.test(id)) return "vendor-i18n";
+            if (/[\\/]better-auth[\\/]/.test(id)) return "vendor-auth";
+            return "vendor";
+          },
+        },
+      },
+    },
     server: { port: 5173, headers: { "Content-Security-Policy": devCsp, ...securityHeaders } },
     preview: { headers: { "Content-Security-Policy": prodCsp, ...securityHeaders } },
     test: { environment: "node", include: ["src/**/*.test.ts"] },
