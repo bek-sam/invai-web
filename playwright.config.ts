@@ -16,8 +16,13 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  reporter: [["list"], ["html", { open: "never", outputFolder: "e2e/.report" }]],
-  outputDir: "e2e/.results",
+  // Both paths must sit outside invai-web/, not just under e2e/: the live :5173 Vite dev server
+  // this suite runs against watches the whole project tree (no server.watch.ignored) and force
+  // full-page-reloads every open tab when Playwright writes trace/report files mid-run, stalling
+  // rendering long enough to blow the step timeout (A1 gate step 6, invai-docs/waves/A1/reports/
+  // gate-step6-qa.md). "../.e2e-out/invai-web" resolves next to invai-web/, never inside it.
+  reporter: [["list"], ["html", { open: "never", outputFolder: "../.e2e-out/invai-web/report" }]],
+  outputDir: "../.e2e-out/invai-web/results",
   use: {
     baseURL: process.env.E2E_WEB_URL ?? "http://localhost:5173",
     trace: "retain-on-failure",
