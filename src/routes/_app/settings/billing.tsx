@@ -6,7 +6,7 @@ import {
   cn,
   DataTable,
   type DataTableColumn,
-  Money,
+  formatMoney,
   Progress,
   RelativeTime,
   toast,
@@ -18,7 +18,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
-import { localeNumber } from "../../../components/digest/digest-copy";
+import { digestMoneyLang, localeNumber } from "../../../components/digest/digest-copy";
 import { Page, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { billingActionError } from "../../../features/billing/checkout";
@@ -224,7 +224,11 @@ function BillingPage() {
               {t("billing.labels", "{{n}} labels bought this period", {
                 n: status.data.usage.labelsBought,
               })}{" "}
-              · <Money cents={status.data.usage.labelFees} /> {t("billing.labelFees", "label fees")}
+              ·{" "}
+              <span className="tabular-nums">
+                {formatMoney(status.data.usage.labelFees, "USD", digestMoneyLang(i18n.language))}
+              </span>{" "}
+              {t("billing.labelFees", "label fees")}
             </p>
             {!status.data.paymentsEnabled && (
               <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -589,7 +593,9 @@ function PlanCard({
           <span className="text-lg">{t("billing.customPrice", "Custom price")}</span>
         ) : (
           <>
-            <Money cents={plan.priceMonthly} />
+            <span className="tabular-nums">
+              {formatMoney(plan.priceMonthly, "USD", digestMoneyLang(i18n.language))}
+            </span>
             <span className="text-sm font-normal text-muted-foreground">
               /{t("billing.month", "mo")}
             </span>
@@ -620,7 +626,10 @@ function PlanCard({
             : t("billing.stores", "{{n}} channel connections", { n: plan.maxConnections })}
         </li>
         <li>
-          <Money cents={plan.labelFee} /> {t("billing.perLabel", "per label")}
+          <span className="tabular-nums">
+            {formatMoney(plan.labelFee, "USD", digestMoneyLang(i18n.language))}
+          </span>{" "}
+          {t("billing.perLabel", "per label")}
         </li>
       </ul>
       {move === "current" ? (

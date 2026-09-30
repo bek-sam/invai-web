@@ -118,12 +118,14 @@ function ShippingPage() {
           void navigate({ search: { tab: v as (typeof TABS)[number] }, replace: true })
         }
       >
-        <TabsList className="mb-3">
-          <TabsTrigger value="queue">{t("ship.queue", "Ready to ship")}</TabsTrigger>
-          <TabsTrigger value="shipments">{t("ship.shipments", "Shipments")}</TabsTrigger>
-          <TabsTrigger value="scanForms">{t("ship.scanForms", "End of day")}</TabsTrigger>
-          <TabsTrigger value="tracking">{t("ship.tracking", "Tracking push")}</TabsTrigger>
-        </TabsList>
+        <div className="-mx-1 mb-3 overflow-x-auto px-1">
+          <TabsList>
+            <TabsTrigger value="queue">{t("ship.queue", "Ready to ship")}</TabsTrigger>
+            <TabsTrigger value="shipments">{t("ship.shipments", "Shipments")}</TabsTrigger>
+            <TabsTrigger value="scanForms">{t("ship.scanForms", "End of day")}</TabsTrigger>
+            <TabsTrigger value="tracking">{t("ship.tracking", "Tracking push")}</TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent value="queue">
           <Queue />
         </TabsContent>
