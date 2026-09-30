@@ -1,13 +1,30 @@
-import { STATIONS, type Station } from "@invai/contracts";
-import { Badge, Card, cn, EmptyState, RelativeTime, Skeleton } from "@invai/ui";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { MAINTENANCE_REASONS, STATIONS, type Station, type StationDevice } from "@invai/contracts";
+import {
+  Badge,
+  Button,
+  Card,
+  cn,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  EmptyState,
+  RelativeTime,
+  Skeleton,
+  Textarea,
+  toast,
+} from "@invai/ui";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, Radio, ScanLine, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, PauseCircle, Radio, ScanLine, Wrench, XCircle } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Page, Section } from "../../../components/page";
+import { NativeSelect, Page, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { lastNDays, orderLabel } from "../../../lib/format";
+import { useCan } from "../../../lib/me";
 import {
   type RealtimeMessage,
   useRealtimeListener,
@@ -132,6 +149,9 @@ function StationsBoard() {
           );
         })}
       </div>
+      <div className="mt-4">
+        <StationMaintenancePanel />
+      </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
         <Section
           className="lg:col-span-3"
@@ -210,5 +230,180 @@ function StationsBoard() {
         </Section>
       </div>
     </Page>
+  );
+}
+
+/**
+ * Station maintenance windows (B-35). Start/end is `production.maintenance` (office+); everyone
+ * with `production.read` -- including a floor tablet -- sees which stations are closed, since a
+ * closed station's scans return `mismatch: "station_maintenance"` for whoever hits it.
+ */
+function StationMaintenancePanel() {
+  const { t } = useTranslation();
+  const can = useCan();
+  const queryClient = useQueryClient();
+  const devices = useQuery(orpc.stations.list.queryOptions({ input: {} }));
+  const open = useQuery(
+    orpc.production.maintenance.list.queryOptions({ input: { open: true, limit: 200 } }),
+  );
+  const [starting, setStarting] = useState<StationDevice | null>(null);
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: orpc.production.maintenance.key() });
+    void queryClient.invalidateQueries({ queryKey: orpc.stations.key() });
+  };
+  const end = useMutation(
+    orpc.production.maintenance.end.mutationOptions({
+      onSuccess: () => {
+        toast.success(t("stations.maintenanceEnded", "Station reopened"));
+        invalidate();
+      },
+    }),
+  );
+  const openByStation = new Map((open.data?.items ?? []).map((m) => [m.stationId, m]));
+  return (
+    <Section
+      title={t("stations.maintenance", "Station maintenance")}
+      description={t(
+        "stations.maintenanceHint",
+        "Close a station for cleaning or a repair; its scans block until it reopens.",
+      )}
+    >
+      {devices.isPending ? (
+        <SkeletonRows rows={2} />
+      ) : devices.isError ? (
+        <ErrorState error={devices.error} compact onRetry={() => void devices.refetch()} />
+      ) : devices.data.items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {t("stationsSettings.none", "No stations yet")}
+        </p>
+      ) : (
+        <ul className="flex flex-wrap gap-2">
+          {devices.data.items.map((s) => {
+            const m = openByStation.get(s.id);
+            return (
+              <li
+                key={s.id}
+                className={cn(
+                  "flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm",
+                  m ? "border-warning bg-warning/10" : "border-border",
+                )}
+              >
+                <span className="font-medium">{s.name}</span>
+                {m ? (
+                  <>
+                    <Badge variant="warning">
+                      <Wrench className="size-3" aria-hidden />
+                      {t(`maintenanceReason.${m.reason}`, m.reason)}
+                    </Badge>
+                    {can("production.maintenance") && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => end.mutate({ stationId: s.id, note: null })}
+                        disabled={end.isPending}
+                      >
+                        {end.isPending ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
+                        {t("stations.reopen", "Reopen")}
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  can("production.maintenance") && (
+                    <Button size="sm" variant="ghost" onClick={() => setStarting(s)}>
+                      <PauseCircle />
+                      {t("stations.close", "Close")}
+                    </Button>
+                  )
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {starting && (
+        <StartMaintenanceDialog
+          station={starting}
+          onClose={() => setStarting(null)}
+          onStarted={invalidate}
+        />
+      )}
+    </Section>
+  );
+}
+
+function StartMaintenanceDialog({
+  station,
+  onClose,
+  onStarted,
+}: {
+  station: StationDevice;
+  onClose: () => void;
+  onStarted: () => void;
+}) {
+  const { t } = useTranslation();
+  const [reason, setReason] = useState<(typeof MAINTENANCE_REASONS)[number]>("cleaning");
+  const [note, setNote] = useState("");
+  const start = useMutation(
+    orpc.production.maintenance.start.mutationOptions({
+      onSuccess: () => {
+        toast.success(
+          t("stations.maintenanceStarted", "{{name}} closed for maintenance", {
+            name: station.name,
+          }),
+        );
+        onStarted();
+        onClose();
+      },
+    }),
+  );
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("stations.closeTitle", "Close {{name}}", { name: station.name })}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              "stations.closeHint",
+              "Scans at this station block with a clear message until it reopens.",
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <NativeSelect
+          aria-label={t("stations.reason", "Reason")}
+          value={reason}
+          onChange={(e) => setReason(e.target.value as typeof reason)}
+        >
+          {MAINTENANCE_REASONS.map((r) => (
+            <option key={r} value={r}>
+              {t(`maintenanceReason.${r}`, r.replace(/_/g, " "))}
+            </option>
+          ))}
+        </NativeSelect>
+        <Textarea
+          value={note}
+          maxLength={500}
+          rows={2}
+          placeholder={t("stations.notePlaceholder", "Note (optional)")}
+          aria-label={t("orders.note", "Note")}
+          onChange={(e) => setNote(e.target.value)}
+        />
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            {t("action.cancel")}
+          </Button>
+          <Button
+            onClick={() =>
+              start.mutate({ stationId: station.id, reason, note: note.trim() || null })
+            }
+            disabled={start.isPending}
+          >
+            {start.isPending ? <Loader2 className="animate-spin" /> : <PauseCircle />}
+            {t("stations.close", "Close")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

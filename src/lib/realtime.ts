@@ -72,6 +72,8 @@ export function keysForEvent(name: string): QueryKey[] {
       return [orpc.vendorPortal.key()];
     case "digest.ready":
       return [orpc.digest.key(), orpc.today.key()];
+    case "station.maintenance_changed":
+      return [orpc.production.maintenance.key(), orpc.stations.key(), orpc.production.queue.key()];
     default:
       return [];
   }
