@@ -266,3 +266,65 @@ export function formatMoneyShort(dollars: number): string {
 export function orderLabel(orderNo: string): string {
   return `#${orderNo.replace(/^#+/, "")}`;
 }
+
+/**
+ * `i18n.language` as-is ("en" or "es"), for `Intl.NumberFormat` — unlike `dateLocale()`, plain
+ * "es" is wanted here: it gives the period-decimal, comma-thousands style ("12,3 mil US$",
+ * "+6,9 pts") the spec's locale rule (business-analytics-v2.md §5 rule 10) shows as the example,
+ * matching how `@invai/ui`'s `Money` already picks its locale.
+ */
+function numberLocale(): string {
+  return i18n.language || "en";
+}
+
+/**
+ * Compact currency for chart axis ticks, locale-aware (T-A6, B-226): `narrowSymbol` keeps the
+ * Spanish form short ("12,3 mil $" instead of the non-breaking "12,3 mil US$") so axis labels
+ * don't crowd or clip. Input is dollars, not cents, like `formatMoneyShort`.
+ */
+export function formatMoneyShortLocale(dollars: number): string {
+  return new Intl.NumberFormat(numberLocale(), {
+    style: "currency",
+    currency: "USD",
+    currencyDisplay: "narrowSymbol",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(dollars);
+}
+
+/**
+ * Locale-aware percent for a 0..1 ratio (`estimatedShare`, `finance.profit`'s `marginPct`):
+ * 0.873 -> "87%" / "87 %". Null-safe, like `formatPct`, which stays untouched (not locale-aware)
+ * for its existing callers outside this card's owned screens.
+ */
+export function formatRatioPctLocale(ratio: number | null | undefined, digits = 0): string {
+  if (ratio === null || ratio === undefined || Number.isNaN(ratio)) return "—";
+  return new Intl.NumberFormat(numberLocale(), {
+    style: "percent",
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(ratio);
+}
+
+/**
+ * Locale-aware percent for a number already ×100 (the `*Pct` convention every `analytics.*`
+ * field uses, e.g. `cm3Pct: 31.6`, `losingPct: 4.2`): 31.6 -> "31.6%" / "31,6 %".
+ */
+export function formatPctNumberLocale(pct: number | null | undefined, digits = 1): string {
+  if (pct === null || pct === undefined || Number.isNaN(pct)) return "—";
+  return formatRatioPctLocale(pct / 100, digits);
+}
+
+/**
+ * A percent-point change, always signed: 6.9 -> "+6.9 pts" / "+6,9 pts" (spec rule 10's own
+ * example). For a difference between two `*Pct` numbers, never for a plain percent snapshot.
+ */
+export function formatPercentPoints(points: number | null | undefined, digits = 1): string {
+  if (points === null || points === undefined || Number.isNaN(points)) return "—";
+  const n = new Intl.NumberFormat(numberLocale(), {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(Math.abs(points));
+  const sign = points < 0 ? "-" : points > 0 ? "+" : "";
+  return `${sign}${n} pts`;
+}

@@ -49,6 +49,9 @@ function CostsForm({ settings }: { settings: CostSettings }) {
   const [labor, setLabor] = useState(centsToDollarsInput(settings.laborRatePerHour));
   const [minutes, setMinutes] = useState(String(settings.laborMinutesPerItem));
   const [ads, setAds] = useState(settings.adsAllocation);
+  const [fixedMonthly, setFixedMonthly] = useState(
+    settings.fixedMonthlyCents == null ? "" : centsToDollarsInput(settings.fixedMonthlyCents),
+  );
   const save = useMutation(
     orpc.finance.costSettings.update.mutationOptions({
       onSuccess: () => {
@@ -59,6 +62,7 @@ function CostsForm({ settings }: { settings: CostSettings }) {
   );
   const pkg = parseDollarsToCents(packaging);
   const rate = parseDollarsToCents(labor);
+  const fixedMonthlyCents = parseDollarsToCents(fixedMonthly);
   const setFee = (i: number, k: keyof (typeof fees)[number], v: string) =>
     setFees(
       fees.map((f, j) =>
@@ -218,10 +222,45 @@ function CostsForm({ settings }: { settings: CostSettings }) {
           </Field>
         </div>
       </Section>
+      <Section
+        title={t("costs.breakEven", "Break-even")}
+        description={t(
+          "costs.breakEvenSubtitle",
+          "Used by Profit → Break-even to show orders per month needed to cover the shop's bills.",
+        )}
+      >
+        <Field
+          label={t("costs.fixedMonthly", "Fixed monthly costs ($)")}
+          htmlFor="c-fixed"
+          hint={t(
+            "costs.fixedMonthlyHint",
+            "Rent, salaries, software — whatever doesn't change with how many shirts you print. Labor per shirt is already counted above; don't add it again here.",
+          )}
+          error={
+            fixedMonthly.trim() !== "" && fixedMonthlyCents === null
+              ? t("costs.fixedMonthlyInvalid", "Enter a dollar amount, or leave it blank")
+              : undefined
+          }
+        >
+          <Input
+            id="c-fixed"
+            inputMode="decimal"
+            placeholder={t("costs.fixedMonthlyPlaceholder", "Not set")}
+            value={fixedMonthly}
+            onChange={(e) => setFixedMonthly(e.target.value)}
+            disabled={!editable}
+          />
+        </Field>
+      </Section>
       {editable && (
         <div className="flex justify-end">
           <Button
-            disabled={pkg === null || rate === null || save.isPending}
+            disabled={
+              pkg === null ||
+              rate === null ||
+              (fixedMonthly.trim() !== "" && fixedMonthlyCents === null) ||
+              save.isPending
+            }
             onClick={() =>
               save.mutate({
                 feeTables: fees,
@@ -230,6 +269,7 @@ function CostsForm({ settings }: { settings: CostSettings }) {
                 laborRatePerHour: rate ?? 0,
                 laborMinutesPerItem: Number(minutes) || 0,
                 adsAllocation: ads,
+                fixedMonthlyCents: fixedMonthly.trim() === "" ? null : fixedMonthlyCents,
               })
             }
           >

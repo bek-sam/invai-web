@@ -5,7 +5,11 @@ import {
   firstName,
   formatDay,
   formatInches,
+  formatMoneyShortLocale,
   formatPct,
+  formatPctNumberLocale,
+  formatPercentPoints,
+  formatRatioPctLocale,
   freightProgress,
   parseDollarsToCents,
   parseTags,
@@ -77,6 +81,51 @@ describe("format helpers", () => {
     expect(freightProgress(15000, 20000)).toEqual({ ratio: 0.75, shortfall: 5000 });
     expect(freightProgress(25000, 20000)).toEqual({ ratio: 1, shortfall: 0 });
     expect(freightProgress(100, 0)).toEqual({ ratio: 1, shortfall: 0 });
+  });
+
+  it("formats a locale-aware percent for a ratio and for the analytics *Pct convention (T-A6, AC7)", () => {
+    const original = i18n.language;
+    try {
+      i18n.language = "en";
+      expect(formatRatioPctLocale(0.873)).toBe("87%");
+      expect(formatRatioPctLocale(null)).toBe("—");
+      expect(formatPctNumberLocale(31.6)).toBe("31.6%");
+      expect(formatPctNumberLocale(null)).toBe("—");
+      i18n.language = "es";
+      expect(formatRatioPctLocale(0.873)).toContain("87");
+      expect(formatPctNumberLocale(31.6)).toContain("31,6");
+    } finally {
+      i18n.language = original;
+    }
+  });
+
+  it("signs percent-point changes and keeps the spec's '+6,9 pts' style in Spanish", () => {
+    const original = i18n.language;
+    try {
+      i18n.language = "en";
+      expect(formatPercentPoints(6.9)).toBe("+6.9 pts");
+      expect(formatPercentPoints(-3.2)).toBe("-3.2 pts");
+      expect(formatPercentPoints(0)).toBe("0.0 pts");
+      expect(formatPercentPoints(null)).toBe("—");
+      i18n.language = "es";
+      expect(formatPercentPoints(6.9)).toBe("+6,9 pts");
+    } finally {
+      i18n.language = original;
+    }
+  });
+
+  it("formats a locale-aware compact currency axis tick without a clipping non-breaking run (B-226)", () => {
+    const original = i18n.language;
+    try {
+      i18n.language = "en";
+      expect(formatMoneyShortLocale(12345)).toBe("$12.3K");
+      i18n.language = "es";
+      // Uses the narrow "$" symbol (not the longer "US$"), so a fixed-width axis never clips.
+      expect(formatMoneyShortLocale(12345)).not.toContain("US$");
+      expect(formatMoneyShortLocale(12345)).toContain("$");
+    } finally {
+      i18n.language = original;
+    }
   });
 });
 

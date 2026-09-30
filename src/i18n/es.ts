@@ -591,7 +591,15 @@ export const es: Messages = {
   },
   costs: {
     ads: "Repartir el gasto en anuncios por",
+    breakEven: "Punto de equilibrio",
+    breakEvenSubtitle:
+      "Lo usa Ganancias → Punto de equilibrio para mostrar los pedidos por mes necesarios para cubrir los gastos del taller.",
     fees: "Comisiones por canal",
+    fixedMonthly: "Costos fijos mensuales ($)",
+    fixedMonthlyHint:
+      "Renta, salarios, software: lo que no cambia según cuántas playeras imprimas. La mano de obra por playera ya se cuenta arriba; no la agregues aquí de nuevo.",
+    fixedMonthlyInvalid: "Ingresa un monto en dólares, o deja el campo vacío",
+    fixedMonthlyPlaceholder: "Sin definir",
     laborRate: "Costo de mano de obra por hora ($)",
     listingFee: "Tarifa de publicación ($)",
     minutes: "Minutos de mano de obra por artículo",
@@ -1561,6 +1569,7 @@ export const es: Messages = {
       day: "Día",
       design: "Diseño",
       order: "Pedido",
+      sku: "SKU",
     },
     drilldownLimited:
       "Las filas abren la lista de pedidos de este periodo; esa lista aún no filtra por {{dim}}.",
@@ -1611,6 +1620,91 @@ export const es: Messages = {
     voidReason: "¿Por qué anulas este reembolso?",
     voidRefund: "Anular",
     voided: "anulado",
+  },
+  profitV2: {
+    addFixedCosts: "Agrega tus costos fijos mensuales para ver el punto de equilibrio",
+    adsCost: "Publicidad",
+    allChannels: "Todos los canales",
+    baseCm3: "Antes",
+    breakEven: "Punto de equilibrio",
+    breakEvenHint:
+      "Pedidos por mes necesarios para cubrir los costos fijos mensuales del taller, y el ritmo actual.",
+    breakEvenNotEnoughOrders:
+      "Todavía no hay suficientes pedidos para mostrar el punto de equilibrio ({{n}} de 30 necesarios en este periodo)",
+    breakEvenOrders: "Pedidos de equilibrio / mes",
+    by: {
+      channel: "Canal",
+      costLine: "Línea de costo",
+      design: "Diseño",
+    },
+    byLabel: "Clasificar por",
+    change: "Cambio",
+    charged: "Cobrado",
+    cm3PerOrder: "Ganancia neta / pedido",
+    comparedTo: "Comparado con {{from}}–{{to}}",
+    contribution: "Contribución",
+    contributionHint:
+      "Margen de contribución después de costos de producto (CM1), cumplimiento (CM2) y publicidad (CM3).",
+    currentCm3: "Ahora",
+    dimension: "Agrupar por",
+    discounts: "Descuentos",
+    estimated: "Estimado",
+    filteredByChannel: "Filtrado a {{channel}}",
+    fixedMonthlyCents: "Costos fijos mensuales",
+    freeShipping: "Envío gratis",
+    grossSales: "Ventas brutas",
+    groupBy: {
+      channel: "Canal",
+      service: "Servicio",
+      weightBand: "Rango de peso",
+      zone: "Zona",
+    },
+    groupByLabel: "Agrupar por",
+    labeledOrders: "Pedidos con etiqueta",
+    laborCost: "Mano de obra",
+    largestCostLine: "Mayor costo",
+    leakage: "Cascada de fugas",
+    leakageHint:
+      "Ventas brutas, y luego lo que se resta antes de la contribución: descuentos, comisiones, reembolsos, pérdida de envío y reimpresiones.",
+    leakagePct: "Fuga",
+    losingOrders: "Pedidos que perdieron dinero",
+    losingOrdersCount: "Pedidos con pérdida",
+    losingOrdersHint:
+      "Pedidos cuya contribución después de costos de cumplimiento (CM2) es negativa, del peor al mejor.",
+    losingPct: "Parte de los pedidos",
+    lossCents: "Total perdido",
+    margin: "Margen",
+    marginPerOrder: "Margen / pedido",
+    noLabeledShipments: "Todavía no hay envíos con etiqueta en este periodo",
+    noLabeledShipmentsHint:
+      "Compra etiquetas de envío en InvAI para ver aquí la ganancia de envío.",
+    noLosingOrders: "No hay pedidos con pérdida en este periodo",
+    notEnoughOrders: "No hay suficientes pedidos para explicar el cambio",
+    notEnoughOrdersHint:
+      "{{base}} pedidos antes, {{current}} pedidos ahora; ambos periodos necesitan al menos 20.",
+    operatingProfitPace: "Ritmo de ganancia operativa / mes",
+    ordersWithoutProfitLine: "{{n}} pedidos todavía no están en estos números",
+    pace: "Ritmo actual / mes",
+    packagingCost: "Empaque",
+    profitBridge: "Por qué cambió",
+    profitBridgeHint:
+      "Ganancia neta comparada con el periodo anterior de igual duración, dividida entre vender más o menos unidades y que cada venta ganara más o menos.",
+    ratePart: "Por la tasa",
+    refundsChange:
+      "Los reembolsos también cambiaron (fechados por el reembolso, no por la venta; no forman parte del total de arriba):",
+    remaining: "Restante (contribución)",
+    reprints: "Reimpresiones",
+    shipmentsWithoutZone:
+      "{{n}} envíos con etiqueta no tienen zona registrada todavía y no están en estas filas.",
+    shippingLoss: "Pérdida de envío",
+    shippingMargin: "Ganancia de envío",
+    shippingMarginHint:
+      "Envío cobrado al comprador menos franqueo y costo de etiqueta, para pedidos con etiqueta de InvAI.",
+    totalChange: "Cambio total",
+    views: {
+      overview: "Por día o pedido",
+    },
+    volumePart: "Por el volumen",
   },
   pushStatus: {
     exported_manual: "Rastreo cargado (manual)",
