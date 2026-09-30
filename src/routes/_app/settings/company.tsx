@@ -1,4 +1,4 @@
-import { Button, Input, toast } from "@invai/ui";
+import { Button, Input, Switch, toast } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -37,6 +37,15 @@ function CompanyPage() {
   // a POD/DTF shop needs this set before it can generate or publish an Etsy listing (T-8-1 AC2).
   const [partnerName, setPartnerName] = useState(me.org.productionPartner?.name ?? "");
   const [partnerEtsyId, setPartnerEtsyId] = useState(me.org.productionPartner?.etsyPartnerId ?? "");
+  const [printsInHouse, setPrintsInHouse] = useState(me.org.printsInHouse);
+  const [shipsSaturday, setShipsSaturday] = useState(me.org.shipsSaturday ?? false);
+  const [transferAgeWarnDays, setTransferAgeWarnDays] = useState(
+    String(me.org.transferAgeWarnDays ?? 30),
+  );
+  const transferAgeInvalid =
+    !Number.isInteger(Number(transferAgeWarnDays)) ||
+    Number(transferAgeWarnDays) < 1 ||
+    Number(transferAgeWarnDays) > 365;
   const save = useMutation(
     orpc.me.updateOrg.mutationOptions({
       onSuccess: () => {
@@ -130,6 +139,64 @@ function CompanyPage() {
               </Field>
             </div>
           )}
+          {me.org.type === "shop" && (
+            <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4">
+              <label className="flex items-center gap-2 text-sm">
+                <Switch
+                  checked={printsInHouse}
+                  onCheckedChange={setPrintsInHouse}
+                  disabled={!editable}
+                />
+                {t("company.printsInHouse", "We print in house")}
+                <span className="text-xs text-muted-foreground">
+                  {t(
+                    "company.printsInHouseHint",
+                    "Skips sending sheets to a vendor; press them yourself instead.",
+                  )}
+                </span>
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Switch
+                  checked={shipsSaturday}
+                  onCheckedChange={setShipsSaturday}
+                  disabled={!editable}
+                />
+                {t("company.shipsSaturday", "We ship on Saturdays")}
+                <span className="text-xs text-muted-foreground">
+                  {t(
+                    "company.shipsSaturdayHint",
+                    "Counts Saturday as a ship day for ship-by dates.",
+                  )}
+                </span>
+              </label>
+              <Field
+                label={t("company.transferAgeWarnDays", "Transfer-age warning (days)")}
+                htmlFor="c-transfer-age"
+                hint={t(
+                  "company.transferAgeWarnDaysHint",
+                  "Pick and press flag a printed transfer as old after this many days.",
+                )}
+                error={
+                  transferAgeInvalid
+                    ? t("company.transferAgeWarnDaysError", "Enter a whole number from 1 to 365")
+                    : undefined
+                }
+                className="max-w-xs"
+              >
+                <Input
+                  id="c-transfer-age"
+                  type="number"
+                  min={1}
+                  max={365}
+                  step={1}
+                  value={transferAgeWarnDays}
+                  aria-invalid={transferAgeInvalid}
+                  onChange={(e) => setTransferAgeWarnDays(e.target.value)}
+                  disabled={!editable}
+                />
+              </Field>
+            </div>
+          )}
           {editable && (
             <div className="mt-4 flex justify-end">
               <Button
@@ -140,9 +207,16 @@ function CompanyPage() {
                     productionPartner: partnerName.trim()
                       ? { name: partnerName.trim(), etsyPartnerId: partnerEtsyId.trim() || null }
                       : null,
+                    ...(me.org.type === "shop"
+                      ? {
+                          printsInHouse,
+                          shipsSaturday,
+                          transferAgeWarnDays: Number(transferAgeWarnDays),
+                        }
+                      : {}),
                   })
                 }
-                disabled={!name.trim() || save.isPending}
+                disabled={!name.trim() || transferAgeInvalid || save.isPending}
               >
                 {save.isPending && <Loader2 className="animate-spin" />}
                 {t("action.save")}
