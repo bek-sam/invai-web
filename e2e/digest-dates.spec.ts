@@ -48,8 +48,15 @@ test.describe("AC1 (T-20-2): the Spanish digest heading never shows an English w
     // The list page is already "settled" (no skeletons), so wait for the route change itself:
     // otherwise `h1` can still be the list's own "Resúmenes" heading (wave 20 gate, run 2).
     await page.waitForURL(/\/digests\/\d{4}-W\d{2}/);
+    // Still a race after the URL changes: both routes render through the same `Page`/`PageHeader`
+    // (`src/components/page.tsx`, `invai-ui/src/app/page-header.tsx`) and only one `<h1>` ever
+    // exists at a time, but a one-shot `innerText()` right after `settled()` can still catch the
+    // list route's own "Resúmenes" heading before the detail route's heading has committed (T-23-9
+    // gate, run 1). Wait for the heading text itself with an auto-retrying assertion first.
+    const heading = page.locator("h1").first();
+    await expect(heading).toHaveText(ES_WEEKDAY_OR_MONTH, { timeout: 15_000 });
     await settled(page);
-    const pageHeading = (await page.locator("h1").first().innerText()).trim();
+    const pageHeading = (await heading.innerText()).trim();
     expect(pageHeading).not.toMatch(EN_WEEKDAY_OR_MONTH);
     expect(pageHeading).toMatch(ES_WEEKDAY_OR_MONTH);
     expect(issues.filter((i) => i.kind === "console")).toEqual([]);
