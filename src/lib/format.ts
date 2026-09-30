@@ -4,6 +4,18 @@ import {
   type ListingContent,
   type OrderItemState,
 } from "@invai/contracts";
+import i18n from "i18next";
+
+/**
+ * The app's chosen language (`i18n.language`, toggled independent of the browser/OS locale) as an
+ * `Intl` locale for a short date: `es-MX` in Spanish so the month never renders as "sept" (T-20-2's
+ * `weekOfLabel` precedent), `en-US` otherwise. `toLocaleDateString(undefined, ...)` reads the
+ * runtime's default locale instead and was the B-207 bug: an English-OS browser with the app set
+ * to Spanish still showed English weekday/month names (`e2e/digest-dates.spec.ts` AC1).
+ */
+function dateLocale(): string {
+  return i18n.language?.startsWith("es") ? "es-MX" : "en-US";
+}
 
 export function formatInches(inches: number, digits = 1): string {
   return `${inches.toFixed(digits).replace(/\.0+$/, "")}″`;
@@ -22,12 +34,12 @@ export function formatNumber(n: number | null | undefined, digits = 0): string {
 
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(dateLocale(), { month: "short", day: "numeric" });
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString(undefined, {
+  return new Date(iso).toLocaleString(dateLocale(), {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -46,7 +58,7 @@ export function firstName(fullName: string | null | undefined): string {
 export function formatDay(day: string): string {
   const [y, m, d] = day.split("-").map(Number);
   if (!y || !m || !d) return day;
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+  return new Date(y, m - 1, d).toLocaleDateString(dateLocale(), {
     weekday: "short",
     month: "short",
     day: "numeric",

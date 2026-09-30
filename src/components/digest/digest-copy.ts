@@ -71,6 +71,16 @@ export function localeNumber(n: number, lang: string): string {
 }
 
 /**
+ * The digest's `es-US`/`en-US` locale for `formatMoney` (B-193): plain `i18n.language` ("es")
+ * formats USD as "704,47 US$" (bare-es currency style), which reads as a mismatch next to the
+ * rest of the digest's `es-US` money and points. Pass this instead of `i18n.language` to any
+ * `formatMoney` call inside a digest chip or action line.
+ */
+export function digestMoneyLang(lang: string): string {
+  return lang.startsWith("es") ? "es-US" : "en-US";
+}
+
+/**
  * Arrow direction for a glance-grid delta, from the raw `changePct` the backend sends (points for
  * `marginPct`/`onTimeRate`, relative percent otherwise). `null` means no arrow at all: either there
  * is no comparable prior week, or the change is exactly zero ("unchanged" / "sin cambio", wave 20

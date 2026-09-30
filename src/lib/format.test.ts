@@ -1,7 +1,9 @@
+import i18n from "i18next";
 import { describe, expect, it } from "vitest";
 import {
   endOfDayIso,
   firstName,
+  formatDay,
   formatInches,
   formatPct,
   freightProgress,
@@ -25,6 +27,21 @@ describe("format helpers", () => {
     expect(firstName("Maria  Lopez Garcia")).toBe("Maria");
     expect(firstName("")).toBe("—");
     expect(firstName(null)).toBe("—");
+  });
+
+  it("follows the app's chosen language, not the runtime's default locale (B-207 AC1)", () => {
+    const original = i18n.language;
+    try {
+      i18n.language = "en";
+      expect(formatDay("2026-09-21")).toMatch(/^Mon, Sep 21$/);
+      i18n.language = "es";
+      const es = formatDay("2026-09-21");
+      expect(es).not.toMatch(/\b(Mon|Sep)\b/);
+      expect(es.toLowerCase()).toContain("lun");
+      expect(es.toLowerCase()).toContain("sep");
+    } finally {
+      i18n.language = original;
+    }
   });
 
   it("round-trips local calendar days", () => {

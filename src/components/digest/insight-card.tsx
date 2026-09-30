@@ -7,7 +7,7 @@ import { orpc } from "../../lib/rpc";
 import { AnyLink } from "../any-link";
 import { RecommendationCard } from "../market/recommendation-card";
 import { useNicheLabel } from "../market/use-niche-taxonomy";
-import { digestActionText, digestWinText, sourceDateText } from "./digest-copy";
+import { digestActionText, digestMoneyLang, digestWinText, sourceDateText } from "./digest-copy";
 import { FeedbackThumbs } from "./feedback-thumbs";
 
 /** Splits a contract `href` ("/orders?view=overdue") into TanStack Router's `to` + `search`. */
@@ -65,7 +65,11 @@ export function DigestInsightCard({
       {insight.impactCents != null && (
         <Badge variant="outline" className="w-fit">
           {t("digest.impact", "~{{amount}} impact", {
-            amount: formatMoney(Math.abs(insight.impactCents), "USD", i18n.language),
+            amount: formatMoney(
+              Math.abs(insight.impactCents),
+              "USD",
+              digestMoneyLang(i18n.language),
+            ),
           })}
         </Badge>
       )}
@@ -109,7 +113,7 @@ export function DigestWinCard({ digestId, insight }: { digestId: string; insight
     <div className="flex flex-col gap-2 rounded-md border border-success/40 bg-success/5 p-3 text-sm">
       {insight.impactCents != null && (
         <Badge variant="success" className="w-fit">
-          {formatMoney(Math.abs(insight.impactCents), "USD", i18n.language)}
+          {formatMoney(Math.abs(insight.impactCents), "USD", digestMoneyLang(i18n.language))}
         </Badge>
       )}
       <p className="font-medium">{text}</p>

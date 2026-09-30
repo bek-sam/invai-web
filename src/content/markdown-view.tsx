@@ -12,7 +12,7 @@ import type { Block, Inline } from "./markdown";
  */
 export function MarkdownBlocks({ blocks }: { blocks: Block[] }) {
   return (
-    <div className="flex flex-col gap-4 text-sm leading-relaxed">
+    <div className="flex flex-col gap-4 text-sm leading-relaxed break-words">
       {blocks.map((b, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: static content, re-parsed whole on every render
         <MarkdownBlock key={i} block={b} />
@@ -61,12 +61,18 @@ function MarkdownBlock({ block }: { block: Block }) {
           className={cn("flex flex-col gap-1.5 pl-5", block.ordered ? "list-decimal" : "list-disc")}
         >
           {block.items.map((item, i) => (
+            // A `list-item` <li> must keep the browser's default display to draw its own number
+            // or bullet (`::marker` is only generated for `display: list-item`; `display: flex`
+            // on the <li> itself silently drops it) -- the flex layout for its children lives on
+            // an inner <div> instead (B-196: help-article lists must keep their numbers/bullets).
             // biome-ignore lint/suspicious/noArrayIndexKey: static content
-            <li key={i} className="flex flex-col gap-1.5 marker:text-muted-foreground">
-              {item.map((b, j) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: static content
-                <MarkdownBlock key={j} block={b} />
-              ))}
+            <li key={i} className="marker:text-muted-foreground">
+              <div className="flex flex-col gap-1.5">
+                {item.map((b, j) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: static content
+                  <MarkdownBlock key={j} block={b} />
+                ))}
+              </div>
             </li>
           ))}
         </ListTag>
@@ -162,8 +168,13 @@ function renderInline(node: Inline): React.ReactNode {
         </em>
       );
     case "code":
+      // B-196: legal/help source has long unbroken tokens (file paths, env var names) inside
+      // backticks; without a break rule an inline `<code>` doesn't wrap and pushes the whole
+      // page wider than the 390 px viewport instead of scrolling its own content.
       return (
-        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">{node.value}</code>
+        <code className="break-all rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">
+          {node.value}
+        </code>
       );
     case "image":
       return <ImagePlaceholder alt={node.alt} />;

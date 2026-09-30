@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { localeNumber } from "../../../components/digest/digest-copy";
 import { Page, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { billingActionError } from "../../../features/billing/checkout";
@@ -52,7 +53,7 @@ const RETURN_POLL_MS = 2_000;
 const RETURN_POLL_FOR_MS = 30_000;
 
 function BillingPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const can = useCan();
   const canManage = can("billing.manage");
   const queryClient = useQueryClient();
@@ -287,9 +288,9 @@ function BillingPage() {
                 "billing.creditsLeft",
                 "{{n}} left this month · {{allowance}} included with your plan, {{packs}} from packs",
                 {
-                  n: credits.data.remaining.toLocaleString(),
-                  allowance: credits.data.allowance.toLocaleString(),
-                  packs: credits.data.packs.toLocaleString(),
+                  n: localeNumber(credits.data.remaining, i18n.language),
+                  allowance: localeNumber(credits.data.allowance, i18n.language),
+                  packs: localeNumber(credits.data.packs, i18n.language),
                 },
               )}
             >
@@ -314,7 +315,7 @@ function BillingPage() {
                         <Sparkles />
                       )}
                       {t("billing.buyPack", "Buy {{n}} credits", {
-                        n: pack.credits.toLocaleString(),
+                        n: localeNumber(pack.credits, i18n.language),
                       })}
                     </Button>
                   ))}
@@ -352,7 +353,7 @@ function BillingPage() {
         title={t("billing.downgradeTitle", "Switch to {{plan}}?", {
           plan: downgradeTo?.name ?? "",
         })}
-        description={downgradeTo ? downgradeText(downgradeTo, t) : undefined}
+        description={downgradeTo ? downgradeText(downgradeTo, t, i18n.language) : undefined}
         confirmLabel={t("billing.downgradeConfirm", "Switch plan")}
         destructive
         pending={busy}
@@ -366,7 +367,9 @@ function BillingPage() {
         open={confirmFree}
         onOpenChange={setConfirmFree}
         title={t("billing.freeTitle", "Switch to the free plan?")}
-        description={freePlan && status.data ? freeText(status.data, freePlan, t) : undefined}
+        description={
+          freePlan && status.data ? freeText(status.data, freePlan, t, i18n.language) : undefined
+        }
         confirmLabel={t("billing.freeConfirm", "Switch to free")}
         destructive
         pending={change.isPending}
@@ -458,7 +461,7 @@ function CreditLedgerTable({
   isLoadingMore: boolean;
   onLoadMore: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const columns: DataTableColumn<CreditEntry>[] = [
     {
       accessorKey: "at",
@@ -488,7 +491,8 @@ function CreditLedgerTable({
           "—"
         ) : (
           <span className="tabular-nums text-muted-foreground">
-            {r.tokensIn.toLocaleString()} in / {(r.tokensOut ?? 0).toLocaleString()} out
+            {localeNumber(r.tokensIn, i18n.language)} in /{" "}
+            {localeNumber(r.tokensOut ?? 0, i18n.language)} out
           </span>
         );
       },
@@ -504,7 +508,7 @@ function CreditLedgerTable({
           )}
         >
           {row.original.credits > 0 ? "+" : ""}
-          {row.original.credits.toLocaleString()}
+          {localeNumber(row.original.credits, i18n.language)}
         </span>
       ),
     },
@@ -525,7 +529,7 @@ function CreditLedgerTable({
 }
 
 function UsageMeters({ status }: { status: BillingStatus }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {(["orders", "aiCredits", "users", "connections"] as const).map((k) => {
@@ -537,7 +541,8 @@ function UsageMeters({ status }: { status: BillingStatus }) {
             <div className="mb-1 flex justify-between gap-2 text-sm">
               <span>{label}</span>
               <span className={cn("tabular-nums", m.limitReached && "font-medium text-danger")}>
-                {m.used.toLocaleString()} / {m.limit === null ? "∞" : m.limit.toLocaleString()}
+                {localeNumber(m.used, i18n.language)} /{" "}
+                {m.limit === null ? "∞" : localeNumber(m.limit, i18n.language)}
                 {m.limitReached && ` · ${t("billing.limitReached", "limit reached")}`}
               </span>
             </div>
@@ -568,7 +573,7 @@ function PlanCard({
   pending: boolean;
   onChoose: (move: PlanMove | "choose") => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const custom = isCustomPlan(plan);
   const label =
     move === "upgrade"
@@ -595,10 +600,14 @@ function PlanCard({
         <li>
           {plan.ordersPerMonth === null
             ? t("billing.unlimited", "Unlimited orders")
-            : t("billing.orders", "{{n}} orders/mo", { n: plan.ordersPerMonth.toLocaleString() })}
+            : t("billing.orders", "{{n}} orders/mo", {
+                n: localeNumber(plan.ordersPerMonth, i18n.language),
+              })}
         </li>
         <li>
-          {t("billing.credits", "{{n}} AI credits", { n: plan.aiCreditsPerMonth.toLocaleString() })}
+          {t("billing.credits", "{{n}} AI credits", {
+            n: localeNumber(plan.aiCreditsPerMonth, i18n.language),
+          })}
         </li>
         <li>
           {plan.maxUsers === null
@@ -639,7 +648,7 @@ function PlanCard({
   );
 }
 
-function downgradeText(plan: Plan, t: T): string {
+function downgradeText(plan: Plan, t: T, lang: string): string {
   return t(
     "billing.downgradeBody",
     "{{plan}} includes {{orders}} orders a month, {{users}} users and {{stores}} channel connections. If you use more than that, imports, invites or new connections stop until you upgrade again.",
@@ -648,7 +657,7 @@ function downgradeText(plan: Plan, t: T): string {
       orders:
         plan.ordersPerMonth === null
           ? t("billing.unlimitedShort", "unlimited")
-          : plan.ordersPerMonth.toLocaleString(),
+          : localeNumber(plan.ordersPerMonth, lang),
       users: plan.maxUsers ?? t("billing.unlimitedShort", "unlimited"),
       stores: plan.maxConnections ?? t("billing.unlimitedShort", "unlimited"),
     },
@@ -656,9 +665,11 @@ function downgradeText(plan: Plan, t: T): string {
 }
 
 /** Moving to free: a paying plan runs to the end of its period first (live), or changes now. */
-function freeText(s: BillingStatus, free: Plan, t: T): string {
+function freeText(s: BillingStatus, free: Plan, t: T, lang: string): string {
   const limits = {
-    orders: free.ordersPerMonth?.toLocaleString() ?? t("billing.unlimitedShort", "unlimited"),
+    orders:
+      (free.ordersPerMonth != null ? localeNumber(free.ordersPerMonth, lang) : undefined) ??
+      t("billing.unlimitedShort", "unlimited"),
     users: free.maxUsers ?? t("billing.unlimitedShort", "unlimited"),
     stores: free.maxConnections ?? t("billing.unlimitedShort", "unlimited"),
   };

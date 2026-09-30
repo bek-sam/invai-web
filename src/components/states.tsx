@@ -19,6 +19,9 @@ export function ErrorState({
 }) {
   const { t } = useTranslation();
   const info = errorInfo(error);
+  // Retrying a no-access page just asks the same question and gets the same FORBIDDEN answer
+  // (B-193): the button never helps here, so it doesn't show, even when the caller passed one.
+  const canRetry = !!onRetry && info.code !== "FORBIDDEN";
   const Icon =
     info.code === "NOT_IMPLEMENTED"
       ? Construction
@@ -46,7 +49,7 @@ export function ErrorState({
         <span className="min-w-0 flex-1 truncate">
           {title}: {info.message}
         </span>
-        {onRetry && (
+        {canRetry && (
           <Button size="sm" variant="ghost" onClick={onRetry}>
             {t("action.retry")}
           </Button>
@@ -61,7 +64,7 @@ export function ErrorState({
         title={title}
         description={info.message}
         action={
-          onRetry ? (
+          canRetry ? (
             <Button size="sm" variant="outline" onClick={onRetry}>
               <RotateCw />
               {t("action.retry")}

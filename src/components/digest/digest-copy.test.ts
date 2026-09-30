@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import { describe, expect, it } from "vitest";
 import {
   digestActionText,
+  digestMoneyLang,
   digestWinText,
   glanceChangeDirection,
   localeNumber,
@@ -159,6 +160,13 @@ describe("localeNumber", () => {
     expect(localeNumber(10000, "en")).toBe("10,000");
     expect(localeNumber(10000, "es")).toBe("10,000");
     expect(localeNumber(1950, "es")).toBe("1,950");
+  });
+});
+
+describe("digestMoneyLang", () => {
+  it('maps to es-US for Spanish, never bare es (B-193: bare-es shows "704,47 US$")', () => {
+    expect(digestMoneyLang("en")).toBe("en-US");
+    expect(digestMoneyLang("es")).toBe("es-US");
   });
 });
 
