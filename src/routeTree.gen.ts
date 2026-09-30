@@ -25,6 +25,8 @@ import { Route as HelpIndexRouteImport } from './routes/help/index'
 import { Route as HelpSlugRouteImport } from './routes/help/$slug'
 import { Route as LegalSlugRouteImport } from './routes/legal/$slug'
 import { Route as AppAnalyticsAdSpendRouteImport } from './routes/_app/analytics/ad-spend'
+import { Route as AppAnalyticsInventoryRouteImport } from './routes/_app/analytics/inventory'
+import { Route as AppAnalyticsOperationsRouteImport } from './routes/_app/analytics/operations'
 import { Route as AppAnalyticsProfitRouteImport } from './routes/_app/analytics/profit'
 import { Route as AppCatalogBlanksRouteImport } from './routes/_app/catalog/blanks'
 import { Route as AppCatalogProductsRouteImport } from './routes/_app/catalog/products'
@@ -141,6 +143,16 @@ const LegalSlugRoute = LegalSlugRouteImport.update({
 const AppAnalyticsAdSpendRoute = AppAnalyticsAdSpendRouteImport.update({
   id: '/analytics/ad-spend',
   path: '/analytics/ad-spend',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAnalyticsInventoryRoute = AppAnalyticsInventoryRouteImport.update({
+  id: '/analytics/inventory',
+  path: '/analytics/inventory',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAnalyticsOperationsRoute = AppAnalyticsOperationsRouteImport.update({
+  id: '/analytics/operations',
+  path: '/analytics/operations',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAnalyticsProfitRoute = AppAnalyticsProfitRouteImport.update({
@@ -354,6 +366,8 @@ export interface FileRoutesByFullPath {
   '/legal/$slug': typeof LegalSlugRoute
   '/help/': typeof HelpIndexRoute
   '/analytics/ad-spend': typeof AppAnalyticsAdSpendRoute
+  '/analytics/inventory': typeof AppAnalyticsInventoryRoute
+  '/analytics/operations': typeof AppAnalyticsOperationsRoute
   '/analytics/profit': typeof AppAnalyticsProfitRoute
   '/catalog/blanks': typeof AppCatalogBlanksRoute
   '/catalog/products': typeof AppCatalogProductsRoute
@@ -408,6 +422,8 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/help': typeof HelpIndexRoute
   '/analytics/ad-spend': typeof AppAnalyticsAdSpendRoute
+  '/analytics/inventory': typeof AppAnalyticsInventoryRoute
+  '/analytics/operations': typeof AppAnalyticsOperationsRoute
   '/analytics/profit': typeof AppAnalyticsProfitRoute
   '/catalog/blanks': typeof AppCatalogBlanksRoute
   '/catalog/products': typeof AppCatalogProductsRoute
@@ -464,6 +480,8 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/help/': typeof HelpIndexRoute
   '/_app/analytics/ad-spend': typeof AppAnalyticsAdSpendRoute
+  '/_app/analytics/inventory': typeof AppAnalyticsInventoryRoute
+  '/_app/analytics/operations': typeof AppAnalyticsOperationsRoute
   '/_app/analytics/profit': typeof AppAnalyticsProfitRoute
   '/_app/catalog/blanks': typeof AppCatalogBlanksRoute
   '/_app/catalog/products': typeof AppCatalogProductsRoute
@@ -520,6 +538,8 @@ export interface FileRouteTypes {
     | '/legal/$slug'
     | '/help/'
     | '/analytics/ad-spend'
+    | '/analytics/inventory'
+    | '/analytics/operations'
     | '/analytics/profit'
     | '/catalog/blanks'
     | '/catalog/products'
@@ -574,6 +594,8 @@ export interface FileRouteTypes {
     | '/'
     | '/help'
     | '/analytics/ad-spend'
+    | '/analytics/inventory'
+    | '/analytics/operations'
     | '/analytics/profit'
     | '/catalog/blanks'
     | '/catalog/products'
@@ -629,6 +651,8 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/help/'
     | '/_app/analytics/ad-spend'
+    | '/_app/analytics/inventory'
+    | '/_app/analytics/operations'
     | '/_app/analytics/profit'
     | '/_app/catalog/blanks'
     | '/_app/catalog/products'
@@ -794,6 +818,20 @@ declare module '@tanstack/react-router' {
       path: '/analytics/ad-spend'
       fullPath: '/analytics/ad-spend'
       preLoaderRoute: typeof AppAnalyticsAdSpendRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/analytics/inventory': {
+      id: '/_app/analytics/inventory'
+      path: '/analytics/inventory'
+      fullPath: '/analytics/inventory'
+      preLoaderRoute: typeof AppAnalyticsInventoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/analytics/operations': {
+      id: '/_app/analytics/operations'
+      path: '/analytics/operations'
+      fullPath: '/analytics/operations'
+      preLoaderRoute: typeof AppAnalyticsOperationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/analytics/profit': {
@@ -1064,6 +1102,8 @@ interface AppRouteChildren {
   AppShippingRoute: typeof AppShippingRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAnalyticsAdSpendRoute: typeof AppAnalyticsAdSpendRoute
+  AppAnalyticsInventoryRoute: typeof AppAnalyticsInventoryRoute
+  AppAnalyticsOperationsRoute: typeof AppAnalyticsOperationsRoute
   AppAnalyticsProfitRoute: typeof AppAnalyticsProfitRoute
   AppCatalogBlanksRoute: typeof AppCatalogBlanksRoute
   AppCatalogProductsRoute: typeof AppCatalogProductsRoute
@@ -1109,6 +1149,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppShippingRoute: AppShippingRoute,
   AppIndexRoute: AppIndexRoute,
   AppAnalyticsAdSpendRoute: AppAnalyticsAdSpendRoute,
+  AppAnalyticsInventoryRoute: AppAnalyticsInventoryRoute,
+  AppAnalyticsOperationsRoute: AppAnalyticsOperationsRoute,
   AppAnalyticsProfitRoute: AppAnalyticsProfitRoute,
   AppCatalogBlanksRoute: AppCatalogBlanksRoute,
   AppCatalogProductsRoute: AppCatalogProductsRoute,

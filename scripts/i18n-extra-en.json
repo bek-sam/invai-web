@@ -67,6 +67,10 @@
   "reprintStatus.cancelled": "Cancelled", "reprintStatus.done": "Done", "reprintStatus.on_sheet": "On sheet", "reprintStatus.requested": "Requested",
   "sheetState.printing": "Printing",
   "ship.exportWhere.amazon": "Amazon: Seller Central → Orders → Upload Order Related Files → Shipping Confirmation.", "ship.exportWhere.etsy": "Etsy: Shop Manager → Orders & Shipping → add tracking to each order, or use a bulk-upload app built on Etsy's tracking API with this file.", "ship.exportWhere.tiktok": "TikTok Shop: Seller Center → Orders → Manage orders → Upload → Add Tracking No.", "ship.exportWhere.walmart": "Walmart: Seller Center → Order Management → Bulk Order Update, then upload this file.", "ship.maxUnits": "Max units", "ship.provider": "Carrier provider: {{p}}", "ship.tare": "Tare (oz)",
+  "designs.lifecycle.stage.new": "New", "designs.lifecycle.stage.growing": "Growing", "designs.lifecycle.stage.steady": "Steady", "designs.lifecycle.stage.declining": "Declining", "designs.lifecycle.stage.dead": "Dead", "designs.lifecycle.stage.inactive": "Inactive",
+  "designs.lifecycle.trend.rising": "Rising", "designs.lifecycle.trend.falling": "Falling", "designs.lifecycle.trend.flat": "Flat",
+  "opsV2.state.imported": "Imported", "opsV2.state.needsMapping": "Needs mapping", "opsV2.state.ready": "Ready", "opsV2.state.needsArtwork": "Needs artwork", "opsV2.state.onSheet": "On sheet", "opsV2.state.transferIn": "At vendor", "opsV2.state.pressed": "Pressed", "opsV2.state.packed": "Packed", "opsV2.state.shipped": "Shipped", "opsV2.state.delivered": "Delivered", "opsV2.state.onHold": "On hold", "opsV2.state.cancelled": "Cancelled",
+  "opsV2.driverName.channel": "Channel", "opsV2.driverName.personalized": "Personalized", "opsV2.driverName.rush": "Rush", "opsV2.driverName.multiUnit": "Multi-unit", "opsV2.driverName.blockedOver24h": "Blocked over 24h",
   "supplier.submitCount": "Submit count",
   "upgrade.limitShort": "Your plan's limit is reached. Go to Billing to upgrade.", "upgrade.paymentShort": "This needs an active plan. Go to Billing to choose one."
 }

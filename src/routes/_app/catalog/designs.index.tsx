@@ -1,6 +1,6 @@
-import { QA_STATUSES } from "@invai/contracts";
+import { type DesignLifecycleRow, QA_STATUSES } from "@invai/contracts";
 import { Badge, Button, Card, EmptyState, Input, Skeleton, Switch } from "@invai/ui";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ImagePlus, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -13,6 +13,46 @@ import { ErrorState } from "../../../components/states";
 import { useDebounced } from "../../../hooks/use-debounced";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
+
+type LifecycleTone = "info" | "success" | "secondary" | "warning" | "danger" | "outline";
+
+const STAGE_TONE: Record<DesignLifecycleRow["stage"], LifecycleTone> = {
+  new: "info",
+  growing: "success",
+  steady: "secondary",
+  declining: "warning",
+  dead: "danger",
+  inactive: "outline",
+};
+
+const TREND_TONE: Record<"rising" | "falling" | "flat", LifecycleTone> = {
+  rising: "success",
+  falling: "danger",
+  flat: "secondary",
+};
+
+/**
+ * AC-C4: the design's own lifecycle stage, unless the market module has a trend for it, which
+ * wins (`marketTrend` is null, or `"insufficient"` meaning the market module has nothing useful
+ * to say, in either case falling back to `stage`). `finance.read`-gated like every `analytics.*`
+ * call (AC-E5), so the caller only renders this once it has already checked `can("finance.read")`.
+ */
+function DesignLifecycleBadge({ row }: { row: DesignLifecycleRow | undefined }) {
+  const { t } = useTranslation();
+  if (!row) return null;
+  if (row.marketTrend && row.marketTrend !== "insufficient") {
+    return (
+      <Badge variant={TREND_TONE[row.marketTrend]} className="px-1.5 text-[10px]">
+        {t(`designs.lifecycle.trend.${row.marketTrend}`, row.marketTrend)}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant={STAGE_TONE[row.stage]} className="px-1.5 text-[10px]">
+      {t(`designs.lifecycle.stage.${row.stage}`, row.stage)}
+    </Badge>
+  );
+}
 
 export const Route = createFileRoute("/_app/catalog/designs/")({
   validateSearch: z.object({
@@ -43,6 +83,17 @@ function DesignsPage() {
     }),
   );
   const items = useMemo(() => designs.data?.pages.flatMap((p) => p.items) ?? [], [designs.data]);
+  // AC-C4: lifecycle stage per design; gated on finance.read like every analytics.* call
+  // (AC-E5), so a role without it never calls the procedure and never sees a FORBIDDEN toast.
+  const canSeeLifecycle = can("finance.read");
+  const lifecycle = useQuery(
+    orpc.analytics.designLifecycle.queryOptions({ input: {}, enabled: canSeeLifecycle }),
+  );
+  const lifecycleByDesign = useMemo(() => {
+    const map = new Map<string, DesignLifecycleRow>();
+    for (const row of lifecycle.data?.rows ?? []) map.set(row.designId, row);
+    return map;
+  }, [lifecycle.data]);
   return (
     <Page
       title={t("nav.designs")}
@@ -143,9 +194,12 @@ function DesignsPage() {
                       {t(`qa.${d.qaStatus}`, d.qaStatus)}
                     </Badge>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {t("designs.orders30", "{{count}} orders · 30d", { count: d.ordersLast30d })}
-                  </span>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs text-muted-foreground">
+                      {t("designs.orders30", "{{count}} orders · 30d", { count: d.ordersLast30d })}
+                    </span>
+                    {canSeeLifecycle && <DesignLifecycleBadge row={lifecycleByDesign.get(d.id)} />}
+                  </div>
                 </div>
               </Link>
             ))}

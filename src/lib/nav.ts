@@ -1,6 +1,7 @@
 import type { Me, Permission } from "@invai/contracts";
 import type { LucideIcon } from "lucide-react";
 import {
+  Activity,
   Archive,
   BarChart3,
   Bell,
@@ -12,6 +13,7 @@ import {
   CreditCard,
   Factory,
   FileSearch,
+  HeartPulse,
   Image,
   Inbox,
   Layers,
@@ -231,6 +233,22 @@ export const SHOP_NAV: NavGroup[] = [
         icon: Megaphone,
         permission: "finance.read",
         keywords: "ads marketing campaign",
+      },
+      {
+        key: "operations",
+        to: "/analytics/operations",
+        labelKey: "nav.operations",
+        icon: Activity,
+        permission: "finance.read",
+        keywords: "reprints film waste press minutes late shipments",
+      },
+      {
+        key: "inventory-health",
+        to: "/analytics/inventory",
+        labelKey: "nav.inventoryHealth",
+        icon: HeartPulse,
+        permission: "finance.read",
+        keywords: "dead stock size mix supplier trends turns",
       },
     ],
   },

@@ -5,6 +5,10 @@ const shop = {
   org: { type: "shop" as const },
   permissions: ["today.read", "orders.read", "catalog.read"] as never[],
 };
+const shopFinance = {
+  org: { type: "shop" as const },
+  permissions: ["today.read", "orders.read", "catalog.read", "finance.read"] as never[],
+};
 const vendor = {
   org: { type: "vendor" as const },
   permissions: ["vendor_portal.read", "team.read", "org.read"] as never[],
@@ -17,7 +21,15 @@ describe("navFor", () => {
     expect(keys).toContain("orders");
     expect(keys).toContain("designs");
     expect(keys).not.toContain("profit");
+    expect(keys).not.toContain("operations");
+    expect(keys).not.toContain("inventory-health");
     expect(groups.every((g) => g.items.length > 0)).toBe(true);
+  });
+
+  it("shows Operations and Inventory health under Analytics for finance.read roles", () => {
+    const keys = navFor(shopFinance as never).flatMap((g) => g.items.map((i) => i.key));
+    expect(keys).toContain("operations");
+    expect(keys).toContain("inventory-health");
   });
 
   it("gives vendor orgs the portal nav", () => {
