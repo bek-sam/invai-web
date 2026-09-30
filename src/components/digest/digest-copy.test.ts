@@ -127,6 +127,66 @@ describe("digestActionText review_costs (D3)", () => {
   });
 });
 
+describe("digestActionText D9-D13 (0.10.0)", () => {
+  it("D9 review_shipping_prices names the channel", () => {
+    const i = insight({
+      action: {
+        kind: "review_shipping_prices",
+        params: { channel: "etsy" },
+        href: "/analytics/profit",
+      },
+    });
+    expect(digestActionText(t, "en", i, (k) => k)).toBe("Review shipping prices on etsy");
+  });
+
+  it("D10 review_losing_orders has no placeholder", () => {
+    const i = insight({
+      action: { kind: "review_losing_orders", params: {}, href: "/analytics/profit" },
+    });
+    expect(digestActionText(t, "en", i, (k) => k)).toBe("Review your losing orders");
+  });
+
+  it("D11 review_dead_stock names style and color", () => {
+    const i = insight({
+      action: {
+        kind: "review_dead_stock",
+        params: { style: "BC3001", color: "Black" },
+        href: "/analytics/inventory",
+      },
+    });
+    expect(digestActionText(t, "en", i, (k) => k)).toBe("Review dead stock: BC3001 Black");
+  });
+
+  it("D11 restock_size_gap names style, color and size", () => {
+    const i = insight({
+      action: {
+        kind: "restock_size_gap",
+        params: { style: "BC3001", color: "Dusty Blue", size: "L" },
+        href: "/analytics/inventory",
+      },
+    });
+    expect(digestActionText(t, "en", i, (k) => k)).toBe("Restock BC3001 Dusty Blue L");
+  });
+
+  it("D12 review_blank_cost names the supplier and style", () => {
+    const i = insight({
+      action: {
+        kind: "review_blank_cost",
+        params: { supplierName: "S&S Activewear", style: "BC3001" },
+        href: "/settings/costs",
+      },
+    });
+    expect(digestActionText(t, "en", i, (k) => k)).toBe("Review S&S Activewear's cost for BC3001");
+  });
+
+  it("D13 see_break_even has no placeholder", () => {
+    const i = insight({
+      action: { kind: "see_break_even", params: {}, href: "/analytics/profit" },
+    });
+    expect(digestActionText(t, "en", i, (k) => k)).toBe("See your break-even pace");
+  });
+});
+
 describe("sourceDateText", () => {
   it("formats the date from the app language, not the runtime default locale", () => {
     const en = sourceDateText(t, "en", "google_trends", "2026-09-20T00:00:00.000Z");

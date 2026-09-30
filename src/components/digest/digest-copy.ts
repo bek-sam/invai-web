@@ -140,7 +140,35 @@ export function digestActionText(
         : "";
     case "none":
       return digestWinText(t, lang, insight);
+    // 0.10.0 (Track E, D9-D13): same rule, wording keyed only on `kind`, never on which params
+    // are set (`DigestActionParams` comment, `invai-contracts/src/schemas/digest.ts`).
+    case "review_shipping_prices":
+      return t("digest.action.reviewShippingPrices", "Review shipping prices on {{channel}}", {
+        channel,
+      });
+    case "review_losing_orders":
+      return t("digest.action.reviewLosingOrders", "Review your losing orders");
+    case "review_dead_stock":
+      return t("digest.action.reviewDeadStock", "Review dead stock: {{variant}}", {
+        variant: variantLabel(params),
+      });
+    case "restock_size_gap":
+      return t("digest.action.restockSizeGap", "Restock {{variant}}", {
+        variant: variantLabel(params),
+      });
+    case "review_blank_cost":
+      return t("digest.action.reviewBlankCost", "Review {{supplier}}'s cost for {{style}}", {
+        supplier: params.supplierName ?? "",
+        style: params.style ?? "",
+      });
+    case "see_break_even":
+      return t("digest.action.seeBreakEven", "See your break-even pace");
   }
+}
+
+/** "{{style}} {{color}} {{size}}" with any missing part left out, never a double space. */
+function variantLabel(params: { style?: string; color?: string; size?: string }): string {
+  return [params.style, params.color, params.size].filter(Boolean).join(" ");
 }
 
 /**
