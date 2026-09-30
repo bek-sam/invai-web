@@ -2502,6 +2502,8 @@ export const es: Messages = {
     text: "Texto a revisar",
   },
   today: {
+    actionsSteady: "No hay nada urgente ahora mismo",
+    actionsTitle: "Las acciones de esta semana",
     afternoon: "Buenas tardes",
     alerts: "Alertas",
     atRisk: "En riesgo",

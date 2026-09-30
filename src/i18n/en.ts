@@ -2455,6 +2455,8 @@ export const en = {
     text: "Text to check",
   },
   today: {
+    actionsSteady: "Nothing needs attention right now",
+    actionsTitle: "This week's actions",
     afternoon: "Good afternoon",
     alerts: "Alerts",
     atRisk: "At risk",

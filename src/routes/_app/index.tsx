@@ -25,6 +25,8 @@ import { Page, Section } from "../../components/page";
 import { ErrorState, SkeletonRows } from "../../components/states";
 import { isOwnDemo } from "../../features/demo/is-own-demo";
 import { OnboardingChecklist } from "../../features/onboarding/checklist";
+import { TodayActionsPanel } from "../../features/today/actions-panel";
+import { firstName } from "../../lib/format";
 import { useCan, useMe } from "../../lib/me";
 import { orpc } from "../../lib/rpc";
 
@@ -32,8 +34,18 @@ export const Route = createFileRoute("/_app/")({
   component: TodayPage,
 });
 
+/**
+ * B-225: the greeting's date must follow the UI language, never the runtime's default locale
+ * (`toLocaleDateString(undefined, ...)`; `lib/format.ts`'s private `dateLocale()` has the same
+ * rule but isn't exported, so this is its own copy, digest-copy.ts's precedent for files this
+ * card doesn't own).
+ */
+function greetingDateLocale(lang: string): string {
+  return lang.startsWith("es") ? "es-MX" : "en-US";
+}
+
 function TodayPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const me = useMe();
   const can = useCan();
   const summary = useQuery(orpc.today.summary.queryOptions({ input: {}, refetchInterval: 60_000 }));
@@ -44,16 +56,24 @@ function TodayPage() {
       : hour < 18
         ? t("today.afternoon", "Good afternoon")
         : t("today.evening", "Good evening");
+  const todayDate = new Date().toLocaleDateString(greetingDateLocale(i18n.language), {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <Page
       title={t("nav.today")}
-      description={`${greeting}, ${me.user.name.split(" ")[0]}. ${new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}`}
+      description={`${greeting}, ${firstName(me.user.name)}. ${todayDate}`}
       actions={<QuickActions />}
     >
       <div className="flex flex-col gap-4">
         {me.onboarding && <OnboardingChecklist checklist={me.onboarding} isDemo={isOwnDemo(me)} />}
         {can("finance.read") && <DigestTodayCard />}
+        {/* AC-E2/AC-E5: finance.read-gated here, like DigestTodayCard, so the query never fires
+        for a role without it and a refusal never breaks Today for everyone else. */}
+        {can("finance.read") && <TodayActionsPanel />}
         {summary.isError ? (
           <ErrorState error={summary.error} onRetry={() => void summary.refetch()} />
         ) : (
