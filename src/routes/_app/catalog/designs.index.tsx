@@ -1,5 +1,5 @@
-import { type DesignLifecycleRow, QA_STATUSES } from "@invai/contracts";
-import { Badge, Button, Card, EmptyState, Input, Skeleton, Switch } from "@invai/ui";
+import { type Design, type DesignLifecycleRow, QA_STATUSES } from "@invai/contracts";
+import { Badge, Button, Card, cn, EmptyState, Input, Skeleton, Switch } from "@invai/ui";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ImagePlus, Search, Sparkles } from "lucide-react";
@@ -11,6 +11,7 @@ import { NativeSelect, Page } from "../../../components/page";
 import { SignedImage } from "../../../components/signed-image";
 import { ErrorState } from "../../../components/states";
 import { useDebounced } from "../../../hooks/use-debounced";
+import { useInView } from "../../../hooks/use-in-view";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
 
@@ -54,6 +55,72 @@ function DesignLifecycleBadge({ row }: { row: DesignLifecycleRow | undefined }) 
   );
 }
 
+/**
+ * B-209 / gate root-cause §1: the grid can hold the whole first page (up to 60 cards), and every
+ * `<SignedImage>` used to fire its own `files.downloadUrl` call the instant it mounted, piling up
+ * behind Chrome's 6-connections-per-origin cap. Each card now only mounts `SignedImage` (and so
+ * only requests a signed URL) once it is within `useInView`'s `rootMargin` of the viewport; until
+ * then it renders a plain static box -- never the loading `Skeleton` or a spinner, so
+ * `settled()`'s `[data-slot=skeleton], .animate-spin` check isn't left waiting on cards that
+ * haven't asked for anything yet.
+ */
+function DesignCard({
+  design: d,
+  canSeeLifecycle,
+  lifecycleRow,
+}: {
+  design: Design;
+  canSeeLifecycle: boolean;
+  lifecycleRow: DesignLifecycleRow | undefined;
+}) {
+  const { t } = useTranslation();
+  const { ref, inView } = useInView();
+  return (
+    <Link
+      to="/catalog/designs/$designId"
+      params={{ designId: d.id }}
+      className="group overflow-hidden rounded-lg border border-border bg-card transition-shadow hover:shadow-md"
+    >
+      {inView ? (
+        <SignedImage
+          fileKey={d.placements[0]?.previewKey ?? null}
+          alt={d.name}
+          className="aspect-square w-full rounded-none"
+        />
+      ) : (
+        <div
+          ref={ref}
+          aria-hidden
+          className={cn("aspect-square w-full rounded-none bg-muted", "checkerboard")}
+        />
+      )}
+      <div className="flex flex-col gap-1 p-2.5">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-sm font-medium">{d.name}</span>
+          {d.personalizationTemplateId && (
+            <Sparkles
+              className="size-3.5 shrink-0 text-info"
+              aria-label={t("orders.personalized", "Personalized")}
+            />
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-1">
+          <span className="font-mono text-xs text-muted-foreground">{d.code}</span>
+          <Badge variant={QA_TONE[d.qaStatus]} className="px-1.5 text-[10px]">
+            {t(`qa.${d.qaStatus}`, d.qaStatus)}
+          </Badge>
+        </div>
+        <div className="flex items-center justify-between gap-1">
+          <span className="text-xs text-muted-foreground">
+            {t("designs.orders30", "{{count}} orders · 30d", { count: d.ordersLast30d })}
+          </span>
+          {canSeeLifecycle && <DesignLifecycleBadge row={lifecycleRow} />}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export const Route = createFileRoute("/_app/catalog/designs/")({
   validateSearch: z.object({
     qa: z.enum(QA_STATUSES).optional().catch(undefined),
@@ -86,9 +153,16 @@ function DesignsPage() {
   // AC-C4: lifecycle stage per design; gated on finance.read like every analytics.* call
   // (AC-E5), so a role without it never calls the procedure and never sees a FORBIDDEN toast.
   const canSeeLifecycle = can("finance.read");
-  const lifecycle = useQuery(
-    orpc.analytics.designLifecycle.queryOptions({ input: {}, enabled: canSeeLifecycle }),
-  );
+  // Gate root-cause §1: `.queryOptions()`'s generated queryFn always reads `context.signal`, so
+  // TanStack Query always aborts the underlying fetch when this page unmounts mid-request (a
+  // click on a design right after the grid settles). This call has no loading UI and nothing
+  // depends on it finishing before navigation, so call the client directly (no signal) instead:
+  // the request completes normally in the background rather than showing up as a failed request.
+  const lifecycle = useQuery({
+    queryKey: orpc.analytics.designLifecycle.queryKey({ input: {} }),
+    queryFn: () => orpc.analytics.designLifecycle.call({}),
+    enabled: canSeeLifecycle,
+  });
   const lifecycleByDesign = useMemo(() => {
     const map = new Map<string, DesignLifecycleRow>();
     for (const row of lifecycle.data?.rows ?? []) map.set(row.designId, row);
@@ -167,41 +241,12 @@ function DesignsPage() {
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
             {items.map((d) => (
-              <Link
+              <DesignCard
                 key={d.id}
-                to="/catalog/designs/$designId"
-                params={{ designId: d.id }}
-                className="group overflow-hidden rounded-lg border border-border bg-card transition-shadow hover:shadow-md"
-              >
-                <SignedImage
-                  fileKey={d.placements[0]?.previewKey ?? null}
-                  alt={d.name}
-                  className="aspect-square w-full rounded-none"
-                />
-                <div className="flex flex-col gap-1 p-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="truncate text-sm font-medium">{d.name}</span>
-                    {d.personalizationTemplateId && (
-                      <Sparkles
-                        className="size-3.5 shrink-0 text-info"
-                        aria-label={t("orders.personalized", "Personalized")}
-                      />
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="font-mono text-xs text-muted-foreground">{d.code}</span>
-                    <Badge variant={QA_TONE[d.qaStatus]} className="px-1.5 text-[10px]">
-                      {t(`qa.${d.qaStatus}`, d.qaStatus)}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs text-muted-foreground">
-                      {t("designs.orders30", "{{count}} orders · 30d", { count: d.ordersLast30d })}
-                    </span>
-                    {canSeeLifecycle && <DesignLifecycleBadge row={lifecycleByDesign.get(d.id)} />}
-                  </div>
-                </div>
-              </Link>
+                design={d}
+                canSeeLifecycle={canSeeLifecycle}
+                lifecycleRow={lifecycleByDesign.get(d.id)}
+              />
             ))}
           </div>
           {designs.hasNextPage && (

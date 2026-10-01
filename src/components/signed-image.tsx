@@ -3,17 +3,26 @@ import { useQuery } from "@tanstack/react-query";
 import { ImageOff } from "lucide-react";
 import { orpc } from "../lib/rpc";
 
-/** Signed URLs live 15 minutes; refresh a bit before that. */
+/**
+ * Signed URLs live 15 minutes; refresh a bit before that.
+ *
+ * Gate root-cause §1: `.queryOptions()`'s generated queryFn always reads `context.signal`, so
+ * TanStack Query aborts the underlying fetch whenever every component reading this fileKey
+ * unmounts mid-request -- e.g. clicking a design card (or any navigation) while its thumbnail is
+ * still loading. Nothing here depends on the fetch finishing before navigation, and the image is
+ * thrown away either way once unmounted, so call the client directly (no signal): the request
+ * completes normally in the background instead of surfacing as a failed/aborted request.
+ */
 export function useSignedUrl(fileKey: string | null | undefined) {
-  return useQuery(
-    orpc.files.downloadUrl.queryOptions({
-      input: { fileKey: fileKey ?? "", disposition: "inline" },
-      enabled: !!fileKey,
-      staleTime: 10 * 60_000,
-      gcTime: 14 * 60_000,
-      retry: false,
-    }),
-  );
+  const input = { fileKey: fileKey ?? "", disposition: "inline" as const };
+  return useQuery({
+    queryKey: orpc.files.downloadUrl.queryKey({ input }),
+    queryFn: () => orpc.files.downloadUrl.call(input),
+    enabled: !!fileKey,
+    staleTime: 10 * 60_000,
+    gcTime: 14 * 60_000,
+    retry: false,
+  });
 }
 
 /** An image stored in S3 by key. Checkerboard behind it so transparent DTF art is visible. */
