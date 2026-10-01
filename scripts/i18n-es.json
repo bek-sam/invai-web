@@ -1269,6 +1269,7 @@
  "orders.tagPlaceholder": "p. ej. regalo, mayoreo",
  "orders.tagRemoved": "Etiqueta quitada",
  "orders.timeline": "Historial",
+ "orders.timelineNewState": "Nuevo",
  "orders.total": "Total",
  "orders.tracking": "Rastreo",
  "orders.undo": "Deshacer",

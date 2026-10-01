@@ -431,12 +431,20 @@ function Timeline({ orderId }: { orderId: string }) {
                 )}
               />
               <p className="text-sm">
-                {e.message}
-                {e.from && e.to && (
-                  <span className="ml-1 inline-flex items-center gap-1 align-middle">
-                    <StatusBadge state={e.from} className="scale-90" />→
+                {e.kind === "state_changed" && e.to ? (
+                  <span className="inline-flex items-center gap-1 align-middle">
+                    {e.from ? (
+                      <StatusBadge state={e.from} className="scale-90" />
+                    ) : (
+                      <Badge variant="secondary" className="scale-90">
+                        {t("orders.timelineNewState", "New")}
+                      </Badge>
+                    )}
+                    <span aria-hidden="true">→</span>
                     <StatusBadge state={e.to} className="scale-90" />
                   </span>
+                ) : (
+                  e.message
                 )}
               </p>
               <p className="text-xs text-muted-foreground">

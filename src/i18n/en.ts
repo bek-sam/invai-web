@@ -1502,6 +1502,7 @@ export const en = {
     tagPlaceholder: "e.g. gift, wholesale",
     tagRemoved: "Tag removed",
     timeline: "Timeline",
+    timelineNewState: "New",
     total: "Total",
     tracking: "Tracking",
     undo: "Undo",

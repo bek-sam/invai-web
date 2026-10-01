@@ -1530,6 +1530,7 @@ export const es: Messages = {
     tagPlaceholder: "p. ej. regalo, mayoreo",
     tagRemoved: "Etiqueta quitada",
     timeline: "Historial",
+    timelineNewState: "Nuevo",
     total: "Total",
     tracking: "Rastreo",
     undo: "Deshacer",
