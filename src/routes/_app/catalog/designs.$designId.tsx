@@ -368,8 +368,11 @@ function DesignEditor({ design }: { design: Design | null }) {
                 {p.uploading !== null && <Progress value={p.uploading * 100} className="h-1.5" />}
               </div>
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-3 gap-3">
-                  <Field label={t("orders.placement", "Placement")}>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <Field
+                    label={t("orders.placement", "Placement")}
+                    className="col-span-2 sm:col-span-1"
+                  >
                     <NativeSelect
                       value={p.placement}
                       onChange={(e) => update(p.key, { placement: e.target.value as Placement })}
