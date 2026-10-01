@@ -100,7 +100,42 @@ export function seedOutput(): {
   vendorOrgId: string;
   stationToken: { station: string; token: string };
 } {
-  return JSON.parse(readFileSync(path.join(BACKEND, "seed-output.json"), "utf8"));
+  // E2E_SEED_OUTPUT_FILE lets a run against a scratch DB read its own seed's output (the backend's
+  // `SEED_OUTPUT_FILE`) instead of the shared `invai-backend/seed-output.json`, which belongs to a
+  // different company id on a scratch stack and fails floor/station auth (flagged, unfixed, in
+  // waves/23/reports/T-23-8.md and waves/A1/reports/T-A1-report.md; this file is QA-owned).
+  const file = process.env.E2E_SEED_OUTPUT_FILE ?? path.join(BACKEND, "seed-output.json");
+  return JSON.parse(readFileSync(file, "utf8"));
+}
+
+/**
+ * Turn off auto-import on every API connection that currently has it on, so the channel poller
+ * (`POLL_EVERY_MS` = 10 min, `invai-backend/src/modules/channels/jobs.ts`) can't add a mock order
+ * to the sheet-build pool mid-suite (B-255). Call once in `beforeAll`; pass the returned ids to
+ * `restoreAutoImport` in `afterAll` (pass or fail) so the connection is left exactly as found.
+ *
+ * Residual window: a sync job already queued (or enqueued by a poll tick landing between this
+ * call and the next) before the hold is read by `syncConnection` still runs to completion --
+ * `syncConnection` doesn't re-check `autoImport` once its job is queued (`sync.ts`) -- so one
+ * import of the mock's next 1-3 orders can still land up to `POLL_EVERY_MS` (plus this
+ * connection's fixed jitter, `pollJitterMs`) after the hold takes effect. The API suite's step 5
+ * is immune regardless: it builds from the preview's own `orderItemIds`, not from "every ready
+ * item at build time".
+ */
+export async function holdAutoImport(ownerApi: Api): Promise<string[]> {
+  const { items } = await ownerApi.channels.list({});
+  const on = items.filter((c) => c.mode === "api" && c.settings.autoImport);
+  await Promise.all(
+    on.map((c) => ownerApi.channels.update({ id: c.id, settings: { autoImport: false } })),
+  );
+  return on.map((c) => c.id);
+}
+
+/** Restore exactly the connections `holdAutoImport` turned off. */
+export async function restoreAutoImport(ownerApi: Api, ids: string[]): Promise<void> {
+  await Promise.all(
+    ids.map((id) => ownerApi.channels.update({ id, settings: { autoImport: true } })),
+  );
 }
 
 /** Upload a local file through files.presignUpload and return its key. */

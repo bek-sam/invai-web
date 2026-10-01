@@ -4,10 +4,12 @@ import {
   type Api,
   FIXTURES,
   floorSession,
+  holdAutoImport,
   inDays,
   OWNER,
   PRESSER_PIN,
   poll,
+  restoreAutoImport,
   seedOutput,
   signIn,
   stationSession,
@@ -24,6 +26,7 @@ test.describe.configure({ mode: "serial" });
 let context: BrowserContext;
 let page: Page;
 let api: Api;
+let heldConnectionIds: string[] = [];
 const state: {
   orderNo?: string;
   orderId?: string;
@@ -46,8 +49,15 @@ test.beforeAll(async ({ browser }) => {
       );
   });
   await loginAs(page);
+  // B-255: hold the mock Shopify poll off for the suite's duration so step 5's pool is pinned
+  // (the UI's "Build sheets" button has no way to name item ids, so this suite relies on the
+  // hold alone -- see api-golden-path.spec.ts for the belt-and-suspenders orderItemIds pin).
+  heldConnectionIds = await holdAutoImport(api);
 });
-test.afterAll(async () => context.close());
+test.afterAll(async () => {
+  await restoreAutoImport(api, heldConnectionIds);
+  await context.close();
+});
 
 /** A toast in the notifications region (the same words often appear in the page too). */
 const toast = (text: string | RegExp) =>
@@ -225,7 +235,10 @@ test("5. gang sheets: preview, build with progress, sheet page with preview and 
     await page.getByRole("button", { name: "Build sheets" }).click();
     await page.locator("#cutoff").fill(inDays(3).slice(0, 10));
     await page.getByRole("button", { name: "Preview" }).click();
-    await expect(page.getByText("Items", { exact: true })).toBeVisible();
+    const itemsLabel = page.getByText("Items", { exact: true });
+    await expect(itemsLabel).toBeVisible();
+    const poolSize = await itemsLabel.locator("..").locator("p").nth(1).textContent();
+    console.log("step 5 pool", poolSize, "items");
     await page.getByRole("button", { name: "Build", exact: true }).click();
     await expect(page.getByText(/Building \d+ items/)).toBeVisible();
     await expect(toast(/sheet\(s\) ready/)).toBeVisible({ timeout: 180_000 });

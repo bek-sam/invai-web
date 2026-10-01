@@ -3,10 +3,12 @@ import { expect, test } from "@playwright/test";
 import {
   FIXTURES,
   floorSession,
+  holdAutoImport,
   inDays,
   OWNER,
   PRESSER_PIN,
   poll,
+  restoreAutoImport,
   type Session,
   seedOutput,
   signIn,
@@ -24,6 +26,7 @@ import {
 test.describe.configure({ mode: "serial" });
 
 let owner: Session;
+let heldConnectionIds: string[] = [];
 const state: {
   etsyConnectionId?: string;
   unmappedItemId?: string;
@@ -41,6 +44,12 @@ const state: {
 
 test.beforeAll(async () => {
   owner = await signIn(OWNER.email, OWNER.password);
+  // B-255: hold the mock Shopify poll off for the suite's duration so step 5's pool is pinned;
+  // restored in afterAll below, pass or fail.
+  heldConnectionIds = await holdAutoImport(owner.api);
+});
+test.afterAll(async () => {
+  await restoreAutoImport(owner.api, heldConnectionIds);
 });
 
 test("1. owner signs in and Today shows real numbers", async () => {
@@ -182,11 +191,21 @@ test("5. gang sheets: preview, build, progress, preview image, utilization >= 80
     maxSheets: null,
   };
   const preview = await owner.api.production.batches.preview(opts);
+  console.log("step 5 pool", preview.items.length, "items");
   expect(preview.items.length).toBeGreaterThan(10);
   expect(preview.items.some((i) => i.orderItemId === state.unmappedItemId)).toBe(true);
   expect(preview.items.some((i) => i.orderItemId === state.personalizedItemId)).toBe(true);
 
-  const ref = await owner.api.production.batches.build({ ...opts, name: "E2E build" });
+  // Pin the build to exactly the preview's pool (B-255): a poll tick queued before the
+  // beforeAll hold took effect can still land up to 10 minutes later (`syncConnection` doesn't
+  // re-check `autoImport`), but it can only add to "every ready item"; naming these ids makes
+  // the build see the same pool the preview just saw, whatever the wall-clock minute.
+  const ref = await owner.api.production.batches.build({
+    ...opts,
+    orderItemIds: preview.items.map((i) => i.orderItemId),
+    name: "E2E build",
+  });
+  expect(ref.itemCount).toBe(preview.items.length);
   const job = await poll(
     () => owner.api.production.jobs.get({ id: ref.jobId }),
     (j) => j.status === "done" || j.status === "failed",
