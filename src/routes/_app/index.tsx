@@ -1,4 +1,4 @@
-import type { Alert, TodaySummary } from "@invai/contracts";
+import type { Alert, AlertMessageCode, AlertParams, TodaySummary } from "@invai/contracts";
 import { Button, cn, EmptyState, Progress, RelativeTime, Skeleton, StatCard } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -26,7 +26,7 @@ import { ErrorState, SkeletonRows } from "../../components/states";
 import { isOwnDemo } from "../../features/demo/is-own-demo";
 import { OnboardingChecklist } from "../../features/onboarding/checklist";
 import { TodayActionsPanel } from "../../features/today/actions-panel";
-import { firstName } from "../../lib/format";
+import { firstName, orderLabel } from "../../lib/format";
 import { useCan, useMe } from "../../lib/me";
 import { orpc } from "../../lib/rpc";
 
@@ -417,11 +417,144 @@ function alertKindLabel(t: TFunction, kind: Alert["kind"]): string {
   }
 }
 
+/** A ship-by or sent-at date in the shop's own time zone (B-137), in the active language. */
+export function alertDateLabel(
+  iso: string,
+  timeZone: string | undefined,
+  language: string,
+): string {
+  try {
+    return new Intl.DateTimeFormat(language.startsWith("es") ? "es-MX" : "en-US", {
+      timeZone,
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+/** A translated word's first letter lowercased, for mid-sentence use ("still sent" not "still Sent"). */
+function lowerFirst(s: string): string {
+  return s ? s.charAt(0).toLowerCase() + s.slice(1) : s;
+}
+
 /**
- * The specifics under the headline: the backend's title names the order, SKU or sheet. Its
- * English sentence ("Ships within 24 hours…") only adds to it in English.
+ * 0.11.0 (ruling R1, waves/P5/reviews/plan-architect.md): the translated line per `messageCode`,
+ * keyed by a Record (never an exhaustive switch) so a future code this build doesn't know yet
+ * falls through to the title-only fallback instead of a type error or a thrown switch.
  */
-function alertDetail(a: Alert, language: string): string {
+const ALERT_LINE_BUILDERS: Partial<
+  Record<AlertMessageCode, (t: TFunction, p: AlertParams, language: string) => string>
+> = {
+  order_at_risk: (t, p, language) =>
+    t("alerts.line.order_at_risk", "Order {{orderNo}} ships within {{count}} hour, due {{date}}.", {
+      orderNo: orderLabel(p.orderNo ?? ""),
+      count: p.hours ?? 0,
+      date: p.shipBy ? alertDateLabel(p.shipBy, p.timeZone, language) : "",
+    }),
+  order_overdue: (t, p, language) =>
+    t(
+      "alerts.line.order_overdue",
+      "Order {{orderNo}} was due {{date}} and still has no shipping label.",
+      {
+        orderNo: orderLabel(p.orderNo ?? ""),
+        date: p.shipBy ? alertDateLabel(p.shipBy, p.timeZone, language) : "",
+      },
+    ),
+  sync_broken: (t, p) =>
+    t(
+      "alerts.line.sync_broken",
+      "{{connectionName}} has been failing to sync for more than 30 minutes.",
+      { connectionName: p.connectionName ?? "" },
+    ),
+  sheet_stuck: (t, p) =>
+    t("alerts.line.sheet_stuck", "Sheet {{sheetName}} sent {{count}} hour ago, still {{status}}.", {
+      sheetName: p.sheetName ?? "",
+      count: p.hours ?? 0,
+      status: p.sheetStatus ? lowerFirst(t(`sheetState.${p.sheetStatus}`, p.sheetStatus)) : "",
+    }),
+  stock_low: (t, p) =>
+    t(
+      "alerts.line.stock_low",
+      "{{blankName}}: {{available}} available, reorder point {{reorderPoint}}, {{incoming}} incoming.",
+      {
+        blankName: p.blankName ?? "",
+        available: p.available ?? 0,
+        reorderPoint: p.reorderPoint ?? 0,
+        incoming: p.incoming ?? 0,
+      },
+    ),
+  plan_limit_near: (t, p) =>
+    t(
+      "alerts.line.plan_limit_near",
+      "{{usedPct}}% of monthly orders used: {{used}} of {{limit}} on the {{planName}} plan.",
+      {
+        usedPct: p.usedPct ?? 0,
+        used: p.used ?? 0,
+        limit: p.limit ?? 0,
+        planName: p.planName ?? "",
+      },
+    ),
+  plan_limit_reached: (t, p) =>
+    t(
+      "alerts.line.plan_limit_reached",
+      "{{used}} of {{limit}} orders used on the {{planName}} plan this month.",
+      { used: p.used ?? 0, limit: p.limit ?? 0, planName: p.planName ?? "" },
+    ),
+  label_buy_stuck: (t) =>
+    t(
+      "alerts.line.label_buy_stuck",
+      "We couldn't confirm a label purchase with the carrier after several tries. Open the shipment and buy the label again; you won't be charged twice.",
+    ),
+  label_void_stuck: (t) =>
+    t(
+      "alerts.line.label_void_stuck",
+      "We couldn't confirm a label void with the carrier. Open the shipment and void it again, or contact the carrier about the refund.",
+    ),
+  tracking_push_stuck: (t) =>
+    t(
+      "alerts.line.tracking_push_stuck",
+      "We couldn't confirm the tracking upload to the channel after several tries. Open the tracking list and retry it.",
+    ),
+  vendor_email_unconfirmed: (t, p) =>
+    t(
+      "alerts.line.vendor_email_unconfirmed",
+      "Sheet {{sheetName}}: we couldn't confirm the email to {{vendorName}} was sent. Open the sheet and resend it.",
+      { sheetName: p.sheetName ?? "", vendorName: p.vendorName ?? "" },
+    ),
+  vendor_email_failed: (t, p) =>
+    t(
+      "alerts.line.vendor_email_failed",
+      "Sheet {{sheetName}}: the email to {{vendorName}} didn't go out. Check their address, then resend it.",
+      { sheetName: p.sheetName ?? "", vendorName: p.vendorName ?? "" },
+    ),
+  po_stuck_submitting: (t, p) =>
+    t(
+      "alerts.line.po_stuck_submitting",
+      "{{poNo}} has been stuck sending to {{supplierName}} for over 15 minutes.",
+      { poNo: p.poNo ?? "", supplierName: p.supplierName ?? "" },
+    ),
+  webhook_stuck: (t, p) =>
+    t(
+      "alerts.line.webhook_stuck",
+      "An update from {{channel}} wasn't processed. Run a sync on the connection to pick it up.",
+      { channel: p.channel ? t(`channel.${p.channel}`, p.channel) : "" },
+    ),
+};
+
+/**
+ * The specifics under the headline. With a known `messageCode` + `params` (0.11.0, B-224), the
+ * line is translated from them, in English and Spanish. Without one (old rows, worker/AI alerts),
+ * today's behavior stays: the backend's English title and message, joined only in English.
+ */
+export function alertDetail(t: TFunction, a: Alert, language: string): string {
+  if (a.messageCode && a.params) {
+    const line = ALERT_LINE_BUILDERS[a.messageCode]?.(t, a.params, language);
+    if (line) return line;
+  }
   return language.startsWith("en") && a.message ? `${a.title} · ${a.message}` : a.title;
 }
 
@@ -505,7 +638,7 @@ function AlertsPanel() {
                     {alertKindLabel(t, a.kind)}
                   </p>
                   <p className="line-clamp-2 text-xs text-muted-foreground">
-                    {alertDetail(a, i18n.language)}
+                    {alertDetail(t, a, i18n.language)}
                   </p>
                 </div>
                 <RelativeTime

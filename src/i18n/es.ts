@@ -134,6 +134,34 @@ export const es: Messages = {
       tracking_push_failed: "El rastreo no llegó al marketplace",
       vendor_sheet_received: "Nuevo gang sheet de una tienda",
     },
+    line: {
+      label_buy_stuck:
+        "No pudimos confirmar la compra de la etiqueta con la paquetería después de varios intentos. Abre el envío y compra la etiqueta de nuevo; no se te cobrará dos veces.",
+      label_void_stuck:
+        "No pudimos confirmar la anulación de la etiqueta con la paquetería. Abre el envío y anúlala de nuevo, o contacta a la paquetería sobre el reembolso.",
+      order_at_risk_one: "El pedido {{orderNo}} se envía en {{count}} hora, antes del {{date}}",
+      order_at_risk_other: "El pedido {{orderNo}} se envía en {{count}} horas, antes del {{date}}",
+      order_overdue:
+        "El pedido {{orderNo}} debía enviarse el {{date}} y todavía no tiene etiqueta de envío.",
+      plan_limit_near:
+        "{{usedPct}}% del límite mensual de pedidos usado: {{used}} de {{limit}} en el plan {{planName}}.",
+      plan_limit_reached: "Se usaron {{used}} de {{limit}} pedidos del plan {{planName}} este mes.",
+      po_stuck_submitting:
+        "{{poNo}} lleva más de 15 minutos atascada enviándose a {{supplierName}}.",
+      sheet_stuck_one: "La hoja {{sheetName}} se envió hace {{count}} hora y sigue {{status}}.",
+      sheet_stuck_other: "La hoja {{sheetName}} se envió hace {{count}} horas y sigue {{status}}.",
+      stock_low:
+        "{{blankName}}: quedan {{available}}, punto de reorden {{reorderPoint}}, {{incoming}} en camino.",
+      sync_broken: "{{connectionName}} lleva más de 30 minutos sin poder sincronizar.",
+      tracking_push_stuck:
+        "No pudimos confirmar el envío del rastreo al canal después de varios intentos. Abre la lista de rastreo y vuelve a intentarlo.",
+      vendor_email_failed:
+        "Hoja {{sheetName}}: el correo a {{vendorName}} no se envió. Revisa su dirección y vuelve a enviarlo.",
+      vendor_email_unconfirmed:
+        "Hoja {{sheetName}}: no pudimos confirmar que el correo a {{vendorName}} se haya enviado. Abre la hoja y reenvíalo.",
+      webhook_stuck:
+        "Una actualización de {{channel}} no se procesó. Ejecuta una sincronización en la conexión para recibirla.",
+    },
   },
   analyticsV2: {
     notEnoughHistory: "Aún no hay suficiente historial",
@@ -1534,6 +1562,31 @@ export const es: Messages = {
     tagRemoved: "Etiqueta quitada",
     timeline: "Historial",
     timelineNewState: "Nuevo",
+    timelineReason: {
+      artwork_approved: "Arte aprobado",
+      artwork_edited: "Arte editado",
+      artwork_failed: "Falló el renderizado del arte",
+      artwork_flagged: "Arte marcado para revisión",
+      artwork_rendered: "Arte renderizado",
+      artwork_rerendered: "Arte vuelto a renderizar",
+      artwork_uploaded: "Arte subido",
+      cancelled: "Cancelado: {{reason}}",
+      carrier_accepted: "La paquetería aceptó el paquete",
+      carrier_delivered: "La paquetería entregó el paquete",
+      held: "En espera: {{reason}}",
+      mapped: "Mapeado a un producto",
+      not_personalized: "No personalizado",
+      on_sheet: "En la hoja {{sheetName}}",
+      qc_fail: "Falló el control de calidad",
+      qc_pass: "Pasó el control de calidad",
+      released: "Liberado",
+      reprint: "Reimpresión: {{reason}}",
+      reprintNoReason: "Reimpresión",
+      scan_match: "Escaneo coincide",
+      sheet_received: "Hoja {{sheetName}} recibida",
+      tracking_pushed: "Rastreo enviado",
+      unknown_sku: "Sin coincidencia de SKU",
+    },
     total: "Total",
     tracking: "Rastreo",
     undo: "Deshacer",

@@ -45,7 +45,7 @@ import {
   OrderTags,
   ShipmentSection,
 } from "./order-actions";
-import { extractTimelineReason } from "./timeline-reason";
+import { extractTimelineReason, timelineReasonLabel } from "./timeline-reason";
 
 export function OrderDetail({
   orderId,
@@ -446,6 +446,14 @@ function Timeline({ orderId }: { orderId: string }) {
                       <StatusBadge state={e.to} className="scale-90" />
                     </span>
                     {(() => {
+                      // 0.11.0 (B-238): a known reasonCode gets a translated label; otherwise
+                      // keep today's fallback of parsing the backend's English `message`.
+                      const label = e.reasonCode
+                        ? timelineReasonLabel(t, e.reasonCode, e.reasonParams)
+                        : null;
+                      if (label) {
+                        return <span className="ml-1 text-muted-foreground">({label})</span>;
+                      }
                       const reason = extractTimelineReason(e.message, e.from, e.to);
                       if (reason.type === "reason") {
                         return <span className="ml-1 text-muted-foreground">({reason.text})</span>;

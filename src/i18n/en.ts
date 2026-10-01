@@ -131,6 +131,35 @@ export const en = {
       tracking_push_failed: "Tracking didn't reach the marketplace",
       vendor_sheet_received: "New gang sheet from a shop",
     },
+    line: {
+      label_buy_stuck:
+        "We couldn't confirm a label purchase with the carrier after several tries. Open the shipment and buy the label again; you won't be charged twice.",
+      label_void_stuck:
+        "We couldn't confirm a label void with the carrier. Open the shipment and void it again, or contact the carrier about the refund.",
+      // No trailing period: the formatted date can end in its own punctuation ("a.m." in
+      // Spanish), and a second one reads as a typo ("a.m..").
+      order_at_risk_one: "Order {{orderNo}} ships within {{count}} hour, due {{date}}",
+      order_at_risk_other: "Order {{orderNo}} ships within {{count}} hours, due {{date}}",
+      order_overdue: "Order {{orderNo}} was due {{date}} and still has no shipping label.",
+      plan_limit_near:
+        "{{usedPct}}% of monthly orders used: {{used}} of {{limit}} on the {{planName}} plan.",
+      plan_limit_reached: "{{used}} of {{limit}} orders used on the {{planName}} plan this month.",
+      po_stuck_submitting:
+        "{{poNo}} has been stuck sending to {{supplierName}} for over 15 minutes.",
+      sheet_stuck_one: "Sheet {{sheetName}} sent {{count}} hour ago, still {{status}}.",
+      sheet_stuck_other: "Sheet {{sheetName}} sent {{count}} hours ago, still {{status}}.",
+      stock_low:
+        "{{blankName}}: {{available}} available, reorder point {{reorderPoint}}, {{incoming}} incoming.",
+      sync_broken: "{{connectionName}} has been failing to sync for more than 30 minutes.",
+      tracking_push_stuck:
+        "We couldn't confirm the tracking upload to the channel after several tries. Open the tracking list and retry it.",
+      vendor_email_failed:
+        "Sheet {{sheetName}}: the email to {{vendorName}} didn't go out. Check their address, then resend it.",
+      vendor_email_unconfirmed:
+        "Sheet {{sheetName}}: we couldn't confirm the email to {{vendorName}} was sent. Open the sheet and resend it.",
+      webhook_stuck:
+        "An update from {{channel}} wasn't processed. Run a sync on the connection to pick it up.",
+    },
   },
   analyticsV2: {
     notEnoughHistory: "Not enough history yet",
@@ -1506,6 +1535,31 @@ export const en = {
     tagRemoved: "Tag removed",
     timeline: "Timeline",
     timelineNewState: "New",
+    timelineReason: {
+      artwork_approved: "Artwork approved",
+      artwork_edited: "Artwork edited",
+      artwork_failed: "Artwork render failed",
+      artwork_flagged: "Artwork flagged",
+      artwork_rendered: "Artwork rendered",
+      artwork_rerendered: "Artwork re-rendered",
+      artwork_uploaded: "Artwork uploaded",
+      cancelled: "Cancelled: {{reason}}",
+      carrier_accepted: "Carrier accepted the package",
+      carrier_delivered: "Carrier delivered",
+      held: "On hold: {{reason}}",
+      mapped: "Mapped to a product",
+      not_personalized: "Not personalized",
+      on_sheet: "On sheet {{sheetName}}",
+      qc_fail: "QC fail",
+      qc_pass: "QC pass",
+      released: "Released",
+      reprint: "Reprint: {{reason}}",
+      reprintNoReason: "Reprint",
+      scan_match: "Scan match",
+      sheet_received: "Sheet {{sheetName}} received",
+      tracking_pushed: "Tracking sent",
+      unknown_sku: "No SKU match",
+    },
     total: "Total",
     tracking: "Tracking",
     undo: "Undo",
