@@ -33,7 +33,7 @@ export function assistantErrorMessage(
     case "spend_cap":
       return t(
         "assistant.error.spendCap",
-        "Your shop's AI limit for today has been reached. Try again tomorrow, or ask the owner to raise it.",
+        "Today's AI limit has been reached. Try again tomorrow.",
       );
     case "credits_exhausted":
       return t(

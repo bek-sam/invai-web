@@ -11,7 +11,7 @@ const t = fakeT as unknown as TFunction;
 describe("assistantErrorMessage", () => {
   it("maps spend_cap to a plain-language daily-limit message", () => {
     const msg = assistantErrorMessage(t, "spend_cap", "AI spend cap reached for company");
-    expect(msg).toContain("today");
+    expect(msg).toContain("Today");
     expect(msg).not.toBe("AI spend cap reached for company");
   });
 

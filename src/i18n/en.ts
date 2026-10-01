@@ -184,8 +184,7 @@ export const en = {
     credits: "{{n}} AI credits left",
     error: {
       cantAnswer: "I couldn't answer that. Try again.",
-      spendCap:
-        "Your shop's AI limit for today has been reached. Try again tomorrow, or ask the owner to raise it.",
+      spendCap: "Today's AI limit has been reached. Try again tomorrow.",
     },
     "new": "New chat",
     placeholder: "Ask about profit, orders, stock…",

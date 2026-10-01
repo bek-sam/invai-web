@@ -143,7 +143,7 @@
  "assistant.badge.sample": "Datos de muestra",
  "assistant.credits": "Quedan {{n}} créditos de IA",
  "assistant.error.cantAnswer": "No pude responder eso. Inténtalo de nuevo.",
- "assistant.error.spendCap": "Se alcanzó el límite diario de IA de tu tienda. Vuelve a intentarlo mañana, o pídele al propietario que lo aumente.",
+ "assistant.error.spendCap": "Se alcanzó el límite de IA de hoy. Vuelve a intentarlo mañana.",
  "assistant.new": "Nuevo chat",
  "assistant.placeholder": "Pregunta por ganancias, pedidos, inventario…",
  "assistant.q1": "¿Cuál fue mi margen en TikTok esta semana?",

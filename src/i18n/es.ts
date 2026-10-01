@@ -187,8 +187,7 @@ export const es: Messages = {
     credits: "Quedan {{n}} créditos de IA",
     error: {
       cantAnswer: "No pude responder eso. Inténtalo de nuevo.",
-      spendCap:
-        "Se alcanzó el límite diario de IA de tu tienda. Vuelve a intentarlo mañana, o pídele al propietario que lo aumente.",
+      spendCap: "Se alcanzó el límite de IA de hoy. Vuelve a intentarlo mañana.",
     },
     "new": "Nuevo chat",
     placeholder: "Pregunta por ganancias, pedidos, inventario…",
