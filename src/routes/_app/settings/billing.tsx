@@ -495,8 +495,10 @@ function CreditLedgerTable({
           "—"
         ) : (
           <span className="tabular-nums text-muted-foreground">
-            {localeNumber(r.tokensIn, i18n.language)} in /{" "}
-            {localeNumber(r.tokensOut ?? 0, i18n.language)} out
+            {t("billing.ledgerTokensInOut", "{{in}} in / {{out}} out", {
+              in: localeNumber(r.tokensIn, i18n.language),
+              out: localeNumber(r.tokensOut ?? 0, i18n.language),
+            })}
           </span>
         );
       },

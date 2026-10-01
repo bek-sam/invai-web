@@ -361,7 +361,7 @@ function DesignEditor({ design }: { design: Design | null }) {
                 ) : (
                   <SignedImage
                     fileKey={p.previewKey ?? (p.fileKey || null)}
-                    alt={p.placement}
+                    alt={t(`placement.${p.placement}`, p.placement.replace(/_/g, " "))}
                     className="aspect-square w-full"
                   />
                 )}
