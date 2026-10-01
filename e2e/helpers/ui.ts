@@ -74,10 +74,15 @@ export const loginAsVendor = (page: Page) => loginAs(page, VENDOR);
 export async function settled(page: Page, timeout = 10_000) {
   // A plain locator: an open drawer marks <main> aria-hidden, which hides it from getByRole.
   await expect(page.locator("main").first()).toBeVisible();
-  await expect
-    .poll(async () => page.locator("[data-slot=skeleton], .animate-spin").count(), {
-      timeout,
-    })
-    .toBe(0)
-    .catch(() => {});
+  const busy = page.locator("[data-slot=skeleton], .animate-spin");
+  // toPass retries the callback and, on timeout, rethrows whatever it last threw -- so the
+  // failure names the count and URL instead of being swallowed (gate-rootcause.md §1).
+  await expect(async () => {
+    const count = await busy.count();
+    if (count > 0) {
+      throw new Error(
+        `settled(): ${count} skeleton/spinner element(s) still present at ${page.url()}`,
+      );
+    }
+  }).toPass({ timeout });
 }
