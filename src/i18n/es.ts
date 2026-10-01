@@ -185,6 +185,11 @@ export const es: Messages = {
       sample: "Datos de muestra",
     },
     credits: "Quedan {{n}} créditos de IA",
+    error: {
+      cantAnswer: "No pude responder eso. Inténtalo de nuevo.",
+      spendCap:
+        "Se alcanzó el límite diario de IA de tu tienda. Vuelve a intentarlo mañana, o pídele al propietario que lo aumente.",
+    },
     "new": "Nuevo chat",
     placeholder: "Pregunta por ganancias, pedidos, inventario…",
     send: "Enviar",
@@ -1171,11 +1176,6 @@ export const es: Messages = {
       r3: "Sube {{design}} a por lo menos {{floor}}, o detén sus anuncios.",
       r4: "Crea 1 o 2 diseños nuevos para el nicho {{niche}}.",
       r5: "Pausa los anuncios de {{design}} y bájalo en tu lista.",
-    },
-    band: {
-      high: "Confianza alta",
-      low: "No hay suficientes datos",
-      medium: "Confianza media: pruébalo",
     },
     channels: {
       connected: "tus canales conectados",

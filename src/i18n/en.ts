@@ -182,6 +182,11 @@ export const en = {
       sample: "Sample data",
     },
     credits: "{{n}} AI credits left",
+    error: {
+      cantAnswer: "I couldn't answer that. Try again.",
+      spendCap:
+        "Your shop's AI limit for today has been reached. Try again tomorrow, or ask the owner to raise it.",
+    },
     "new": "New chat",
     placeholder: "Ask about profit, orders, stock…",
     send: "Send",
@@ -1148,11 +1153,6 @@ export const en = {
       r3: "Raise {{design}} to at least {{floor}}, or stop its ads.",
       r4: "Make 1–2 new designs for the {{niche}} niche.",
       r5: "Pause ads on {{design}} and move it down your list.",
-    },
-    band: {
-      high: "High confidence",
-      low: "Not enough data",
-      medium: "Medium confidence: test it",
     },
     channels: {
       connected: "your connected channels",

@@ -2,6 +2,7 @@ import type { MarketRecommendation } from "@invai/contracts";
 import { Button, cn, RelativeTime, Textarea } from "@invai/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import type { TFunction } from "i18next";
 import { Bot, Loader2, MessageSquarePlus, Send, Square, User, Wrench } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,38 @@ import { client, orpc } from "../../lib/rpc";
 export const Route = createFileRoute("/_app/assistant")({
   component: AssistantPage,
 });
+
+/**
+ * Maps the assistant stream's `error` event (B-262) to a plain-language, translated line.
+ * Codes come from `invai-backend/src/modules/ai/service.ts:1320-1327`. `credits_exhausted`
+ * reuses the exact wording the billing screens already show for that same backend code
+ * (`upgrade.limit.aiCredits`), so the shop sees one consistent message everywhere. A missing or
+ * unknown code (including `rate_limited`, which the service doesn't send today) keeps the
+ * server's own English text, same as before this mapping existed.
+ */
+export function assistantErrorMessage(
+  t: TFunction,
+  code: string | undefined,
+  message: string,
+): string {
+  switch (code) {
+    case "spend_cap":
+      return t(
+        "assistant.error.spendCap",
+        "Your shop's AI limit for today has been reached. Try again tomorrow, or ask the owner to raise it.",
+      );
+    case "credits_exhausted":
+      return t(
+        "upgrade.limit.aiCredits",
+        "This month's AI credits are used up. Buy a credit pack or upgrade your plan to keep using AI.",
+      );
+    case "refusal":
+    case "internal":
+      return t("assistant.error.cantAnswer", "I couldn't answer that. Try again.");
+    default:
+      return message;
+  }
+}
 
 interface ChatMessage {
   id: string;
@@ -137,7 +170,8 @@ function AssistantPage() {
             recommendationIds: [...new Set([...(m.recommendationIds ?? []), ...newIds])],
           }));
           void hydrateRecommendations(newIds);
-        } else if (ev.type === "error") patch((m) => ({ ...m, error: ev.message }));
+        } else if (ev.type === "error")
+          patch((m) => ({ ...m, error: assistantErrorMessage(t, ev.code, ev.message) }));
         else if (ev.type === "done") setConversationId(ev.conversationId);
       }
     } catch (e) {

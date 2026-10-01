@@ -1,11 +1,10 @@
 import type { MarketRecommendation, RecommendationVote } from "@invai/contracts";
-import { Button, cn } from "@invai/ui";
+import { Button, ConfidenceBadge, cn } from "@invai/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "../../lib/errors";
 import { orpc } from "../../lib/rpc";
-import { ConfidenceBadge } from "./confidence-badge";
 import { recommendationActionText } from "./recommendation-copy";
 import { SampleDataBadge } from "./sample-data-badge";
 import { useNicheLabel } from "./use-niche-taxonomy";

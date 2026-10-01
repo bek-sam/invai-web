@@ -60,7 +60,6 @@
   "digest.source.amazonBrandAnalytics": "Amazon Brand Analytics", "digest.source.amazonPricing": "Amazon pricing", "digest.source.census": "Census", "digest.source.googleTrends": "Google Trends", "digest.source.jungleScout": "Jungle Scout", "digest.source.own": "Your own data", "digest.source.pinterestTrends": "Pinterest Trends", "digest.source.walmartPricing": "Walmart pricing",
   "errors.forbiddenMessage": "You don't have access to this page. Ask the owner.", "errors.generic": "Something went wrong", "errors.network": "Can't reach the server", "errors.notImplemented": "This part of the API isn't available yet", "errors.pageNotFoundAction": "Back to Today", "errors.pageNotFoundDescription": "This page doesn't exist or was moved.", "errors.pageNotFoundTitle": "Page not found",
   "listings.exportCsv": "Export CSV",
-  "market.band.high": "High confidence", "market.band.low": "Not enough data", "market.band.medium": "Medium confidence: test it",
   "mismatch.wrong_style": "Wrong style",
   "poState.submitting": "Submitting…",
   "profit.refundSource.csv": "Order file", "profit.refundSource.manual": "Recorded here", "profit.refundSource.shopify": "Shopify",
