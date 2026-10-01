@@ -157,8 +157,12 @@ export const es: Messages = {
         "No pudimos confirmar el envío del rastreo al canal después de varios intentos. Abre la lista de rastreo y vuelve a intentarlo.",
       vendor_email_failed:
         "Hoja {{sheetName}}: el correo a {{vendorName}} no se envió. Revisa su dirección y vuelve a enviarlo.",
+      vendor_email_failed_unknown:
+        "Hoja {{sheetName}}: el correo al proveedor no se envió. Revisa su dirección y vuelve a enviarlo.",
       vendor_email_unconfirmed:
         "Hoja {{sheetName}}: no pudimos confirmar que el correo a {{vendorName}} se haya enviado. Abre la hoja y reenvíalo.",
+      vendor_email_unconfirmed_unknown:
+        "Hoja {{sheetName}}: no pudimos confirmar que el correo al proveedor se haya enviado. Abre la hoja y reenvíalo.",
       webhook_stuck:
         "Una actualización de {{channel}} no se procesó. Ejecuta una sincronización en la conexión para recibirla.",
     },

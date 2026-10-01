@@ -137,3 +137,71 @@ describe("alerts.line pluralization (real i18next)", () => {
     ).toContain("5 horas");
   });
 });
+
+/**
+ * The backend leaves `vendorName` out of `params` entirely when the vendor on a sheet is
+ * unknown (invai-backend vendors/delivery.ts:242); a substituted "" would leave a gap in the
+ * sentence (review round 1, finding 1). Real catalogs, both languages, both codes.
+ */
+describe("alerts.line vendor email, with and without vendorName (real i18next)", () => {
+  async function makeI18n(lng: "en" | "es") {
+    const instance = createInstance();
+    await instance.init({ lng, resources: { en: { translation: en }, es: { translation: es } } });
+    return instance;
+  }
+
+  it("names the vendor when vendorName is present", async () => {
+    const i18nEn = await makeI18n("en");
+    const i18nEs = await makeI18n("es");
+    const a = alert({
+      kind: "vendor_sheet_received",
+      messageCode: "vendor_email_unconfirmed",
+      params: { sheetName: "2026-10-01 #1", vendorName: "Sun City DTF" },
+    });
+    expect(alertDetail(i18nEn.t, a, "en")).toBe(
+      "Sheet 2026-10-01 #1: we couldn't confirm the email to Sun City DTF was sent. Open the sheet and resend it.",
+    );
+    expect(alertDetail(i18nEs.t, a, "es")).toBe(
+      "Hoja 2026-10-01 #1: no pudimos confirmar que el correo a Sun City DTF se haya enviado. Abre la hoja y reenvíalo.",
+    );
+  });
+
+  it("falls back to a vendorless line, with no gap, when vendorName is absent (vendor unknown)", async () => {
+    const i18nEn = await makeI18n("en");
+    const i18nEs = await makeI18n("es");
+    const unconfirmed = alert({
+      kind: "vendor_sheet_received",
+      messageCode: "vendor_email_unconfirmed",
+      params: { sheetName: "2026-10-01 #1" },
+    });
+    const failed = alert({
+      kind: "vendor_sheet_received",
+      messageCode: "vendor_email_failed",
+      params: { sheetName: "2026-10-01 #1" },
+    });
+
+    expect(alertDetail(i18nEn.t, unconfirmed, "en")).toBe(
+      "Sheet 2026-10-01 #1: we couldn't confirm the email to the vendor was sent. Open the sheet and resend it.",
+    );
+    expect(alertDetail(i18nEs.t, unconfirmed, "es")).toBe(
+      "Hoja 2026-10-01 #1: no pudimos confirmar que el correo al proveedor se haya enviado. Abre la hoja y reenvíalo.",
+    );
+    expect(alertDetail(i18nEn.t, failed, "en")).toBe(
+      "Sheet 2026-10-01 #1: the email to the vendor didn't go out. Check their address, then resend it.",
+    );
+    expect(alertDetail(i18nEs.t, failed, "es")).toBe(
+      "Hoja 2026-10-01 #1: el correo al proveedor no se envió. Revisa su dirección y vuelve a enviarlo.",
+    );
+
+    // No double-space / empty-name gap ("a  se" or "to  was") in either language.
+    for (const line of [
+      alertDetail(i18nEn.t, unconfirmed, "en"),
+      alertDetail(i18nEs.t, unconfirmed, "es"),
+      alertDetail(i18nEn.t, failed, "en"),
+      alertDetail(i18nEs.t, failed, "es"),
+    ]) {
+      expect(line).not.toMatch(/\s{2,}/);
+      expect(line).not.toMatch(/\bto\s+was\b|\ba\s+se\b/);
+    }
+  });
+});

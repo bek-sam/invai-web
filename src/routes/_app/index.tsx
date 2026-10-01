@@ -519,18 +519,33 @@ const ALERT_LINE_BUILDERS: Partial<
       "alerts.line.tracking_push_stuck",
       "We couldn't confirm the tracking upload to the channel after several tries. Open the tracking list and retry it.",
     ),
+  // The backend leaves `vendorName` out of `params` entirely when the vendor is unknown
+  // (invai-backend vendors/delivery.ts:242), so a vendorless variant is needed per-code: a
+  // substituted "" would leave a gap in the sentence (review round 1, finding 1).
   vendor_email_unconfirmed: (t, p) =>
-    t(
-      "alerts.line.vendor_email_unconfirmed",
-      "Sheet {{sheetName}}: we couldn't confirm the email to {{vendorName}} was sent. Open the sheet and resend it.",
-      { sheetName: p.sheetName ?? "", vendorName: p.vendorName ?? "" },
-    ),
+    p.vendorName
+      ? t(
+          "alerts.line.vendor_email_unconfirmed",
+          "Sheet {{sheetName}}: we couldn't confirm the email to {{vendorName}} was sent. Open the sheet and resend it.",
+          { sheetName: p.sheetName ?? "", vendorName: p.vendorName },
+        )
+      : t(
+          "alerts.line.vendor_email_unconfirmed_unknown",
+          "Sheet {{sheetName}}: we couldn't confirm the email to the vendor was sent. Open the sheet and resend it.",
+          { sheetName: p.sheetName ?? "" },
+        ),
   vendor_email_failed: (t, p) =>
-    t(
-      "alerts.line.vendor_email_failed",
-      "Sheet {{sheetName}}: the email to {{vendorName}} didn't go out. Check their address, then resend it.",
-      { sheetName: p.sheetName ?? "", vendorName: p.vendorName ?? "" },
-    ),
+    p.vendorName
+      ? t(
+          "alerts.line.vendor_email_failed",
+          "Sheet {{sheetName}}: the email to {{vendorName}} didn't go out. Check their address, then resend it.",
+          { sheetName: p.sheetName ?? "", vendorName: p.vendorName },
+        )
+      : t(
+          "alerts.line.vendor_email_failed_unknown",
+          "Sheet {{sheetName}}: the email to the vendor didn't go out. Check their address, then resend it.",
+          { sheetName: p.sheetName ?? "" },
+        ),
   po_stuck_submitting: (t, p) =>
     t(
       "alerts.line.po_stuck_submitting",

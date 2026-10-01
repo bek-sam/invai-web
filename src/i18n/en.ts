@@ -155,8 +155,12 @@ export const en = {
         "We couldn't confirm the tracking upload to the channel after several tries. Open the tracking list and retry it.",
       vendor_email_failed:
         "Sheet {{sheetName}}: the email to {{vendorName}} didn't go out. Check their address, then resend it.",
+      vendor_email_failed_unknown:
+        "Sheet {{sheetName}}: the email to the vendor didn't go out. Check their address, then resend it.",
       vendor_email_unconfirmed:
         "Sheet {{sheetName}}: we couldn't confirm the email to {{vendorName}} was sent. Open the sheet and resend it.",
+      vendor_email_unconfirmed_unknown:
+        "Sheet {{sheetName}}: we couldn't confirm the email to the vendor was sent. Open the sheet and resend it.",
       webhook_stuck:
         "An update from {{channel}} wasn't processed. Run a sync on the connection to pick it up.",
     },
