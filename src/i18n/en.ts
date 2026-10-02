@@ -1720,6 +1720,7 @@ export const en = {
     on_model_white: "On model (white)",
   },
   photos: {
+    analysisFailed: "We couldn't analyze this design. Try again.",
     analysisTitle: "Analysis",
     analyzing: "Analyzing design…",
     approve: "Approve",
@@ -1743,6 +1744,7 @@ export const en = {
     estimateSummary: "{{images}} photos, {{credits}} credits",
     garments: "Garments",
     generate: "Generate",
+    imageFailed: "This photo couldn't be made.",
     needsApproval: "These photos still need approval before you can download or attach them.",
     noBackPrint: "No back print file",
     noDraftsForDesign: "No AI listing drafts for this design yet.",
@@ -1759,6 +1761,7 @@ export const en = {
     sampleAnalysis: "Sample analysis",
     searchDesigns: "Search designs",
     select: "Select {{name}}",
+    setNotFound: "This photo set wasn't found. It may have been removed.",
     skipDuplicateColor: "Duplicate color",
     skipNoBackPrint: "No back print file",
     skippedCount: "{{count}} combination(s) skipped: {{reasons}}",
@@ -1768,6 +1771,7 @@ export const en = {
     views: "Views",
     warnDarkOnDark: "Dark art on a dark shirt is hard to see on {{blank}}.",
     warnLightOnLight: "Light art on a light shirt is hard to see on {{blank}}.",
+    zipFailed: "Couldn't build the zip. Try again.",
   },
   pickers: {
     chooseDesign: "Choose a design…",

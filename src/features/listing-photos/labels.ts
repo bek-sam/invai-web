@@ -159,11 +159,19 @@ const REASON_MESSAGES: Partial<
 /** Maps `photos.*` errors (the 10 `BAD_REQUEST` reasons, the daily cap) to plain sentences. */
 export function photoErrorMessage(t: TFunction, err: unknown): string {
   const info = errorInfo(err);
+  if (info.code === "NOT_FOUND") {
+    // A stale `?setId=` (the set was removed, or belongs to another tenant) -- never the raw
+    // "photo set <uuid> not found" server text (R4).
+    return t("photos.setNotFound", "This photo set wasn't found. It may have been removed.");
+  }
   if (info.code === "BAD_REQUEST") {
     const data = info.data as { reason?: string; count?: number | null } | null;
     const reason = data?.reason as PhotoBadRequestReason | undefined;
     const fn = reason ? REASON_MESSAGES[reason] : undefined;
     if (fn) return fn(t, data?.count ?? null);
+    // A 400 with no structured `reason` (plain input validation) carries the server's raw
+    // English text; never show it in the Spanish UI (R4).
+    return t("errors.generic", "Something went wrong");
   }
   if (info.code === "IMAGE_DAILY_CAP_REACHED") {
     const data = info.data as { cap?: number; used?: number } | null;

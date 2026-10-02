@@ -1750,6 +1750,7 @@ export const es: Messages = {
     on_model_white: "En modelo (blanco)",
   },
   photos: {
+    analysisFailed: "No pudimos analizar este diseño. Inténtalo de nuevo.",
     analysisTitle: "Análisis",
     analyzing: "Analizando el diseño…",
     approve: "Aprobar",
@@ -1773,6 +1774,7 @@ export const es: Messages = {
     estimateSummary: "{{images}} fotos, {{credits}} créditos",
     garments: "Prendas",
     generate: "Generar",
+    imageFailed: "No se pudo generar esta foto.",
     needsApproval:
       "Estas fotos aún necesitan aprobación antes de poder descargarlas o adjuntarlas.",
     noBackPrint: "Sin archivo de impresión trasero",
@@ -1790,6 +1792,7 @@ export const es: Messages = {
     sampleAnalysis: "Análisis de muestra",
     searchDesigns: "Buscar diseños",
     select: "Elegir {{name}}",
+    setNotFound: "No encontramos este conjunto de fotos. Es posible que se haya eliminado.",
     skipDuplicateColor: "Color duplicado",
     skipNoBackPrint: "Sin archivo de impresión trasero",
     skippedCount: "{{count}} combinación(es) omitida(s): {{reasons}}",
@@ -1799,6 +1802,7 @@ export const es: Messages = {
     views: "Vistas",
     warnDarkOnDark: "El arte oscuro sobre una playera oscura es difícil de ver en {{blank}}.",
     warnLightOnLight: "El arte claro sobre una playera clara es difícil de ver en {{blank}}.",
+    zipFailed: "No pudimos crear el zip. Inténtalo de nuevo.",
   },
   pickers: {
     chooseDesign: "Elige un diseño…",

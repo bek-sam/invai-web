@@ -34,8 +34,16 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, ArrowLeft, Check, Download, Loader2, Sparkles } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Check,
+  Download,
+  Loader2,
+  RotateCw,
+  Sparkles,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { Section } from "../../components/page";
@@ -53,8 +61,32 @@ import {
   viewLabel,
 } from "../../features/listing-photos/labels";
 import { useDebounced } from "../../hooks/use-debounced";
+import { useInView } from "../../hooks/use-in-view";
 import { useCan } from "../../lib/me";
 import { orpc } from "../../lib/rpc";
+
+/** Signed URLs live ~15 minutes (`SignedImage`); swap a bit before they actually expire. */
+const SIGNED_URL_REFRESH_MS = 13 * 60_000;
+
+/**
+ * `getSet` re-presigns every image's URL on each poll (a fresh `X-Amz-Date`), so using
+ * `image.url` directly as `<img src>` re-downloads every rendered photo on every 2.5 s poll or
+ * realtime refresh (round-2 finding R3). Reuse the previous URL for an image's stable S3 `key`
+ * until it nears its expiry or the key itself changes.
+ */
+function useStableImageUrls(images: PhotoImage[]): PhotoImage[] {
+  const cache = useRef(new Map<string, { key: string | null; url: string; at: number }>());
+  const now = Date.now();
+  return images.map((img) => {
+    if (!img.url) return img;
+    const cached = cache.current.get(img.id);
+    if (cached && cached.key === img.key && now - cached.at < SIGNED_URL_REFRESH_MS) {
+      return cached.url === img.url ? img : { ...img, url: cached.url };
+    }
+    cache.current.set(img.id, { key: img.key, url: img.url, at: now });
+    return img;
+  });
+}
 
 export const Route = createFileRoute("/_app/listing-photos")({
   validateSearch: z.object({
@@ -99,6 +131,7 @@ function ListingPhotosPage() {
         <div className="flex flex-col gap-6">
           {search.designId ? (
             <DesignFlow
+              key={search.designId}
               designId={search.designId}
               onChangeDesign={() => void navigate({ search: {} })}
               onCreated={(setId) => void navigate({ search: { setId } })}
@@ -157,22 +190,43 @@ function PickDesign({ onSelect }: { onSelect: (id: string) => void }) {
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("common.noResults")}</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((d) => (
-            <div key={d.id} className="flex flex-col gap-2 rounded-lg border border-border p-2">
-              <SignedImage
-                fileKey={d.placements[0]?.previewKey ?? null}
-                alt={d.name}
-                className="aspect-square w-full"
-              />
-              <span className="truncate text-sm font-medium">{d.name}</span>
-              <Button size="sm" variant="outline" onClick={() => onSelect(d.id)}>
-                {t("photos.select", "Select {{name}}", { name: d.name })}
-              </Button>
-            </div>
+            <PickDesignCard key={d.id} design={d} onSelect={onSelect} />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * The grid can hold the whole first page of designs at once; lazy-mount each thumbnail's
+ * `SignedImage` only once it is near the viewport (round-2 finding R3, same pattern as
+ * `catalog/designs.index.tsx`), instead of presigning all 30 the instant the page loads.
+ */
+function PickDesignCard({ design, onSelect }: { design: Design; onSelect: (id: string) => void }) {
+  const { t } = useTranslation();
+  const { ref, inView } = useInView();
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-border p-2">
+      {inView ? (
+        <SignedImage
+          fileKey={design.placements[0]?.previewKey ?? null}
+          alt={design.name}
+          className="aspect-square w-full"
+        />
+      ) : (
+        <div
+          ref={ref}
+          aria-hidden
+          className="checkerboard aspect-square w-full rounded-md bg-muted"
+        />
+      )}
+      <span className="truncate text-sm font-medium">{design.name}</span>
+      <Button size="sm" variant="outline" onClick={() => onSelect(design.id)}>
+        {t("photos.select", "Select {{name}}", { name: design.name })}
+      </Button>
     </div>
   );
 }
@@ -219,15 +273,32 @@ function DesignFlow({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const design = useQuery(orpc.designs.get.queryOptions({ input: { id: designId } }));
+  const lastJobId = useRef<string | null>(null);
+  const [stalled, setStalled] = useState(false);
   const analysis = useQuery(
     orpc.photos.analyzeDesign.queryOptions({
       input: { designId, refresh: false },
-      refetchInterval: (query) => (query.state.data?.status === "pending" ? 2000 : false),
+      refetchInterval: (query) =>
+        query.state.data?.status === "pending" && !stalled ? 2000 : false,
     }),
   );
+  // The backend answers a failed analysis job by silently re-enqueuing a new one and still
+  // returning `pending` (R1; the semantics fix is queued for wave 27), so `status: "failed"`
+  // never actually arrives. A `pending` jobId that differs from the one we started polling means
+  // the previous job failed: stop polling instead of re-running imaging + AI every 2 s forever.
+  useEffect(() => {
+    const d = analysis.data;
+    if (d?.status !== "pending") return;
+    if (lastJobId.current === null) lastJobId.current = d.jobId;
+    else if (d.jobId !== lastJobId.current) setStalled(true);
+  }, [analysis.data]);
   const refresh = useMutation(
     orpc.photos.analyzeDesign.mutationOptions({
-      onSuccess: () => void queryClient.invalidateQueries({ queryKey: orpc.photos.key() }),
+      onSuccess: (result) => {
+        lastJobId.current = result.status === "pending" ? result.jobId : null;
+        setStalled(false);
+        void queryClient.invalidateQueries({ queryKey: orpc.photos.key() });
+      },
     }),
   );
 
@@ -250,16 +321,19 @@ function DesignFlow({
       </div>
       <div>
         <h3 className="mb-1.5 text-sm font-semibold">{t("photos.analysisTitle", "Analysis")}</h3>
-        {analysis.isPending || analysis.data?.status === "pending" ? (
+        {analysis.isPending || (analysis.data?.status === "pending" && !stalled) ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" aria-hidden />
             {t("photos.analyzing", "Analyzing design…")}
           </p>
         ) : analysis.isError ? (
           <ErrorState error={analysis.error} onRetry={() => void analysis.refetch()} compact />
-        ) : analysis.data?.status === "failed" ? (
+        ) : stalled || analysis.data?.status === "failed" ? (
           <ErrorState
-            error={{ code: "PHOTO_ANALYSIS_FAILED", message: analysis.data.error }}
+            error={{
+              code: "PHOTO_ANALYSIS_FAILED",
+              message: t("photos.analysisFailed", "We couldn't analyze this design. Try again."),
+            }}
             onRetry={() => refresh.mutate({ designId, refresh: true })}
             compact
           />
@@ -267,7 +341,7 @@ function DesignFlow({
           <AnalysisPanel analysis={analysis.data.analysis} />
         ) : null}
       </div>
-      {analysis.data?.status === "ready" && (
+      {analysis.data?.status === "ready" && !stalled && (
         <ChoosePanel
           designId={designId}
           design={design.data ?? null}
@@ -529,14 +603,6 @@ function ChoosePanel({
         {estimate.isError && <ErrorState error={estimate.error} compact />}
         <Button
           disabled={!spec || !estimate.data?.canAfford || createSet.isPending}
-          title={
-            estimate.data && !estimate.data.canAfford
-              ? t("photos.creditsShort", "Needs {{credits}} credits; you have {{remaining}}.", {
-                  credits: estimate.data.credits,
-                  remaining: estimate.data.creditsRemaining,
-                })
-              : undefined
-          }
           onClick={() => spec && createSet.mutate({ ...spec, idempotencyKey: idemRef.current.key })}
         >
           {createSet.isPending ? (
@@ -547,6 +613,14 @@ function ChoosePanel({
           {t("photos.generate", "Generate")}
         </Button>
       </div>
+      {estimate.data && !estimate.data.canAfford && (
+        <p className="text-sm text-muted-foreground">
+          {t("photos.creditsShort", "Needs {{credits}} credits; you have {{remaining}}.", {
+            credits: estimate.data.credits,
+            remaining: estimate.data.creditsRemaining,
+          })}
+        </p>
+      )}
       {estimate.data && estimate.data.skipped.length > 0 && (
         <p className="text-xs text-muted-foreground">
           {t("photos.skippedCount", "{{count}} combination(s) skipped: {{reasons}}", {
@@ -588,28 +662,39 @@ function SetDetail({ setId }: { setId: string }) {
       onSuccess: () => void queryClient.invalidateQueries({ queryKey: orpc.photos.key() }),
     }),
   );
-  const lastZipTrigger = useRef(0);
-  const data = q.data;
-  if (
-    data &&
-    data.counts.approved > 0 &&
-    data.counts.approved !== lastZipTrigger.current &&
-    data.zip.status !== "queued" &&
-    data.zip.status !== "building"
-  ) {
-    lastZipTrigger.current = data.counts.approved;
-    exportZip.mutate({ setId });
-  }
+  // Keyed on the sorted set of approved image ids, not the count (R2): approving one image and
+  // rejecting another leaves the count unchanged but must still rebuild the zip. `lastZipKey` is
+  // read (for the "does the ready zip match now" check) before it's updated for this render, so a
+  // just-detected mismatch never shows the stale `Download` link for the old approved set.
+  const lastZipKey = useRef<string | null>(null);
+  const images = useStableImageUrls(q.data?.images ?? []);
 
   if (q.isPending) return <SkeletonRows rows={10} />;
-  if (q.isError) return <ErrorState error={q.error} onRetry={() => void q.refetch()} />;
+  if (q.isError)
+    return (
+      <ErrorState
+        error={{ code: "PHOTO_SET_ERROR", message: photoErrorMessage(t, q.error) }}
+        onRetry={() => void q.refetch()}
+      />
+    );
   const set = q.data;
-  const approvedIds = set.images.filter((i) => i.status === "approved").map((i) => i.id);
-  const passingRenderedIds = set.images
+  const approvedIds = images.filter((i) => i.status === "approved").map((i) => i.id);
+  const passingRenderedIds = images
     .filter((i) => i.status === "rendered" && (!i.checks || i.checks.passes))
     .map((i) => i.id);
+  const approvedKey = [...approvedIds].sort().join(",");
+  const zipMatchesApproved = lastZipKey.current === approvedKey && !exportZip.isPending;
+  if (
+    approvedKey &&
+    approvedKey !== lastZipKey.current &&
+    set.zip.status !== "queued" &&
+    set.zip.status !== "building"
+  ) {
+    lastZipKey.current = approvedKey;
+    exportZip.mutate({ setId });
+  }
   const byChannel = new Map<string, PhotoImage[]>();
-  for (const img of set.images) {
+  for (const img of images) {
     const arr = byChannel.get(img.channel) ?? [];
     arr.push(img);
     byChannel.set(img.channel, arr);
@@ -637,12 +722,17 @@ function SetDetail({ setId }: { setId: string }) {
               {t("photos.approveAllPassing", "Approve all passing")}
             </Button>
           )}
-          {set.zip.status === "ready" && set.zip.url ? (
+          {set.zip.status === "ready" && set.zip.url && zipMatchesApproved ? (
             <Button asChild size="sm">
               <a href={set.zip.url} target="_blank" rel="noopener noreferrer">
                 <Download aria-hidden />
                 {t("photos.downloadZip", "Download zip")}
               </a>
+            </Button>
+          ) : set.zip.status === "failed" || exportZip.isError ? (
+            <Button variant="outline" size="sm" onClick={() => exportZip.mutate({ setId })}>
+              <RotateCw aria-hidden />
+              {t("photos.zipFailed", "Couldn't build the zip. Try again.")}
             </Button>
           ) : approvedIds.length > 0 ? (
             <Button variant="outline" size="sm" disabled>
@@ -661,7 +751,7 @@ function SetDetail({ setId }: { setId: string }) {
         </div>
       </div>
       <h2 className="text-lg font-semibold">{set.designName}</h2>
-      {set.images.length > 0 && approvedIds.length === 0 && (
+      {images.length > 0 && approvedIds.length === 0 && (
         <p className="text-sm text-muted-foreground">
           {t(
             "photos.needsApproval",
@@ -669,10 +759,10 @@ function SetDetail({ setId }: { setId: string }) {
           )}
         </p>
       )}
-      {[...byChannel.entries()].map(([channel, images]) => (
+      {[...byChannel.entries()].map(([channel, channelImages]) => (
         <Section key={channel} title={t(`channel.${channel}`, channel)}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {images.map((img) => (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {channelImages.map((img) => (
               <ImageCard
                 key={img.id}
                 image={img}
@@ -724,7 +814,7 @@ function ImageCard({
         )}
       </div>
       <span className="truncate text-xs text-muted-foreground">
-        {image.garment} · {image.color.name}
+        {garmentLabel(t, image.garment)} · {image.color.name}
       </span>
       {image.status === "queued" && (
         <Badge variant="secondary">{t("photos.queued", "Queued")}</Badge>
@@ -733,7 +823,7 @@ function ImageCard({
         <Badge variant="secondary">{t("photos.rendering", "Rendering")}</Badge>
       )}
       {image.status === "failed" && (
-        <Badge variant="danger">{image.error ?? t("common.error")}</Badge>
+        <Badge variant="danger">{t("photos.imageFailed", "This photo couldn't be made.")}</Badge>
       )}
       {checks &&
         (checks.passes ? (
@@ -818,7 +908,13 @@ function AttachButton({
   );
   return (
     <>
-      <Button variant="outline" size="sm" disabled={disabled} onClick={() => setOpen(true)}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-auto whitespace-normal text-left"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+      >
         <Sparkles aria-hidden />
         {t("photos.attachToDraft", "Attach to AI listing draft")}
       </Button>
