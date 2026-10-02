@@ -24,6 +24,7 @@ const SHOP_ROUTES = [
   "/shipping",
   "/listings/drafts",
   "/listings/trademark",
+  "/listing-photos", // T-26-5 (wave 26 listing photos); route lands with the web screen
   "/analytics/profit",
   "/analytics/operations",
   "/analytics/inventory",
