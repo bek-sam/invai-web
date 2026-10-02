@@ -66,10 +66,19 @@ test("a designer runs the full listing-photos flow for a design (AC1-6)", async 
     .toBe(true);
 
   // Approve: "approve all passing" first (per card AC6), then individual approvals if needed.
+  // Only images that pass every check turn into "Approved" and lose their Approve button; a
+  // card with a check failure or warning (e.g. the Amazon main or hoodie images in this flow)
+  // keeps its own Approve/Reject buttons on purpose, per card AC6 ("approve single images or
+  // all passing ones") -- so this doesn't assert every Approve button disappears.
+  const approveButtons = page.getByRole("button", { name: /^Approve$/ });
+  const approveCountBefore = await approveButtons.count();
   await page.getByRole("button", { name: "Approve all passing" }).click();
-  await expect(page.getByRole("button", { name: /^Approve$/ }).first()).toBeHidden({
+  await expect(page.getByText("Approved", { exact: true }).first()).toBeVisible({
     timeout: 10_000,
   });
+  await expect
+    .poll(async () => approveButtons.count(), { timeout: 10_000 })
+    .toBeLessThan(approveCountBefore);
 
   // Download zip appears once approvals exist and the zip job finishes.
   const zipLink = page.getByRole("link", { name: "Download zip" });
