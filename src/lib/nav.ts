@@ -9,6 +9,7 @@ import {
   Boxes,
   Building2,
   CalendarCheck,
+  Camera,
   ClipboardList,
   CreditCard,
   Factory,
@@ -204,6 +205,14 @@ export const SHOP_NAV: NavGroup[] = [
         icon: Sparkles,
         permission: "ai.listings.read",
         keywords: "etsy titles tags",
+      },
+      {
+        key: "listingPhotos",
+        to: "/listing-photos",
+        labelKey: "nav.listingPhotos",
+        icon: Camera,
+        permission: "photos.read",
+        keywords: "product photos amazon etsy mockups",
       },
       {
         key: "trademark",

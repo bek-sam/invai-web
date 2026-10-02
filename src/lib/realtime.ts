@@ -64,6 +64,8 @@ export function keysForEvent(name: string): QueryKey[] {
       return [orpc.channels.key()];
     case "listing_draft.updated":
       return [orpc.ai.listings.key()];
+    case "photo_set.updated":
+      return [orpc.photos.key()];
     case "alert.created":
       return [orpc.alerts.key(), orpc.today.key()];
     case "today.changed":

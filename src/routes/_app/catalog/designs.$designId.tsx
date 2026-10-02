@@ -6,6 +6,7 @@ import {
   Archive,
   ArchiveRestore,
   ArrowLeft,
+  Camera,
   Loader2,
   Plus,
   ScanSearch,
@@ -237,6 +238,14 @@ function DesignEditor({ design }: { design: Design | null }) {
                 <Link to="/listings/drafts" search={{ designId: design.id, create: true }}>
                   <Sparkles />
                   {t("designs.draftListing", "Draft listings")}
+                </Link>
+              </Button>
+            )}
+            {can("photos.read") && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/listing-photos" search={{ designId: design.id }}>
+                  <Camera />
+                  {t("designs.listingPhotos", "Listing photos")}
                 </Link>
               </Button>
             )}

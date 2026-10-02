@@ -19,6 +19,7 @@ import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAccountRouteImport } from './routes/_app/account'
 import { Route as AppAssistantRouteImport } from './routes/_app/assistant'
+import { Route as AppListingPhotosRouteImport } from './routes/_app/listing-photos'
 import { Route as AppShippingRouteImport } from './routes/_app/shipping'
 import { Route as AcceptInviteInvitationIdRouteImport } from './routes/accept-invite.$invitationId'
 import { Route as HelpIndexRouteImport } from './routes/help/index'
@@ -112,6 +113,11 @@ const AppAccountRoute = AppAccountRouteImport.update({
 const AppAssistantRoute = AppAssistantRouteImport.update({
   id: '/assistant',
   path: '/assistant',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppListingPhotosRoute = AppListingPhotosRouteImport.update({
+  id: '/listing-photos',
+  path: '/listing-photos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppShippingRoute = AppShippingRouteImport.update({
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AppAccountRoute
   '/assistant': typeof AppAssistantRoute
+  '/listing-photos': typeof AppListingPhotosRoute
   '/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
   '/help/$slug': typeof HelpSlugRoute
@@ -415,6 +422,7 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AppAccountRoute
   '/assistant': typeof AppAssistantRoute
+  '/listing-photos': typeof AppListingPhotosRoute
   '/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
   '/help/$slug': typeof HelpSlugRoute
@@ -473,6 +481,7 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/_app/account': typeof AppAccountRoute
   '/_app/assistant': typeof AppAssistantRoute
+  '/_app/listing-photos': typeof AppListingPhotosRoute
   '/_app/shipping': typeof AppShippingRoute
   '/accept-invite/$invitationId': typeof AcceptInviteInvitationIdRoute
   '/help/$slug': typeof HelpSlugRoute
@@ -532,6 +541,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/account'
     | '/assistant'
+    | '/listing-photos'
     | '/shipping'
     | '/accept-invite/$invitationId'
     | '/help/$slug'
@@ -587,6 +597,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/account'
     | '/assistant'
+    | '/listing-photos'
     | '/shipping'
     | '/accept-invite/$invitationId'
     | '/help/$slug'
@@ -644,6 +655,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/_app/account'
     | '/_app/assistant'
+    | '/_app/listing-photos'
     | '/_app/shipping'
     | '/accept-invite/$invitationId'
     | '/help/$slug'
@@ -776,6 +788,13 @@ declare module '@tanstack/react-router' {
       path: '/assistant'
       fullPath: '/assistant'
       preLoaderRoute: typeof AppAssistantRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/listing-photos': {
+      id: '/_app/listing-photos'
+      path: '/listing-photos'
+      fullPath: '/listing-photos'
+      preLoaderRoute: typeof AppListingPhotosRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/shipping': {
@@ -1099,6 +1118,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppAssistantRoute: typeof AppAssistantRoute
+  AppListingPhotosRoute: typeof AppListingPhotosRoute
   AppShippingRoute: typeof AppShippingRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAnalyticsAdSpendRoute: typeof AppAnalyticsAdSpendRoute
@@ -1146,6 +1166,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppAssistantRoute: AppAssistantRoute,
+  AppListingPhotosRoute: AppListingPhotosRoute,
   AppShippingRoute: AppShippingRoute,
   AppIndexRoute: AppIndexRoute,
   AppAnalyticsAdSpendRoute: AppAnalyticsAdSpendRoute,
