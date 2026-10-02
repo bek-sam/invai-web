@@ -3,10 +3,11 @@ import { loginAs } from "./helpers/ui";
 
 /*
  * T-26-5 "Listing photos" screen, phase A (spec `listing-photos.md`, card `waves/26/T-26-5.md`).
- * Written from the card's acceptance criteria before the web screen exists (acceptance-tests-
- * first): expected red until T-26-5 lands the route and components. Role/text selectors use the
- * card's own wording in English; the web-engineer's route is named `/listing-photos` in the card
- * handoff (next to `/listings/drafts` in nav.ts) — this spec assumes that path.
+ * Written from the card's acceptance criteria before the web screen existed (acceptance-tests-
+ * first), then re-synced to the built route's labels after T-26-5 landed (web commit 66ab0cb):
+ * accessible names use `exact: true` where a short name is a substring of another control's name
+ * (e.g. the "White" color checkbox vs. the "On model (white)" view checkbox), and the second test
+ * builds its own fresh, never-approved set rather than assuming one exists in `Recent sets`.
  *
  * Flow: pick a seeded design, wait for analysis, choose tee + hoodie, white + black, front_flat +
  * on_model_white, channels amazon + etsy, generate, wait for ready, approve all passing, see the
@@ -39,14 +40,16 @@ test("a designer runs the full listing-photos flow for a design (AC1-6)", async 
   await expect(page.getByRole("heading", { name: "Recommended colors" })).toBeVisible();
 
   // Step 3: choose garments, colors, views, channels; a live credits estimate.
-  await page.getByRole("checkbox", { name: "Tee" }).check();
-  await page.getByRole("checkbox", { name: "Hoodie" }).check();
-  await page.getByRole("checkbox", { name: "White" }).check();
-  await page.getByRole("checkbox", { name: "Black" }).check();
-  await page.getByRole("checkbox", { name: "Front flat" }).check();
-  await page.getByRole("checkbox", { name: "On model (white)" }).check();
-  await page.getByRole("checkbox", { name: "Amazon" }).check();
-  await page.getByRole("checkbox", { name: "Etsy" }).check();
+  // exact: true throughout -- Playwright's accessible-name match is substring by default, and
+  // "White" (a color checkbox) is a substring of the view checkbox "On model (white)".
+  await page.getByRole("checkbox", { name: "Tee", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Hoodie", exact: true }).check();
+  await page.getByRole("checkbox", { name: "White", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Black", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Front flat", exact: true }).check();
+  await page.getByRole("checkbox", { name: "On model (white)", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Amazon", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Etsy", exact: true }).check();
   await expect(page.getByText(/\d+ photos?, \d+ credits?/)).toBeVisible();
 
   const generate = page.getByRole("button", { name: "Generate" });
@@ -85,17 +88,43 @@ test("a designer runs the full listing-photos flow for a design (AC1-6)", async 
 test("an unapproved image can't be downloaded or attached, and the UI says why (AC6)", async ({
   page,
 }) => {
+  test.setTimeout(90_000);
   await loginAs(page, DESIGNER);
   await page.goto("/listing-photos");
-  const existingSet = page.getByRole("link", { name: /^Open / }).first();
-  await existingSet.click();
+
+  // Build a fresh, never-approved set instead of opening an existing one (`Recent sets`): on a
+  // freshly seeded database there may be no sets yet, and on a used database the most recent one
+  // may already be fully approved (e.g. by the test above), so either way the old assumption that
+  // *some* unapproved set exists wasn't safe. The create mutation's idempotency key is a fresh
+  // crypto.randomUUID() per page load (see the route's `idemRef`), so this always makes its own
+  // new set even when it reuses the same design and options as another test.
+  const search = page.getByRole("searchbox");
+  await expect(search).toBeVisible();
+  const firstDesign = page.getByRole("button", { name: /^Select / }).first();
+  await expect(firstDesign).toBeVisible();
+  await firstDesign.click();
+
+  await expect(page.getByText(/Analyzing|Sample analysis/)).toBeVisible();
+  await expect(page.getByText("Sample", { exact: false })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("heading", { name: "Recommended colors" })).toBeVisible();
+
+  await page.getByRole("checkbox", { name: "Tee", exact: true }).check();
+  await page.getByRole("checkbox", { name: "White", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Front flat", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Amazon", exact: true }).check();
+
+  const generate = page.getByRole("button", { name: "Generate" });
+  await expect(generate).toBeEnabled();
+  await generate.click();
+
+  await expect
+    .poll(async () => (await page.getByText(/Rendering|Queued/).count()) === 0, {
+      timeout: 60_000,
+    })
+    .toBe(true);
+
+  // Nothing was approved, so download and attach must both say so and stay blocked.
   const attach = page.getByRole("button", { name: "Attach to AI listing draft" });
-  if ((await page.getByRole("button", { name: /^Reject$/ }).count()) > 0) {
-    await page
-      .getByRole("button", { name: /^Reject$/ })
-      .first()
-      .click();
-  }
   await expect(page.getByText(/still needs? approval|Approve .* first/)).toBeVisible();
   await expect(attach).toBeDisabled();
 });
@@ -108,5 +137,8 @@ test("a presser has no nav entry and the route shows the no-access page (spec AC
   await loginAs(page, PRESSER);
   await expect(page.getByRole("link", { name: "Listing photos" })).toHaveCount(0);
   await page.goto("/listing-photos");
-  await expect(page.getByText(/don't have access|no access|not authorized/i)).toBeVisible();
+  // The shared FORBIDDEN ErrorState renders both a title ("No access") and a description ("You
+  // don't have access...") that each match a loose "no access" / "don't have access" regex, so a
+  // single such matcher hits two elements (strict-mode violation). Match the title text exactly.
+  await expect(page.getByText("No access", { exact: true })).toBeVisible();
 });
