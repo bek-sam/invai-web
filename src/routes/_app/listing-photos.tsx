@@ -6,7 +6,9 @@ import type {
   PhotoChannel,
   PhotoChecks,
   PhotoImage,
+  PhotoSceneKind,
   PhotoSetSpec,
+  PushTarget,
 } from "@invai/contracts";
 import { PHOTO_CHANNELS } from "@invai/contracts";
 import {
@@ -39,9 +41,13 @@ import {
   ArrowLeft,
   Check,
   Download,
+  Info,
   Loader2,
+  PenTool,
   RotateCw,
+  Send,
   Sparkles,
+  User,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -56,6 +62,8 @@ import {
   contrastWarningMessage,
   garmentLabel,
   photoErrorMessage,
+  pushExclusionReasonLabel,
+  sceneKindLabel,
   skipReasonLabel,
   type TemplateView,
   viewLabel,
@@ -67,6 +75,12 @@ import { orpc } from "../../lib/rpc";
 
 /** Signed URLs live ~15 minutes (`SignedImage`); swap a bit before they actually expire. */
 const SIGNED_URL_REFRESH_MS = 13 * 60_000;
+
+/**
+ * UI-chosen range for a single set's lifestyle scene count (card T-27-5 AC1); the contract's own
+ * cap (`MAX_PHOTO_LIFESTYLE_IMAGES`, 8) still applies server-side on top of this.
+ */
+const MAX_LIFESTYLE_COUNT = 6;
 
 /**
  * `getSet` re-presigns every image's URL on each poll (a fresh `X-Amz-Date`), so using
@@ -419,6 +433,8 @@ function ChoosePanel({
   const [colorKeys, setColorKeys] = useState<Set<string>>(new Set());
   const [views, setViews] = useState<Set<TemplateView>>(new Set());
   const [channels, setChannels] = useState<Set<PhotoChannel>>(new Set());
+  const [lifestyleCount, setLifestyleCount] = useState(0);
+  const [sceneKinds, setSceneKinds] = useState<Set<PhotoSceneKind>>(new Set());
   const facets = useQuery(orpc.blanks.facets.queryOptions({ input: {}, staleTime: 5 * 60_000 }));
 
   // Keyed by the color's name, not its hex: two blank styles can share a color name ("White")
@@ -455,8 +471,14 @@ function ChoosePanel({
     [colorOptions],
   );
   const hasBackPrint = design?.placements.some((p) => p.placement === "back") ?? false;
+  // Lifestyle scenes composite into the front print area only (service.ts `plan`); a design with
+  // no front print file can't take any.
+  const hasFrontPrint = design?.placements.some((p) => p.placement === "front") ?? false;
 
-  const spec: PhotoSetSpec | null = useMemo(() => {
+  // Templates-only spec (no `lifestyle`); kept separate from `spec` below so a second `estimate`
+  // call can diff it out and show the lifestyle scenes' own credit cost (AC1), without this screen
+  // hard-coding `PHOTO_SCENE_CREDITS` (a number only the backend owns).
+  const specBase: PhotoSetSpec | null = useMemo(() => {
     if (garments.size === 0 || colorKeys.size === 0 || views.size === 0 || channels.size === 0)
       return null;
     return {
@@ -471,7 +493,7 @@ function ChoosePanel({
       underbasePreview: true,
     };
   }, [designId, garments, colorKeys, views, channels, colorByKey]);
-  const specForQuery: PhotoSetSpec = spec ?? {
+  const emptySpec: PhotoSetSpec = {
     designId,
     garments: [],
     colors: [],
@@ -479,9 +501,32 @@ function ChoosePanel({
     channels: [],
     underbasePreview: true,
   };
+  const spec: PhotoSetSpec | null = useMemo(() => {
+    if (!specBase) return null;
+    if (lifestyleCount === 0) return specBase;
+    return {
+      ...specBase,
+      lifestyle: {
+        count: lifestyleCount,
+        sceneKinds: sceneKinds.size ? [...sceneKinds] : undefined,
+      },
+    };
+  }, [specBase, lifestyleCount, sceneKinds]);
+  const specForQuery: PhotoSetSpec = spec ?? emptySpec;
   const estimate = useQuery(
     orpc.photos.estimate.queryOptions({ input: specForQuery, enabled: !!spec }),
   );
+  const showLifestyleExtra = lifestyleCount > 0 && !!specBase;
+  const baseEstimate = useQuery(
+    orpc.photos.estimate.queryOptions({
+      input: specBase ?? emptySpec,
+      enabled: showLifestyleExtra,
+    }),
+  );
+  const extraCredits =
+    showLifestyleExtra && estimate.data && baseEstimate.data
+      ? estimate.data.credits - baseEstimate.data.credits
+      : null;
 
   const specKey = spec ? JSON.stringify(spec) : "";
   const idemRef = useRef({ key: crypto.randomUUID(), forSpec: specKey });
@@ -591,6 +636,73 @@ function ChoosePanel({
           ))}
         </div>
       </fieldset>
+      <fieldset disabled={!hasFrontPrint}>
+        <legend className="mb-1.5 text-sm font-medium">
+          {t("photos.lifestyle", "Lifestyle scenes")}
+        </legend>
+        {/*
+         * Shown only once the shop is actually asking for scenes (count > 0): the generic
+         * "Sample analysis" badge above already uses the word "Sample" on this same screen, and
+         * showing this note unconditionally made it a second, ambiguous match for any substring
+         * search on "Sample" (e2e/listing-photos.spec.ts AC1-6, written before phase B).
+         */}
+        {analysis.source === "mock" && lifestyleCount > 0 && (
+          <p className="mb-1.5 text-xs text-muted-foreground">
+            {t(
+              "photos.sampleScenesNote",
+              "Sample scenes: real photo generation isn't turned on for this shop.",
+            )}
+          </p>
+        )}
+        {!hasFrontPrint ? (
+          <p className="text-xs text-muted-foreground">
+            {t("photos.lifestyleNeedsFrontPrint", "Lifestyle scenes need a front print file.")}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2 text-sm">
+              {t("photos.lifestyleCount", "How many scenes")}
+              <Input
+                type="number"
+                min={0}
+                max={MAX_LIFESTYLE_COUNT}
+                value={lifestyleCount}
+                onChange={(e) => {
+                  const n = Math.round(Number(e.target.value));
+                  setLifestyleCount(
+                    Number.isFinite(n) ? Math.min(MAX_LIFESTYLE_COUNT, Math.max(0, n)) : 0,
+                  );
+                }}
+                className="w-16"
+                aria-label={t("photos.lifestyleCount", "How many scenes")}
+              />
+            </label>
+            {lifestyleCount > 0 && analysis.sceneSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {analysis.sceneSuggestions.map((s) => (
+                  <label
+                    key={s.kind}
+                    title={s.description}
+                    className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-sm"
+                  >
+                    <Checkbox
+                      checked={sceneKinds.has(s.kind)}
+                      onCheckedChange={(v) => toggle(sceneKinds, setSceneKinds, s.kind, !!v)}
+                    />
+                    {sceneKindLabel(t, s.kind)}
+                    {s.containsPerson && (
+                      <User
+                        className="size-3 text-muted-foreground"
+                        aria-label={t("photos.scenePerson", "Includes a person")}
+                      />
+                    )}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </fieldset>
       <div className="flex flex-wrap items-center gap-3">
         {estimate.data && (
           <span className="text-sm font-medium">
@@ -598,6 +710,18 @@ function ChoosePanel({
               images: estimate.data.images,
               credits: estimate.data.credits,
             })}
+            {extraCredits != null && extraCredits > 0 && (
+              <>
+                {" "}
+                <span className="font-normal text-muted-foreground">
+                  {t(
+                    "photos.lifestyleExtraCredits",
+                    "(includes {{credits}} credits for {{count}} lifestyle scene(s))",
+                    { credits: extraCredits, count: lifestyleCount },
+                  )}
+                </span>
+              </>
+            )}
           </span>
         )}
         {estimate.isError && <ErrorState error={estimate.error} compact />}
@@ -647,9 +771,17 @@ function SetDetail({ setId }: { setId: string }) {
         if (!d) return false;
         const rendering = d.status === "queued" || d.status === "rendering";
         const zipBusy = d.zip.status === "queued" || d.zip.status === "building";
-        return rendering || zipBusy ? 2500 : false;
+        const pushBusy = d.pushes.some((p) => p.status === "queued" || p.status === "pushing");
+        return rendering || zipBusy || pushBusy ? 2500 : false;
       },
     }),
+  );
+  // Shopify push is hidden entirely with no connection (AC5); `channels.list` is a small, cheap
+  // read already used elsewhere (settings/channels.tsx) for the same connection list. `designer`
+  // (and other photos.manage roles without `channels.read`, e.g. presser never reaches this
+  // screen at all) must never fire this call -- it would 403 every load.
+  const connections = useQuery(
+    orpc.channels.list.queryOptions({ input: {}, enabled: can("channels.read") }),
   );
   const reviewImages = useMutation(
     orpc.photos.reviewImages.mutationOptions({
@@ -679,9 +811,24 @@ function SetDetail({ setId }: { setId: string }) {
     );
   const set = q.data;
   const approvedIds = images.filter((i) => i.status === "approved").map((i) => i.id);
+  const approvedShopifyIds = images
+    .filter((i) => i.status === "approved" && i.channel === "shopify")
+    .map((i) => i.id);
   const passingRenderedIds = images
     .filter((i) => i.status === "rendered" && (!i.checks || i.checks.passes))
     .map((i) => i.id);
+  const shopifyConnections = (connections.data?.items ?? []).filter(
+    (c) => c.channel === "shopify" && c.status !== "disconnected",
+  );
+  // Only the most recent push attempt drives each image's result badge (AC5): an older attempt's
+  // skip reasons would be stale once a newer push has run.
+  const latestPush = [...set.pushes].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))[0];
+  const pushInfo = new Map<string, { pushed: true } | { pushed: false; reason: string }>();
+  if (latestPush) {
+    for (const p of latestPush.pushed) pushInfo.set(p.imageId, { pushed: true });
+    for (const s of latestPush.skipped)
+      pushInfo.set(s.imageId, { pushed: false, reason: s.reason });
+  }
   const approvedKey = [...approvedIds].sort().join(",");
   const zipMatchesApproved = lastZipKey.current === approvedKey && !exportZip.isPending;
   if (
@@ -746,6 +893,16 @@ function SetDetail({ setId }: { setId: string }) {
               designId={set.designId}
               approvedIds={approvedIds}
               disabled={approvedIds.length === 0}
+              hasAiImages={set.hasAiImages}
+              hasSyntheticPerson={set.hasSyntheticPerson}
+            />
+          )}
+          {can("photos.manage") && shopifyConnections.length > 0 && (
+            <PushToShopifyButton
+              setId={setId}
+              designId={set.designId}
+              approvedIds={approvedShopifyIds}
+              disabled={approvedShopifyIds.length === 0}
             />
           )}
         </div>
@@ -768,6 +925,7 @@ function SetDetail({ setId }: { setId: string }) {
                 image={img}
                 canManage={can("photos.manage")}
                 reviewPending={reviewImages.isPending}
+                pushResult={pushInfo.get(img.id) ?? null}
                 onReview={(approve) =>
                   reviewImages.mutate(
                     approve ? { setId, approve: [img.id] } : { setId, reject: [img.id] },
@@ -786,17 +944,26 @@ function ImageCard({
   image,
   canManage,
   reviewPending,
+  pushResult,
   onReview,
 }: {
   image: PhotoImage;
   canManage: boolean;
   reviewPending: boolean;
+  pushResult: { pushed: true } | { pushed: false; reason: string } | null;
   onReview: (approve: boolean) => void;
 }) {
   const { t } = useTranslation();
   const checks: PhotoChecks | null = image.checks;
   const errors = checks?.failures.filter((f) => f.severity === "error") ?? [];
   const warns = checks?.failures.filter((f) => f.severity === "warn") ?? [];
+  // A failed phase-B scene is either a render/provider problem (generic message) or the
+  // design-lock checks rejecting drift (AC3): the latter is never a usable photo and never
+  // charged, so the shop sees that explicitly instead of "couldn't be made".
+  const driftFailed =
+    image.status === "failed" &&
+    (checks?.failures.some((f) => f.code === "design_drift" || f.code === "region_changed") ??
+      false);
   return (
     <div className="flex flex-col gap-1.5 rounded-lg border border-border p-2">
       <div className="checkerboard flex aspect-square items-center justify-center overflow-hidden rounded-md bg-muted">
@@ -823,8 +990,51 @@ function ImageCard({
         <Badge variant="secondary">{t("photos.rendering", "Rendering")}</Badge>
       )}
       {image.status === "failed" && (
-        <Badge variant="danger">{t("photos.imageFailed", "This photo couldn't be made.")}</Badge>
+        <Badge variant="danger">
+          {driftFailed
+            ? t(
+                "photos.designDriftFailed",
+                "We couldn't keep your design exact in this scene, so it was discarded. No credits charged.",
+              )
+            : t("photos.imageFailed", "This photo couldn't be made.")}
+        </Badge>
       )}
+      <div className="flex flex-wrap gap-1">
+        {image.aiGenerated && (
+          <Badge variant="secondary">
+            <Sparkles className="size-3" aria-hidden />
+            {t("photos.aiGenerated", "AI-generated")}
+          </Badge>
+        )}
+        {image.containsSyntheticPerson && (
+          <Badge variant="secondary">
+            <User className="size-3" aria-hidden />
+            {t("photos.aiPerson", "AI person")}
+          </Badge>
+        )}
+        {image.drawnTemplate && (
+          <Badge variant="outline">
+            <PenTool className="size-3" aria-hidden />
+            {t("photos.drawnIllustration", "Drawn illustration")}
+          </Badge>
+        )}
+      </div>
+      {image.designLockScore != null && (
+        <span className="text-xs text-muted-foreground">
+          {t("photos.designLockScore", "Design match: {{pct}}%", {
+            pct: Math.round(image.designLockScore * 100),
+          })}
+        </span>
+      )}
+      {pushResult &&
+        (pushResult.pushed ? (
+          <Badge variant="success">
+            <Send className="size-3" aria-hidden />
+            {t("photos.pushedToShopify", "Sent to Shopify")}
+          </Badge>
+        ) : (
+          <Badge variant="outline">{pushExclusionReasonLabel(t, pushResult.reason)}</Badge>
+        ))}
       {checks &&
         (checks.passes ? (
           <Badge variant="success">{t("photos.pass", "Pass")}</Badge>
@@ -882,11 +1092,15 @@ function AttachButton({
   designId,
   approvedIds,
   disabled,
+  hasAiImages,
+  hasSyntheticPerson,
 }: {
   setId: string;
   designId: string;
   approvedIds: string[];
   disabled: boolean;
+  hasAiImages: boolean;
+  hasSyntheticPerson: boolean;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -926,6 +1140,28 @@ function AttachButton({
               {t("photos.attachDialogHint", "Pick a draft of the same design.")}
             </DialogDescription>
           </DialogHeader>
+          {(hasAiImages || hasSyntheticPerson) && (
+            <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/50 p-2 text-xs">
+              {hasAiImages && (
+                <p className="flex items-start gap-1.5">
+                  <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  {t(
+                    "photos.disclosureAi",
+                    "Etsy's AI-use disclosure will be set on this listing: some approved photos are AI-generated scenes.",
+                  )}
+                </p>
+              )}
+              {hasSyntheticPerson && (
+                <p className="flex items-start gap-1.5">
+                  <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  {t(
+                    "photos.disclosureSyntheticPerson",
+                    "Amazon images with an AI person will carry the required AI-person tag.",
+                  )}
+                </p>
+              )}
+            </div>
+          )}
           {drafts.isPending ? (
             <Loader2 className="mx-auto my-4 animate-spin" aria-hidden />
           ) : drafts.data && drafts.data.items.length === 0 ? (
@@ -968,6 +1204,149 @@ function AttachButton({
             >
               {attach.isPending && <Loader2 className="animate-spin" aria-hidden />}
               {t("photos.attachButton", "Attach")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/**
+ * A push target carries its own `connectionId` (AC5: "choose a Shopify connection and product"),
+ * so picking one listing picks both at once -- no separate connection-first step. `approvedIds`
+ * here is already filtered to `channel === "shopify"` images by the caller.
+ */
+function PushToShopifyButton({
+  setId,
+  designId,
+  approvedIds,
+  disabled,
+}: {
+  setId: string;
+  designId: string;
+  approvedIds: string[];
+  disabled: boolean;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [target, setTarget] = useState<PushTarget | null>(null);
+  const [text, setText] = useState("");
+  const q = useDebounced(text.trim(), 250);
+  const idemRef = useRef(crypto.randomUUID());
+  const targets = useQuery(
+    orpc.photos.pushTargets.queryOptions({
+      input: { designId, search: q || undefined, limit: 30 },
+      enabled: open,
+    }),
+  );
+  const push = useMutation(
+    orpc.photos.pushToShopify.mutationOptions({
+      onSuccess: () => {
+        toast.success(
+          t("photos.pushStarted", "Sending {{count}} photo(s) to Shopify…", {
+            count: approvedIds.length,
+          }),
+        );
+        setOpen(false);
+        setTarget(null);
+      },
+      onError: (err) => toast.error(photoErrorMessage(t, err)),
+    }),
+  );
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-auto whitespace-normal text-left"
+        disabled={disabled}
+        onClick={() => {
+          idemRef.current = crypto.randomUUID();
+          setOpen(true);
+        }}
+      >
+        <Send aria-hidden />
+        {t("photos.pushToShopify", "Push to Shopify")}
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("photos.pushDialogTitle", "Push to a Shopify product")}</DialogTitle>
+            <DialogDescription>
+              {t(
+                "photos.pushDialogHint",
+                "Pick the Shopify product these photos belong to. Already-approved photos for other channels still use the zip.",
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            type="search"
+            aria-label={t("photos.searchProducts", "Search Shopify products")}
+            placeholder={t("photos.searchProducts", "Search Shopify products")}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          {targets.isPending ? (
+            <Loader2 className="mx-auto my-4 animate-spin" aria-hidden />
+          ) : targets.isError ? (
+            <ErrorState error={targets.error} compact />
+          ) : targets.data && targets.data.items.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("photos.noPushTargets", "No Shopify products found for this shop.")}
+            </p>
+          ) : (
+            <div
+              role="listbox"
+              aria-label={t("photos.pushDialogTitle", "Push to a Shopify product")}
+              className="flex max-h-64 flex-col gap-1 overflow-y-auto"
+            >
+              {targets.data?.items.map((p) => (
+                <button
+                  key={p.listingId}
+                  type="button"
+                  role="option"
+                  aria-selected={target?.listingId === p.listingId}
+                  onClick={() => setTarget(p)}
+                  className={cn(
+                    "flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1.5 text-left text-sm",
+                    target?.listingId === p.listingId && "border-primary bg-accent",
+                  )}
+                >
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate">{p.title}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {p.connectionName}
+                    </span>
+                  </span>
+                  {p.matchesDesign && (
+                    <Badge variant="secondary" className="shrink-0">
+                      {t("photos.matchesDesign", "This design")}
+                    </Badge>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              {t("action.cancel")}
+            </Button>
+            <Button
+              disabled={!target || push.isPending}
+              onClick={() =>
+                target &&
+                push.mutate({
+                  setId,
+                  connectionId: target.connectionId,
+                  productRef: { listingId: target.listingId },
+                  imageIds: approvedIds,
+                  idempotencyKey: idemRef.current,
+                })
+              }
+            >
+              {push.isPending && <Loader2 className="animate-spin" aria-hidden />}
+              {t("photos.pushButton", "Push")}
             </Button>
           </DialogFooter>
         </DialogContent>

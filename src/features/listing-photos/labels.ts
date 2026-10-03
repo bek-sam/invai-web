@@ -5,8 +5,9 @@ import type {
   PhotoCheckFailure,
   PhotoChecks,
   PhotoImage,
+  PhotoSceneKind,
 } from "@invai/contracts";
-import { GARMENT_TYPES, TEMPLATE_VIEWS } from "@invai/contracts";
+import { GARMENT_TYPES, PHOTO_SCENE_KINDS, TEMPLATE_VIEWS } from "@invai/contracts";
 import type { TFunction } from "i18next";
 import { errorInfo } from "../../lib/errors";
 
@@ -40,6 +41,32 @@ const SKIP_REASON_LABELS: Record<string, (t: TFunction) => string> = {
 };
 export function skipReasonLabel(t: TFunction, reason: string): string {
   return SKIP_REASON_LABELS[reason]?.(t) ?? reason;
+}
+
+/** Phase B lifestyle scene kinds a shop can pick from the analysis' suggestions. */
+const SCENE_KIND_LABELS: Record<PhotoSceneKind, (t: TFunction) => string> = {
+  studio: (t) => t("photos.sceneStudio", "Studio"),
+  home: (t) => t("photos.sceneHome", "Home"),
+  outdoor: (t) => t("photos.sceneOutdoor", "Outdoor"),
+  street: (t) => t("photos.sceneStreet", "Street"),
+  cafe: (t) => t("photos.sceneCafe", "Cafe"),
+  workplace: (t) => t("photos.sceneWorkplace", "Workplace"),
+  flat_lay: (t) => t("photos.sceneFlatLay", "Flat lay"),
+};
+export function sceneKindLabel(t: TFunction, k: PhotoSceneKind): string {
+  return SCENE_KIND_LABELS[k](t);
+}
+export const ALL_SCENE_KINDS = PHOTO_SCENE_KINDS;
+
+/** Phase B: `PHOTO_EXCLUSION_REASONS`, for Shopify push results shown per image. */
+const PUSH_EXCLUSION_LABELS: Record<string, (t: TFunction) => string> = {
+  not_approved: (t) => t("photos.pushSkipNotApproved", "Not approved"),
+  channel_mismatch: (t) => t("photos.pushSkipChannelMismatch", "Made for a different channel"),
+  not_in_set: (t) => t("photos.pushSkipNotInSet", "Not part of this set"),
+  already_pushed: (t) => t("photos.pushSkipAlreadyPushed", "Already on Shopify"),
+};
+export function pushExclusionReasonLabel(t: TFunction, reason: string): string {
+  return PUSH_EXCLUSION_LABELS[reason]?.(t) ?? reason;
 }
 
 export function contrastWarningMessage(t: TFunction, w: ContrastWarning): string {
@@ -180,6 +207,25 @@ export function photoErrorMessage(t: TFunction, err: unknown): string {
       "Today's limit for AI scene photos is reached ({{used}}/{{cap}}). Try again after it resets.",
       { used: data?.used ?? 0, cap: data?.cap ?? 0 },
     );
+  }
+  // Photos-specific wording (AC2): the shared `errors.ts` message talks about plans and billing,
+  // but here the shop is mid-flow choosing garments/scenes and just needs "not enough credits".
+  if (info.code === "CREDITS_EXHAUSTED") {
+    return t(
+      "photos.notEnoughCredits",
+      "Not enough AI credits for this. Add more credits in Billing.",
+    );
+  }
+  // Phase B platform-wide AI image spend cap (never a shop-specific number -- it's not the
+  // shop's own limit, so no numbers are shown, just "try later").
+  if (info.code === "AI_SPEND_CAP_REACHED") {
+    return t(
+      "photos.platformCapReached",
+      "The AI image limit is reached right now. Try again later.",
+    );
+  }
+  if (info.code === "CONFLICT") {
+    return t("photos.conflict", "This can't be done right now. Try again in a moment.");
   }
   return info.message;
 }
