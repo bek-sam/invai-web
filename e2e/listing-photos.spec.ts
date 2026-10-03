@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { poll, signIn } from "./helpers/api";
 import { loginAs } from "./helpers/ui";
 
 /*
@@ -12,6 +13,13 @@ import { loginAs } from "./helpers/ui";
  * Flow: pick a seeded design, wait for analysis, choose tee + hoodie, white + black, front_flat +
  * on_model_white, channels amazon + etsy, generate, wait for ready, approve all passing, see the
  * zip link, attach to an AI listing draft.
+ *
+ * Gate run-20261002T235910Z found that step's dialog depends on an AI listing draft already
+ * existing for the design, which a plain fresh seed doesn't have ("No AI listing drafts for this
+ * design yet.") -- correct product behavior, not a bug. The test now creates a matching draft
+ * itself through the API (same designer session, `ai.listings.create`), picking whichever
+ * channel actually has an approved image in this run rather than assuming "etsy" or "amazon"
+ * passes its checks, so the fix doesn't quietly depend on today's mock-check outcome either.
  */
 
 const DESIGNER = { email: "designer@desertbloom.test", password: "demo1234!" };
@@ -32,6 +40,12 @@ test("a designer runs the full listing-photos flow for a design (AC1-6)", async 
   const firstDesign = page.getByRole("button", { name: /^Select / }).first();
   await expect(firstDesign).toBeVisible();
   await firstDesign.click();
+
+  // Selecting a design navigates to ?designId=...; capture it now, before "Generate" replaces
+  // the search params with ?setId=..., so the AI listing draft created below targets the same
+  // design this flow is building photos for.
+  const designId = new URL(page.url()).searchParams.get("designId");
+  if (!designId) throw new Error("expected ?designId= in the URL after selecting a design");
 
   // Step 2: analysis — polls until ready; shows style/audience, recommended colors, contrast
   // warnings in plain words. A mock analysis is labelled as sample.
@@ -85,7 +99,32 @@ test("a designer runs the full listing-photos flow for a design (AC1-6)", async 
   await expect(zipLink).toBeVisible({ timeout: 30_000 });
   await expect(zipLink).toHaveAttribute("href", /^https?:\/\//);
 
-  // Attach to an AI listing draft of the same design; confirmation names the count.
+  // Attach to an AI listing draft of the same design; confirmation names the count. The dialog
+  // lists drafts for this design but has none on a fresh seed, so create one here first, through
+  // the API as the same designer -- a channel that actually has an approved image in this run
+  // (the comment above already says Amazon images are the ones likely to carry a check issue),
+  // so "Attach" has something real to match and the final count assertion isn't trivially 0.
+  const setId = new URL(page.url()).searchParams.get("setId");
+  if (!setId) throw new Error("expected ?setId= in the URL after generating a set");
+  const api = (await signIn(DESIGNER.email, DESIGNER.password)).api;
+  const photoSet = await poll(
+    () => api.photos.getSet({ id: setId }),
+    (s) => s.images.some((i) => i.status === "approved"),
+    { label: "an approved image in the set" },
+  );
+  const draftChannel = photoSet.images.find((i) => i.status === "approved")?.channel;
+  if (!draftChannel) throw new Error("no approved image to pick a matching draft channel from");
+  const createdDraft = await api.ai.listings.create({
+    designId,
+    channels: [draftChannel],
+    batch: false,
+  });
+  await poll(
+    () => api.ai.listings.get({ id: createdDraft.drafts[0]?.id as string }),
+    (d) => d.status !== "generating",
+    { label: "the new listing draft" },
+  );
+
   await page.getByRole("button", { name: "Attach to AI listing draft" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
