@@ -1,4 +1,5 @@
 import i18n from "i18next";
+import { MFA_REQUIRED_CODE } from "../features/account/mfa";
 import { demoModeMessage } from "../features/demo/demo-mode";
 
 export interface ErrorInfo {
@@ -37,6 +38,10 @@ export function errorInfo(err: unknown): ErrorInfo {
       );
       return { code, status, message, data: e.data ?? null };
     }
+    if (code === MFA_REQUIRED_CODE) {
+      message = tr("errors.mfaRequired", "Turn on two-step sign-in to continue.");
+      return { code, status, message, data: e.data ?? null };
+    }
     if (code === "DEMO_MODE")
       return { code, status, message: demoModeMessage(), data: e.data ?? null };
     if (code === "FORBIDDEN") {
@@ -69,7 +74,7 @@ export function isUnauthorized(err: unknown): boolean {
 /** Retry transient failures only; never auth, permission, validation or not-implemented errors. */
 export function shouldRetry(failureCount: number, err: unknown): boolean {
   const { status, code } = errorInfo(err);
-  if (code === "NOT_IMPLEMENTED") return false;
+  if (code === "NOT_IMPLEMENTED" || code === MFA_REQUIRED_CODE) return false;
   if (status !== null && status >= 400 && status < 500) return false;
   return failureCount < 2;
 }

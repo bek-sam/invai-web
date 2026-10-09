@@ -24,7 +24,7 @@ function isEmailNotVerified(err: unknown): boolean {
 }
 
 /** Sends a new confirmation link; returns true when it went out. */
-function useResend() {
+export function useResend() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [pending, setPending] = useState(false);

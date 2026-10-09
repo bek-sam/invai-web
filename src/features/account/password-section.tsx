@@ -16,10 +16,12 @@ export function PasswordSection({ email }: { email: string }) {
   const [confirm, setConfirm] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reused, setReused] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setReused(null);
     if (next.length < 8) {
       setError(t("authError.passwordShort", "Use at least 8 characters."));
       return;
@@ -37,7 +39,9 @@ export function PasswordSection({ email }: { email: string }) {
         revokeOtherSessions: true,
       });
       if (res.error) {
-        setError(authErrorMessage(res.error, t));
+        // Shown next to the new-password field, where the fix is.
+        if (res.error.code === "PASSWORD_REUSED") setReused(authErrorMessage(res.error, t));
+        else setError(authErrorMessage(res.error, t));
         return;
       }
       setCurrent("");
@@ -73,9 +77,14 @@ export function PasswordSection({ email }: { email: string }) {
               onChange={(e) => setCurrent(e.target.value)}
             />
           </Field>
-          <Field label={t("auth.newPassword", "New password")} htmlFor="pw-new">
+          <Field
+            label={t("auth.newPassword", "New password")}
+            htmlFor="pw-new"
+            error={reused && <span role="alert">{reused}</span>}
+          >
             <Input
               id="pw-new"
+              aria-invalid={reused ? true : undefined}
               type="password"
               autoComplete="new-password"
               required

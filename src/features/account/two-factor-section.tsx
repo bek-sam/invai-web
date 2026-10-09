@@ -11,14 +11,16 @@ import {
   Input,
   toast,
 } from "@invai/ui";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Download, Loader2, ShieldCheck, ShieldOff } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Field, Section } from "../../components/page";
 import { authClient } from "../../lib/auth";
+import { meQueryOptions } from "../../lib/me";
 import { authErrorMessage } from "./auth-errors";
+import { canTurnOffMfa } from "./mfa";
 import { type AuthUser, authSessionQueryOptions, totpSecret } from "./session";
 
 type Mode = "enable" | "disable" | "codes";
@@ -32,6 +34,9 @@ export function TwoFactorSection({ user }: { user: AuthUser }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode | null>(null);
   const on = user.twoFactorEnabled === true;
+  // Owners and admins can't turn it off. The setup page has `me` too (the call is exempt).
+  const { data: me } = useQuery(meQueryOptions());
+  const mustKeep = !canTurnOffMfa(me?.mfa);
   return (
     <Section
       title={t("account.mfa", "Two-step sign-in")}
@@ -63,6 +68,11 @@ export function TwoFactorSection({ user }: { user: AuthUser }) {
             </>
           )}
         </div>
+        {on && mustKeep && (
+          <p className="text-sm text-muted-foreground" role="note">
+            {t("account.mfaMustStay", "Owners and admins must keep two-step sign-in on.")}
+          </p>
+        )}
         {!on && !user.emailVerified && (
           <p className="text-sm text-warning-foreground dark:text-warning" role="note">
             {t(
@@ -77,9 +87,11 @@ export function TwoFactorSection({ user }: { user: AuthUser }) {
               <Button size="sm" variant="outline" onClick={() => setMode("codes")}>
                 {t("account.newCodes", "New backup codes")}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setMode("disable")}>
-                {t("account.mfaTurnOff", "Turn off")}
-              </Button>
+              {!mustKeep && (
+                <Button size="sm" variant="outline" onClick={() => setMode("disable")}>
+                  {t("account.mfaTurnOff", "Turn off")}
+                </Button>
+              )}
             </>
           ) : (
             <Button size="sm" disabled={!user.emailVerified} onClick={() => setMode("enable")}>

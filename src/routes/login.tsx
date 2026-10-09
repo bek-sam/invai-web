@@ -7,7 +7,11 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { AuthLayout } from "../components/auth-layout";
 import { Field } from "../components/page";
-import { authErrorMessage, isChallengeOver } from "../features/account/auth-errors";
+import {
+  authErrorMessage,
+  isAccountLocked,
+  isChallengeOver,
+} from "../features/account/auth-errors";
 import { setLang } from "../i18n";
 import { authClient } from "../lib/auth";
 import { ensureActiveOrg } from "../lib/session";
@@ -30,6 +34,7 @@ function LoginPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [locked, setLocked] = useState(false);
 
   async function finish() {
     // The saved language follows the person to every device (the account page and menu set it).
@@ -46,11 +51,27 @@ function LoginPage() {
     e.preventDefault();
     setPending(true);
     setError(null);
+    setLocked(false);
     try {
-      const res = await authClient.signIn.email({ email, password });
+      // The Retry-After header backs up the body's retryAfterSec when the lock answer lacks it.
+      let retryAfter: string | null = null;
+      const res = await authClient.signIn.email(
+        { email, password },
+        {
+          onError: (ctx) => {
+            retryAfter = ctx.response.headers.get("Retry-After");
+          },
+        },
+      );
       if (res.error) {
+        setLocked(isAccountLocked(res.error.code));
         setError(
-          authErrorMessage(res.error, t, t("auth.badCredentials", "Email or password is wrong")),
+          authErrorMessage(
+            res.error,
+            t,
+            t("auth.badCredentials", "Email or password is wrong"),
+            retryAfter,
+          ),
         );
         return;
       }
@@ -96,6 +117,18 @@ function LoginPage() {
   const alert = error && (
     <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
       {error}
+      {locked && (
+        <>
+          {" "}
+          <Link
+            to="/forgot-password"
+            search={email ? { email } : {}}
+            className="font-medium underline"
+          >
+            {t("auth.resetToUnlock", "Open password reset")}
+          </Link>
+        </>
+      )}
     </p>
   );
 

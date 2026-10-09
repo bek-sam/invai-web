@@ -4,6 +4,8 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { AppFrame } from "../components/app-frame";
 import { ErrorState } from "../components/states";
+import { mfaState } from "../features/account/mfa";
+import { MfaBanner } from "../features/account/mfa-banner";
 import { VerifyEmailBanner } from "../features/account/verify-email-banner";
 import { authClient } from "../lib/auth";
 import { isUnauthorized } from "../lib/errors";
@@ -40,6 +42,11 @@ export const Route = createFileRoute("/_app")({
       path === "/account";
     if (me.org.type === "vendor" && !inVendor && !shared) throw redirect({ to: "/vendor" });
     if (me.org.type === "shop" && inVendor) throw redirect({ to: "/" });
+    // Grace is over for an owner or admin without two-step sign-in: the setup page (outside _app,
+    // so no loop) takes over and sends them back here once it is on.
+    if (mfaState(me.mfa) === "blocked") {
+      throw redirect({ to: "/setup-two-step", search: { redirect: location.href } });
+    }
     return { me };
   },
   component: AppLayout,
@@ -49,6 +56,7 @@ export const Route = createFileRoute("/_app")({
 function AppLayout() {
   return (
     <AppFrame>
+      <MfaBanner />
       <VerifyEmailBanner />
       <Outlet />
     </AppFrame>

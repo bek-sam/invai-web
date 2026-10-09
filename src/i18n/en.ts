@@ -22,6 +22,7 @@ export const en = {
     mfa: "Two-step sign-in",
     mfaActivate: "Turn on",
     mfaHint: "After your password, sign-in also asks for a code from an app on your phone.",
+    mfaMustStay: "Owners and admins must keep two-step sign-in on.",
     mfaNeedsEmail:
       "Confirm your email first. Use the link we sent you, or send a new one from the banner at the top.",
     mfaOff: "Off",
@@ -264,6 +265,7 @@ export const en = {
     resetSpam: "Nothing after a few minutes? Check your spam folder.",
     resetSubtitle: "Use at least 8 characters. You'll sign in again after.",
     resetTitle: "Set a new password",
+    resetToUnlock: "Open password reset",
     sendLink: "Send link",
     setPassword: "Set new password",
     signIn: "Sign in",
@@ -279,6 +281,10 @@ export const en = {
     yourName: "Your name",
   },
   authError: {
+    accountLocked:
+      "Too many wrong passwords. This account is locked for {{minutes}} minutes. Reset your password to unlock it now.",
+    accountLockedOne:
+      "Too many wrong passwords. This account is locked for 1 minute. Reset your password to unlock it now.",
     codeExpired: "Too many tries or too much time. Sign in again.",
     emailTaken: "That email already has an account. Sign in instead.",
     generic: "Something went wrong. Try again.",
@@ -287,6 +293,7 @@ export const en = {
     mfaAlreadyOn: "Two-step sign-in is already on.",
     network: "Can't reach InvAI. Check your connection and try again.",
     passwordLong: "Use at most 128 characters.",
+    passwordReused: "You used this password before. Choose a new one.",
     passwordShort: "Use at least 8 characters.",
     signInAgain: "For your safety, sign in again to do this.",
     tooMany: "Too many tries. Wait a few minutes, then try again.",
@@ -930,6 +937,7 @@ export const en = {
     forbiddenMessage: "You don't have access to this page. Ask the owner.",
     forbiddenTitle: "No access",
     generic: "Something went wrong",
+    mfaRequired: "Turn on two-step sign-in to continue.",
     network: "Can't reach the server",
     networkTitle: "Offline",
     notImplemented: "This part of the API isn't available yet",
@@ -1189,6 +1197,20 @@ export const en = {
       notUseful: "Not useful",
       notUsefulAria: "Mark '{{action}}' not useful",
     },
+  },
+  mfaBanner: {
+    action: "Turn on two-step sign-in",
+    dismiss: "Hide for now",
+    text: "Owners and admins need two-step sign-in. Turn it on by {{date}}.",
+  },
+  mfaSetup: {
+    continue: "Continue to InvAI",
+    needsEmail:
+      "Confirm your email first. We sent a link to {{email}}. Then come back and turn on two-step sign-in.",
+    resend: "Resend verification email",
+    signOut: "Sign out",
+    subtitle: "Owners and admins must use two-step sign-in. It takes about a minute.",
+    title: "Turn on two-step sign-in",
   },
   mismatch: {
     already_processed: "Already done",

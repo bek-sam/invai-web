@@ -22,6 +22,7 @@ function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [reused, setReused] = useState<string | null>(null);
   const [linkDead, setLinkDead] = useState(!token);
   const [done, setDone] = useState(false);
   const [pending, setPending] = useState(false);
@@ -35,6 +36,7 @@ function ResetPasswordPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setReused(null);
     if (password.length < 8) {
       setError(t("authError.passwordShort", "Use at least 8 characters."));
       return;
@@ -50,6 +52,8 @@ function ResetPasswordPage() {
       if (res.error) {
         if (res.error.code === "INVALID_TOKEN" || res.error.code === "TOKEN_EXPIRED") {
           setLinkDead(true);
+        } else if (res.error.code === "PASSWORD_REUSED") {
+          setReused(authErrorMessage(res.error, t));
         } else setError(authErrorMessage(res.error, t));
         return;
       }
@@ -107,9 +111,14 @@ function ResetPasswordPage() {
       footer={footer}
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-        <Field label={t("auth.newPassword", "New password")} htmlFor="new-password">
+        <Field
+          label={t("auth.newPassword", "New password")}
+          htmlFor="new-password"
+          error={reused && <span role="alert">{reused}</span>}
+        >
           <Input
             id="new-password"
+            aria-invalid={reused ? true : undefined}
             type="password"
             autoComplete="new-password"
             required

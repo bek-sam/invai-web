@@ -24,6 +24,8 @@ export const es: Messages = {
     mfa: "Inicio de sesión en dos pasos",
     mfaActivate: "Activar",
     mfaHint: "Después de tu contraseña, también te pedimos un código de una app en tu teléfono.",
+    mfaMustStay:
+      "Los propietarios y administradores deben mantener activo el inicio de sesión en dos pasos.",
     mfaNeedsEmail:
       "Primero confirma tu correo. Usa el enlace que te enviamos o pide uno nuevo desde el aviso de arriba.",
     mfaOff: "Desactivado",
@@ -270,6 +272,7 @@ export const es: Messages = {
     resetSpam: "¿No llegó nada en unos minutos? Revisa tu carpeta de spam.",
     resetSubtitle: "Usa al menos 8 caracteres. Después vuelves a iniciar sesión.",
     resetTitle: "Crea una contraseña nueva",
+    resetToUnlock: "Abrir restablecimiento",
     sendLink: "Enviar enlace",
     setPassword: "Guardar contraseña nueva",
     signIn: "Iniciar sesión",
@@ -285,6 +288,10 @@ export const es: Messages = {
     yourName: "Tu nombre",
   },
   authError: {
+    accountLocked:
+      "Demasiadas contraseñas incorrectas. Esta cuenta está bloqueada por {{minutes}} minutos. Restablece tu contraseña para desbloquearla ahora.",
+    accountLockedOne:
+      "Demasiadas contraseñas incorrectas. Esta cuenta está bloqueada por 1 minuto. Restablece tu contraseña para desbloquearla ahora.",
     codeExpired: "Demasiados intentos o pasó mucho tiempo. Inicia sesión otra vez.",
     emailTaken: "Ese correo ya tiene una cuenta. Inicia sesión.",
     generic: "Algo salió mal. Inténtalo de nuevo.",
@@ -294,6 +301,7 @@ export const es: Messages = {
     mfaAlreadyOn: "El inicio de sesión en dos pasos ya está activado.",
     network: "No podemos conectar con InvAI. Revisa tu conexión y vuelve a intentarlo.",
     passwordLong: "Usa como máximo 128 caracteres.",
+    passwordReused: "Ya usaste esta contraseña antes. Elige una nueva.",
     passwordShort: "Usa al menos 8 caracteres.",
     signInAgain: "Por tu seguridad, inicia sesión otra vez para hacer esto.",
     tooMany: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
@@ -949,6 +957,7 @@ export const es: Messages = {
     forbiddenMessage: "No tienes acceso a esta página. Pídeselo al dueño.",
     forbiddenTitle: "Sin acceso",
     generic: "Algo salió mal",
+    mfaRequired: "Activa el inicio de sesión en dos pasos para continuar.",
     network: "No se pudo conectar con el servidor",
     networkTitle: "Sin conexión",
     notImplemented: "Esta parte de la API todavía no está disponible",
@@ -1213,6 +1222,21 @@ export const es: Messages = {
       notUseful: "No me sirve",
       notUsefulAria: "Marca '{{action}}' como que no sirve",
     },
+  },
+  mfaBanner: {
+    action: "Activar dos pasos",
+    dismiss: "Ocultar por ahora",
+    text: "Los propietarios y administradores necesitan el inicio de sesión en dos pasos. Actívalo antes del {{date}}.",
+  },
+  mfaSetup: {
+    continue: "Continuar a InvAI",
+    needsEmail:
+      "Primero confirma tu correo. Enviamos un enlace a {{email}}. Luego vuelve y activa el inicio de sesión en dos pasos.",
+    resend: "Reenviar correo de verificación",
+    signOut: "Cerrar sesión",
+    subtitle:
+      "Los propietarios y administradores deben usar el inicio de sesión en dos pasos. Toma cerca de un minuto.",
+    title: "Activa el inicio de sesión en dos pasos",
   },
   mismatch: {
     already_processed: "Ya procesado",
