@@ -140,6 +140,7 @@
  "artworkStatus.flagged": "Marcado",
  "artworkStatus.none": "Ninguno",
  "artworkStatus.pending": "Pendiente",
+ "artworkStatus.purged": "Eliminado por privacidad",
  "artworkStatus.rendered": "Generado",
  "assistant.badge.sample": "Datos de muestra",
  "assistant.credits": "Quedan {{n}} créditos de IA",

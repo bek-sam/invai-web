@@ -3,30 +3,42 @@ import { Link } from "@tanstack/react-router";
 import { ImageIcon } from "lucide-react";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
-import type { Block, Inline } from "./markdown";
+import { type Block, type Inline, isSafeAppPath } from "./markdown";
 
 /**
  * Renders parsed help/legal Markdown as React elements only -- never `dangerouslySetInnerHTML`,
  * so there is nothing here for a stray HTML tag in the source to do (T-21-5, "no raw HTML from
  * markdown: sanitize or disallow").
  */
-export function MarkdownBlocks({ blocks }: { blocks: Block[] }) {
+export function MarkdownBlocks({
+  blocks,
+  compact = false,
+}: {
+  blocks: Block[];
+  compact?: boolean;
+}) {
   return (
-    <div className="flex flex-col gap-4 text-sm leading-relaxed break-words">
+    <div
+      className={cn(
+        "flex flex-col text-sm break-words",
+        compact ? "gap-2 leading-snug" : "gap-4 leading-relaxed",
+      )}
+    >
       {blocks.map((b, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: static content, re-parsed whole on every render
-        <MarkdownBlock key={i} block={b} />
+        <MarkdownBlock key={i} block={b} compact={compact} />
       ))}
     </div>
   );
 }
 
-function MarkdownBlock({ block }: { block: Block }) {
+function MarkdownBlock({ block, compact = false }: { block: Block; compact?: boolean }) {
   switch (block.kind) {
     case "heading": {
       const Tag = `h${Math.min(block.level + 1, 6)}` as "h2" | "h3" | "h4" | "h5" | "h6";
-      const size =
-        block.level <= 1
+      const size = compact
+        ? "text-sm font-semibold"
+        : block.level <= 1
           ? "text-xl font-semibold"
           : block.level === 2
             ? "text-lg font-semibold"
@@ -39,7 +51,7 @@ function MarkdownBlock({ block }: { block: Block }) {
     }
     case "paragraph":
       return (
-        <p>
+        <p className={compact ? "whitespace-pre-line" : undefined}>
           <MarkdownInline nodes={block.children} />
         </p>
       );
@@ -50,7 +62,7 @@ function MarkdownBlock({ block }: { block: Block }) {
         <blockquote className="flex flex-col gap-3 rounded-md border-l-4 border-warning/60 bg-warning/10 py-2 pr-3 pl-4">
           {block.children.map((b, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: static content
-            <MarkdownBlock key={i} block={b} />
+            <MarkdownBlock key={i} block={b} compact={compact} />
           ))}
         </blockquote>
       );
@@ -70,7 +82,7 @@ function MarkdownBlock({ block }: { block: Block }) {
               <div className="flex flex-col gap-1.5">
                 {item.map((b, j) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: static content
-                  <MarkdownBlock key={j} block={b} />
+                  <MarkdownBlock key={j} block={b} compact={compact} />
                 ))}
               </div>
             </li>
@@ -81,7 +93,12 @@ function MarkdownBlock({ block }: { block: Block }) {
     case "table":
       return (
         <div className="overflow-x-auto rounded-md border border-border">
-          <table className="w-full min-w-[480px] border-collapse text-left text-xs">
+          <table
+            className={cn(
+              "border-collapse text-left text-xs",
+              compact ? "w-max min-w-full" : "w-full min-w-[480px]",
+            )}
+          >
             <thead className="bg-muted/50">
               <tr>
                 {block.header.map((cell, i) => (
@@ -188,6 +205,13 @@ function renderInline(node: Inline): React.ReactNode {
           >
             <MarkdownInline nodes={node.children} />
           </Link>
+        );
+      }
+      if (node.internal && isSafeAppPath(node.href)) {
+        return (
+          <a href={node.href} className="text-primary underline underline-offset-2">
+            <MarkdownInline nodes={node.children} />
+          </a>
         );
       }
       return (

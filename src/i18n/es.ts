@@ -180,6 +180,7 @@ export const es: Messages = {
     flagged: "Marcado",
     none: "Ninguno",
     pending: "Pendiente",
+    purged: "Eliminado por privacidad",
     rendered: "Generado",
   },
   assistant: {

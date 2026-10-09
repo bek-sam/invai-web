@@ -17,8 +17,20 @@ export type Inline =
   | { kind: "bold"; children: Inline[] }
   | { kind: "italic"; children: Inline[] }
   | { kind: "code"; value: string }
-  | { kind: "link"; href: string; children: Inline[] }
+  | { kind: "link"; href: string; children: Inline[]; internal?: boolean }
   | { kind: "image"; alt: string; src: string };
+
+/** `source: "ai"` is for untrusted model output: no images, links only to in-app paths, no frontmatter, line breaks kept. */
+export interface MarkdownOptions {
+  source?: "content" | "ai";
+}
+
+/** An in-app path: one leading `/`, not `//`, no backslash, no whitespace or control characters. */
+export function isSafeAppPath(href: string): boolean {
+  if (!/^\/(?!\/)[^\\\s]*$/.test(href)) return false;
+  for (const ch of href) if (ch.charCodeAt(0) < 0x20 || ch.charCodeAt(0) === 0x7f) return false;
+  return true;
+}
 
 export type Block =
   | { kind: "heading"; level: number; children: Inline[] }
@@ -80,7 +92,8 @@ function stripFrontmatter(source: string): { data: Record<string, string>; body:
 }
 
 /** Single-pass inline scanner: code spans are consumed verbatim so `` `(...)` `` never gets read as a link. */
-export function parseInline(src: string): Inline[] {
+export function parseInline(src: string, opts: MarkdownOptions = {}): Inline[] {
+  const ai = opts.source === "ai";
   const out: Inline[] = [];
   let buf = "";
   let i = 0;
@@ -106,14 +119,23 @@ export function parseInline(src: string): Inline[] {
     const img = rest.match(/^!\[([^\]]*)\]\(([^)\s]*)\)/);
     if (img) {
       flush();
-      out.push({ kind: "image", alt: img[1] ?? "", src: img[2] ?? "" });
+      if (ai) out.push({ kind: "text", value: img[1] ?? "" });
+      else out.push({ kind: "image", alt: img[1] ?? "", src: img[2] ?? "" });
       i += img[0].length;
       continue;
     }
     const link = rest.match(/^\[([^\]]+)\]\(([^)\s]*)\)/);
     if (link) {
       flush();
-      out.push({ kind: "link", href: link[2] ?? "", children: parseInline(link[1] ?? "") });
+      const kids = parseInline(link[1] ?? "", opts);
+      if (ai && !isSafeAppPath(link[2] ?? "")) out.push(...kids);
+      else
+        out.push({
+          kind: "link",
+          href: link[2] ?? "",
+          children: kids,
+          ...(ai ? { internal: true } : {}),
+        });
       i += link[0].length;
       continue;
     }
@@ -121,7 +143,7 @@ export function parseInline(src: string): Inline[] {
       const end = rest.indexOf("**", 2);
       if (end !== -1) {
         flush();
-        out.push({ kind: "bold", children: parseInline(rest.slice(2, end)) });
+        out.push({ kind: "bold", children: parseInline(rest.slice(2, end), opts) });
         i += end + 2;
         continue;
       }
@@ -130,7 +152,7 @@ export function parseInline(src: string): Inline[] {
       const end = src.indexOf("*", i + 1);
       if (end !== -1 && end > i + 1) {
         flush();
-        out.push({ kind: "italic", children: parseInline(src.slice(i + 1, end)) });
+        out.push({ kind: "italic", children: parseInline(src.slice(i + 1, end), opts) });
         i = end + 1;
         continue;
       }
@@ -144,7 +166,9 @@ export function parseInline(src: string): Inline[] {
 
 /** Parses a block of already-dedented lines (indent 0 = "belongs to this block"). Recurses for
  * blockquotes and list items, whose content is dedented the same way before recursing. */
-export function parseBlocks(lines: string[]): Block[] {
+export function parseBlocks(lines: string[], opts: MarkdownOptions = {}): Block[] {
+  const ai = opts.source === "ai";
+  const inline = (t: string) => parseInline(t, opts);
   const blocks: Block[] = [];
   let i = 0;
   while (i < lines.length) {
@@ -158,7 +182,7 @@ export function parseBlocks(lines: string[]): Block[] {
     const heading = line.match(HEADING_RE);
     if (heading) {
       const level = heading[1]?.length ?? 1;
-      blocks.push({ kind: "heading", level, children: parseInline(heading[2] ?? "") });
+      blocks.push({ kind: "heading", level, children: inline(heading[2] ?? "") });
       i++;
       continue;
     }
@@ -177,18 +201,18 @@ export function parseBlocks(lines: string[]): Block[] {
         i++;
         q = lines[i];
       }
-      blocks.push({ kind: "blockquote", children: parseBlocks(quoted) });
+      blocks.push({ kind: "blockquote", children: parseBlocks(quoted, opts) });
       continue;
     }
 
     const next = lines[i + 1];
     if (TABLE_ROW_RE.test(line) && next !== undefined && isTableSeparatorRow(next)) {
-      const header = splitTableRow(line).map(parseInline);
+      const header = splitTableRow(line).map(inline);
       i += 2;
       const rows: Inline[][][] = [];
       let row = lines[i];
       while (i < lines.length && row !== undefined && TABLE_ROW_RE.test(row)) {
-        rows.push(splitTableRow(row).map(parseInline));
+        rows.push(splitTableRow(row).map(inline));
         i++;
         row = lines[i];
       }
@@ -196,7 +220,7 @@ export function parseBlocks(lines: string[]): Block[] {
       continue;
     }
 
-    const imageOnly = line.trim().match(IMAGE_ONLY_RE);
+    const imageOnly = ai ? null : line.trim().match(IMAGE_ONLY_RE);
     if (imageOnly) {
       blocks.push({ kind: "image", alt: imageOnly[1] ?? "", src: imageOnly[2] ?? "" });
       i++;
@@ -224,7 +248,7 @@ export function parseBlocks(lines: string[]): Block[] {
           i++;
           cont = lines[i];
         }
-        items.push(parseBlocks(itemLines));
+        items.push(parseBlocks(itemLines, opts));
         marker = lines[i];
       }
       blocks.push({ kind: "list", ordered, items });
@@ -242,14 +266,14 @@ export function parseBlocks(lines: string[]): Block[] {
         UL_RE.test(p) ||
         OL_RE.test(p) ||
         TABLE_ROW_RE.test(p) ||
-        IMAGE_ONLY_RE.test(p.trim())
+        (!ai && IMAGE_ONLY_RE.test(p.trim()))
       )
         break;
       paraLines.push(p.trim());
       i++;
       p = lines[i];
     }
-    blocks.push({ kind: "paragraph", children: parseInline(paraLines.join(" ")) });
+    blocks.push({ kind: "paragraph", children: inline(paraLines.join(ai ? "\n" : " ")) });
   }
   return blocks;
 }
@@ -271,7 +295,11 @@ export function inlineText(children: Inline[]): string {
     .join("");
 }
 
-export function parseMarkdown(source: string): ParsedDocument {
+export function parseMarkdown(source: string, opts: MarkdownOptions = {}): ParsedDocument {
+  if (opts.source === "ai") {
+    const blocks = parseBlocks(source.replace(/\r\n/g, "\n").split("\n"), opts);
+    return { frontmatter: {}, blocks, title: null };
+  }
   const { data, body } = stripFrontmatter(source);
   const blocks = parseBlocks(body.replace(/\r\n/g, "\n").split("\n"));
   const title = data.title ?? firstHeadingText(blocks);

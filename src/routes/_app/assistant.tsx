@@ -6,6 +6,7 @@ import type { TFunction } from "i18next";
 import { Bot, Loader2, MessageSquarePlus, Send, Square, User, Wrench } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AssistantAnswer } from "../../components/assistant-answer";
 import { RecommendationCard } from "../../components/market/recommendation-card";
 import { SampleDataBadge } from "../../components/market/sample-data-badge";
 import { ErrorState } from "../../components/states";
@@ -288,7 +289,11 @@ function AssistantPage() {
                         {m.mock && <SampleDataBadge />}
                       </p>
                     )}
-                    <p className="whitespace-pre-wrap">{m.text}</p>
+                    {m.role === "user" ? (
+                      <p className="whitespace-pre-wrap">{m.text}</p>
+                    ) : (
+                      <AssistantAnswer text={m.text} />
+                    )}
                     {m.streaming && !m.text && (
                       <Loader2 className="size-4 animate-spin text-muted-foreground" />
                     )}

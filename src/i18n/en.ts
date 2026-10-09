@@ -176,6 +176,7 @@ export const en = {
     flagged: "Flagged",
     none: "None",
     pending: "Pending",
+    purged: "Removed for privacy",
     rendered: "Rendered",
   },
   assistant: {
