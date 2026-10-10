@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DefList, Field, NativeSelect, Page, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
+import { CompanyExport } from "../../../features/company-export/company-export";
 import { formatDateTime } from "../../../lib/format";
 import { meQueryOptions, useCan, useMe } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
@@ -225,6 +226,7 @@ function CompanyPage() {
           )}
         </Section>
         {me.org.type === "shop" && <Locations />}
+        <CompanyExport />
       </div>
     </Page>
   );

@@ -641,6 +641,17 @@ export const es: Messages = {
     type: "Tipo",
     tzHint: 'Las fechas de envío y "hoy" usan esta zona',
   },
+  companyExport: {
+    body: "Descarga un archivo zip con todos los registros y archivos subidos de tu tienda. Incluye datos de compradores, así que guárdalo en un lugar seguro. El enlace de descarga funciona 7 días.",
+    download: "Descargar",
+    expired:
+      "Esta descarga venció después de 7 días. Inicia una nueva exportación para obtener tus datos otra vez.",
+    failed: "La exportación no terminó. Inténtalo de nuevo.",
+    ready: "Tu exportación está lista.",
+    running: "Estamos preparando tu exportación. Puede tardar unos minutos.",
+    start: "Preparar mis datos",
+    title: "Descarga todos tus datos",
+  },
   costs: {
     ads: "Repartir el gasto en anuncios por",
     breakEven: "Punto de equilibrio",

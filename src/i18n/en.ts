@@ -623,6 +623,16 @@ export const en = {
     type: "Type",
     tzHint: "Ship-by days and 'today' use this zone",
   },
+  companyExport: {
+    body: "Get a zip file with all your shop's records and uploaded files. It includes buyer details, so keep it safe. The download link works for 7 days.",
+    download: "Download",
+    expired: "This download expired after 7 days. Start a new export to get your data again.",
+    failed: "The export didn't finish. Try again.",
+    ready: "Your export is ready.",
+    running: "Preparing your export. This can take a few minutes.",
+    start: "Prepare my data",
+    title: "Download all your data",
+  },
   costs: {
     ads: "Spread ad spend by",
     breakEven: "Break-even",
