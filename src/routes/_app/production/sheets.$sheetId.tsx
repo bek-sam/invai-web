@@ -216,7 +216,6 @@ function SheetActions({ sheet }: { sheet: GangSheetDetail }) {
         <FileDown />
         PDF
       </Button>
-      <PrintFilesNote sheet={sheet} audience="shop" />
       {manage && s === "ready" && !me.org.printsInHouse && (
         <Button size="sm" onClick={() => setSendOpen(true)}>
           <Send />
@@ -281,6 +280,7 @@ function SheetActions({ sheet }: { sheet: GangSheetDetail }) {
             {t("action.cancel")}
           </Button>
         )}
+      <PrintFilesNote sheet={sheet} audience="shop" />
       {sendOpen && (
         <SendDialog sheet={sheet} open={sendOpen} onOpenChange={setSendOpen} onSent={invalidate} />
       )}

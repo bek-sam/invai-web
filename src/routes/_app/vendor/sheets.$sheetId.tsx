@@ -179,7 +179,6 @@ function VendorActions({ sheet }: { sheet: VendorInboxSheet }) {
         <FileDown />
         PDF
       </Button>
-      <PrintFilesNote sheet={sheet} audience="vendor" />
       {update && s === "sent" && (
         <Button size="sm" onClick={() => ack.mutate({ id: sheet.id })} disabled={ack.isPending}>
           {ack.isPending ? <Loader2 className="animate-spin" /> : <Check />}
@@ -213,6 +212,7 @@ function VendorActions({ sheet }: { sheet: VendorInboxSheet }) {
           {t("vendor.problem", "Report a problem")}
         </Button>
       )}
+      <PrintFilesNote sheet={sheet} audience="vendor" />
       {shipOpen && (
         <ShipDialog sheetId={sheet.id} onClose={() => setShipOpen(false)} onDone={invalidate} />
       )}
