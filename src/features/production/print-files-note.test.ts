@@ -1,4 +1,5 @@
 import { createInstance } from "i18next";
+import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { I18nextProvider } from "react-i18next";
 import { describe, expect, it } from "vitest";
@@ -28,9 +29,7 @@ async function html(
   const i18n = createInstance();
   await i18n.init({ lng, resources: { en: { translation: en }, es: { translation: es } } });
   return renderToStaticMarkup(
-    <I18nextProvider i18n={i18n}>
-      <PrintFilesNote sheet={sheet} audience={audience} />
-    </I18nextProvider>,
+    createElement(I18nextProvider, { i18n }, createElement(PrintFilesNote, { sheet, audience })),
   );
 }
 
