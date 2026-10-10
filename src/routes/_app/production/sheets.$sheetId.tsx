@@ -34,6 +34,7 @@ import { ConfirmDialog } from "../../../components/confirm-dialog";
 import { DefList, Field, NativeSelect, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { PlacementList } from "../../../features/production/placement-list";
+import { PrintFilesNote } from "../../../features/production/print-files-note";
 import { SheetPreview } from "../../../features/production/sheet-preview";
 import { errorInfo, errorMessage } from "../../../lib/errors";
 import { formatDateTime, formatInches, formatPct } from "../../../lib/format";
@@ -215,6 +216,7 @@ function SheetActions({ sheet }: { sheet: GangSheetDetail }) {
         <FileDown />
         PDF
       </Button>
+      <PrintFilesNote sheet={sheet} audience="shop" />
       {manage && s === "ready" && !me.org.printsInHouse && (
         <Button size="sm" onClick={() => setSendOpen(true)}>
           <Send />

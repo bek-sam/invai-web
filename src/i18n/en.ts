@@ -2192,6 +2192,12 @@ export const en = {
     markPrinting: "Print in-house",
     markReceived: "Mark received",
     name: "Sheet",
+    filesRemoved:
+      "Print files were removed to protect buyer data. To print these designs again, build a new sheet.",
+    filesRemovedVendor: "Print files were removed to protect buyer data.",
+    cancelledNoFiles:
+      "This sheet was cancelled, so it has no print files. To print these designs, build a new sheet.",
+    cancelledNoFilesVendor: "This sheet was cancelled, so it has no print files.",
     noFile: "That file isn't ready yet",
     noPreview: "No preview yet",
     open: "Open",

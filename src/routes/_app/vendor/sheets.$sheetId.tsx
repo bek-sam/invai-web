@@ -31,6 +31,7 @@ import { ConfirmDialog } from "../../../components/confirm-dialog";
 import { DefList, Field, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { PlacementList } from "../../../features/production/placement-list";
+import { PrintFilesNote } from "../../../features/production/print-files-note";
 import { SheetPreview } from "../../../features/production/sheet-preview";
 import { formatDateTime, formatInches, formatPct } from "../../../lib/format";
 import { useCan } from "../../../lib/me";
@@ -178,6 +179,7 @@ function VendorActions({ sheet }: { sheet: VendorInboxSheet }) {
         <FileDown />
         PDF
       </Button>
+      <PrintFilesNote sheet={sheet} audience="vendor" />
       {update && s === "sent" && (
         <Button size="sm" onClick={() => ack.mutate({ id: sheet.id })} disabled={ack.isPending}>
           {ack.isPending ? <Loader2 className="animate-spin" /> : <Check />}

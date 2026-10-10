@@ -2233,6 +2233,13 @@ export const es: Messages = {
     markPrinting: "Imprimir en el taller",
     markReceived: "Marcar recibida",
     name: "Hoja",
+    filesRemoved:
+      "Los archivos de impresión se quitaron para proteger los datos del comprador. Para imprimir estos diseños otra vez, arma una hoja nueva.",
+    filesRemovedVendor:
+      "Los archivos de impresión se quitaron para proteger los datos del comprador.",
+    cancelledNoFiles:
+      "Esta hoja se canceló, así que no tiene archivos de impresión. Para imprimir estos diseños, arma una hoja nueva.",
+    cancelledNoFilesVendor: "Esta hoja se canceló, así que no tiene archivos de impresión.",
     noFile: "Ese archivo aún no está listo",
     noPreview: "Aún no hay vista previa",
     open: "Abrir",
