@@ -21,6 +21,7 @@ import { loginAs, loginAsVendor, settled } from "./helpers/ui";
 const LANGS: Lang[] = ["en", "es"];
 const BASE = process.env.E2E_WEB_URL ?? "http://localhost:5173";
 const VIEWPORT = { width: 1440, height: 900 };
+const PHONE = { width: 390, height: 844 };
 const found: Found[] = [];
 const scanned = new Set<string>();
 
@@ -34,7 +35,12 @@ type State = Awaited<ReturnType<Page["context"]>["storageState"]>;
 const sessions: Partial<Record<"owner" | "vendor", State>> = {};
 let ids: { orderId: string; sheetId: string } | undefined;
 
-async function signedInPage(browser: Browser, who: "owner" | "vendor", lang: Lang) {
+async function signedInPage(
+  browser: Browser,
+  who: "owner" | "vendor",
+  lang: Lang,
+  opts: { viewport?: { width: number; height: number }; dark?: boolean } = {},
+) {
   if (!sessions[who]) {
     const first = await browser.newContext({ baseURL: BASE, viewport: VIEWPORT });
     const p = await first.newPage();
@@ -44,11 +50,13 @@ async function signedInPage(browser: Browser, who: "owner" | "vendor", lang: Lan
   }
   const context = await browser.newContext({
     baseURL: BASE,
-    viewport: VIEWPORT,
+    viewport: opts.viewport ?? VIEWPORT,
     storageState: sessions[who],
   });
   const page = await context.newPage();
   await setLang(page, lang);
+  // The app reads its theme from this localStorage key (src/lib/theme.ts).
+  if (opts.dark) await page.addInitScript(() => localStorage.setItem("invai.theme", "dark"));
   return page;
 }
 
@@ -63,11 +71,15 @@ async function seededIds() {
   return ids;
 }
 
-async function visit(page: Page, route: string, url: string, lang: Lang) {
+async function visit(page: Page, route: string, url: string, lang: Lang, mode?: "dark") {
   await page.goto(url);
   await settled(page);
   // The page must be in the language under test, or the Spanish scan would prove nothing.
   await expect(page.locator("html")).toHaveAttribute("lang", lang);
+  if (mode === "dark") {
+    // A dark run must really be dark, or its scan would repeat the light one.
+    await expect(page.locator("html")).toHaveClass(/(^|\s)dark(\s|$)/);
+  }
   found.push(...(await scan(page, route, lang)));
   scanned.add(`${route}|${lang}`);
 }
@@ -100,6 +112,39 @@ for (const lang of LANGS) {
       ["/settings/company", "/settings/company"],
     ];
     for (const [route, url] of screens) await visit(page, route, url, lang);
+  });
+
+  test(`owner Today, Orders and an order drawer at 390 px have no new serious accessibility violations (${lang})`, async ({
+    browser,
+  }) => {
+    test.setTimeout(300_000);
+    const { orderId } = await seededIds();
+    const page = await signedInPage(browser, "owner", lang, { viewport: PHONE });
+    expect(page.viewportSize()).toEqual(PHONE);
+    const screens: [string, string][] = [
+      ["/ [390]", "/"],
+      ["/orders [390]", "/orders"],
+      ["/orders?order=<id> [390]", `/orders?order=${orderId}`],
+    ];
+    for (const [route, url] of screens) await visit(page, route, url, lang);
+  });
+
+  test(`owner screens in dark mode have no new serious accessibility violations (${lang})`, async ({
+    browser,
+  }) => {
+    test.setTimeout(300_000);
+    const { orderId, sheetId } = await seededIds();
+    const page = await signedInPage(browser, "owner", lang, { dark: true });
+    const screens: [string, string][] = [
+      ["/ [dark]", "/"],
+      ["/orders [dark]", "/orders"],
+      ["/orders?order=<id> [dark]", `/orders?order=${orderId}`],
+      ["/production/sheets [dark]", "/production/sheets"],
+      ["/production/sheets/<id> [dark]", `/production/sheets/${sheetId}`],
+      ["/analytics/profit [dark]", "/analytics/profit"],
+      ["/settings/company [dark]", "/settings/company"],
+    ];
+    for (const [route, url] of screens) await visit(page, route, url, lang, "dark");
   });
 
   test(`vendor portal has no new serious accessibility violations (${lang})`, async ({

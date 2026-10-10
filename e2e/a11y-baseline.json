@@ -1,1 +1,529 @@
-{ "entries": [] }
+{
+  "entries": [
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "li:nth-child(1) > .active[href=\"/\"][aria-current=\"page\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": ".mb-4.last\\:mb-0:nth-child(1) > .gap-0\\.5 > li:nth-child(2) > a[href$=\"orders\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"digests\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"sheets\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "li:nth-child(2) > a[href$=\"stations\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"reprints\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"bins\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"designs\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"blanks\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"products\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"sku-mapping\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"personalization\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"stock\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"purchase-orders\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": ".mb-4.last\\:mb-0:nth-child(5) > .gap-0\\.5 > li > a[href$=\"shipping\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"drafts\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"listing-photos\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"trademark\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"profit\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"ad-spend\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"operations\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "li:nth-child(4) > a[href$=\"inventory\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"assistant\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"company\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"team\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"channels\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "li:nth-child(4) > a[href$=\"shipping\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"vendors\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "li:nth-child(6) > a[href$=\"inventory\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "li:nth-child(7) > a[href$=\"stations\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"costs\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"billing\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"notifications\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/ [390]",
+      "target": "a[href$=\"audit\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href=\"/\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": ".active",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"digests\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"sheets\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "li:nth-child(2) > a[href$=\"stations\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"reprints\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"bins\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"designs\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"blanks\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"products\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"sku-mapping\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"personalization\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"stock\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"purchase-orders\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": ".mb-4.last\\:mb-0:nth-child(5) > ul > li > a[href$=\"shipping\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"drafts\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"listing-photos\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"trademark\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"profit\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"ad-spend\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"operations\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "li:nth-child(4) > a[href$=\"inventory\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"assistant\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"company\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"team\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"channels\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "li:nth-child(4) > a[href$=\"shipping\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"vendors\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "li:nth-child(6) > a[href$=\"inventory\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "li:nth-child(7) > a[href$=\"stations\"][data-state=\"closed\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"costs\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"billing\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"notifications\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "link-name",
+      "route": "/orders [390]",
+      "target": "a[href$=\"audit\"]",
+      "reason": "At 390 px the sidebar collapses to an icon-only rail and its links have no accessible name (the label is hidden, the tooltip is not a name). Found by T-34-5.",
+      "backlog": "B-345"
+    },
+    {
+      "rule": "color-contrast",
+      "route": "/ [dark]",
+      "target": ".top-1",
+      "reason": "In dark mode the red notification count badge in the top bar (bg-danger with text-danger-foreground) is below 4.5:1 contrast. Found by T-34-5.",
+      "backlog": "B-346"
+    },
+    {
+      "rule": "color-contrast",
+      "route": "/orders [dark]",
+      "target": ".top-1",
+      "reason": "In dark mode the red notification count badge in the top bar (bg-danger with text-danger-foreground) is below 4.5:1 contrast. Found by T-34-5.",
+      "backlog": "B-346"
+    },
+    {
+      "rule": "color-contrast",
+      "route": "/orders?order=<id> [dark]",
+      "target": ".top-1",
+      "reason": "In dark mode the red notification count badge in the top bar (bg-danger with text-danger-foreground) is below 4.5:1 contrast. Found by T-34-5.",
+      "backlog": "B-346"
+    },
+    {
+      "rule": "color-contrast",
+      "route": "/production/sheets [dark]",
+      "target": ".top-1",
+      "reason": "In dark mode the red notification count badge in the top bar (bg-danger with text-danger-foreground) is below 4.5:1 contrast. Found by T-34-5.",
+      "backlog": "B-346"
+    },
+    {
+      "rule": "color-contrast",
+      "route": "/production/sheets/<id> [dark]",
+      "target": ".top-1",
+      "reason": "In dark mode the red notification count badge in the top bar (bg-danger with text-danger-foreground) is below 4.5:1 contrast. Found by T-34-5.",
+      "backlog": "B-346"
+    },
+    {
+      "rule": "color-contrast",
+      "route": "/analytics/profit [dark]",
+      "target": ".top-1",
+      "reason": "In dark mode the red notification count badge in the top bar (bg-danger with text-danger-foreground) is below 4.5:1 contrast. Found by T-34-5.",
+      "backlog": "B-346"
+    },
+    {
+      "rule": "color-contrast",
+      "route": "/settings/company [dark]",
+      "target": ".top-1",
+      "reason": "In dark mode the red notification count badge in the top bar (bg-danger with text-danger-foreground) is below 4.5:1 contrast. Found by T-34-5.",
+      "backlog": "B-346"
+    }
+  ]
+}
