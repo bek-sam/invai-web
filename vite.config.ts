@@ -13,7 +13,18 @@ import { connectSrc, requireApiOrigin, uploadOrigin } from "./src/lib/build/csp.
 const reactPreambleHash = `'sha256-${createHash("sha256")
   .update(react.preambleCode.replace("__BASE__", "/"))
   .digest("base64")}'`;
-const DEV_API_ORIGIN = "http://localhost:3000"; // matches src/lib/env.ts's VITE_API_URL default
+// Dev CSP connect-src follows the API the app will call: the origin of VITE_API_URL (what
+// src/lib/env.ts reads; dev.sh exports it when INVAI_API_PORT is set), else the same
+// http://localhost:3000 default. A non-http(s) value fails at config load, like requireApiOrigin.
+const DEV_API_ORIGIN = devApiOrigin(process.env.VITE_API_URL);
+function devApiOrigin(raw: string | undefined): string {
+  if (!raw) return "http://localhost:3000";
+  const url = new URL(raw);
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error(`VITE_API_URL must be an http(s) URL, got "${raw}"`);
+  }
+  return url.origin;
+}
 const S3_ORIGIN = "http://localhost:9000"; // local MinIO; presigned image URLs (SignedImage)
 
 const securityHeaders = {
