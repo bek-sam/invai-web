@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { envUrl } from "./e2e/helpers/env-url";
 
 /**
  * End-to-end tests against the real stack: api :3000, worker, imaging :8000, web :5173 and a
@@ -24,7 +25,7 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never", outputFolder: "../.e2e-out/invai-web/report" }]],
   outputDir: "../.e2e-out/invai-web/results",
   use: {
-    baseURL: process.env.E2E_WEB_URL ?? "http://localhost:5173",
+    baseURL: envUrl("E2E_WEB_URL", "http://localhost:5173"),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     viewport: { width: 1440, height: 900 },

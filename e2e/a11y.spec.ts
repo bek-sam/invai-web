@@ -10,6 +10,7 @@ import {
   unbaselined,
 } from "./a11y-core";
 import { OWNER, signIn } from "./helpers/api";
+import { envUrl } from "./helpers/env-url";
 import { loginAs, loginAsVendor, settled } from "./helpers/ui";
 
 /**
@@ -19,7 +20,7 @@ import { loginAs, loginAsVendor, settled } from "./helpers/ui";
  * The spec signs in and picks its own order and sheet through the API; it relies on no other spec.
  */
 const LANGS: Lang[] = ["en", "es"];
-const BASE = process.env.E2E_WEB_URL ?? "http://localhost:5173";
+const BASE = envUrl("E2E_WEB_URL", "http://localhost:5173");
 const VIEWPORT = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
 const found: Found[] = [];

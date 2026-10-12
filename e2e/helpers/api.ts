@@ -5,9 +5,10 @@ import { CONTRACT_VERSION, CONTRACT_VERSION_HEADER, type Contract } from "@invai
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import type { ContractRouterClient } from "@orpc/contract";
+import { envOrigin, envUrl } from "./env-url";
 
-export const API_URL = process.env.E2E_API_URL ?? "http://localhost:3000";
-export const WEB_ORIGIN = process.env.E2E_WEB_URL ?? "http://localhost:5173";
+export const API_URL = envUrl("E2E_API_URL", "http://localhost:3000");
+export const WEB_ORIGIN = envOrigin("E2E_WEB_URL", "http://localhost:5173");
 export const WORKSPACE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 export const BACKEND = path.join(WORKSPACE, "invai-backend");
 export const FIXTURES = path.join(BACKEND, "src/integrations/channels/csv/fixtures");
