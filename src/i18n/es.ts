@@ -2674,6 +2674,24 @@ export const es: Messages = {
     subtitle: "Inventario de prendas por estilo, color y talla, desde el registro de movimientos.",
     when: "Cuándo",
   },
+  storedError: {
+    addressInvalid:
+      "La paquetería no pudo entregar en esta dirección. Revisa la dirección e inténtalo de nuevo.",
+    aiInternal:
+      "El servicio de IA no pudo terminar esta solicitud. Vuelve a intentarlo en un minuto.",
+    aiServiceName: "El servicio de IA",
+    aiUpstream: "{{name}} no pudo terminar esta solicitud. Vuelve a intentarlo en un minuto.",
+    allCancelled: "Se canceló cada unidad",
+    cancelledVoiding: "Cancelado: la etiqueta se está anulando",
+    carrierSilent: "La paquetería no respondió. Vuelve a intentarlo en un minuto.",
+    manualUpload: "Sube el rastreo en el canal a mano",
+    onHold: "En espera: el rastreo se envía cuando se libere la espera",
+    outsideService:
+      "Un servicio externo no pudo completar la solicitud. Vuelve a intentarlo en un minuto.",
+    pushRejected:
+      "El canal no aceptó el rastreo. Vuelve a intentarlo o agrégalo en el canal a mano.",
+    rateExpired: "La tarifa de la paquetería venció. Pide una tarifa nueva.",
+  },
   supplier: {
     other: "Otro",
     sanmar: "SanMar",

@@ -25,6 +25,7 @@ import { errorInfo } from "../../../lib/errors";
 import { parseTags, validateListingLive } from "../../../lib/format";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
+import { storedErrorMessage } from "../../../lib/stored-error";
 
 export const Route = createFileRoute("/_app/listings/drafts/$draftId")({
   component: DraftPage,
@@ -265,7 +266,9 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
         </div>
       </div>
       {draft.error && (
-        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{draft.error}</p>
+        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+          {storedErrorMessage(draft.error, t)}
+        </p>
       )}
       {draft.rejectedReason && (
         <p className="rounded-md bg-muted px-3 py-2 text-sm">
@@ -662,7 +665,9 @@ function PublishStatusSection({ draft }: { draft: ListingDraft }) {
         <div className="flex flex-col gap-2">
           <DraftStatusBadge status={status.status} />
           {status.error && (
-            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{status.error}</p>
+            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+              {storedErrorMessage(status.error, t)}
+            </p>
           )}
           {status.pendingApproval && (
             <p className="text-sm text-muted-foreground">

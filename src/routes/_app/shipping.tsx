@@ -53,6 +53,7 @@ import { formatDate, orderLabel } from "../../lib/format";
 import { useCan } from "../../lib/me";
 import { pollJob } from "../../lib/poll-job";
 import { client, orpc } from "../../lib/rpc";
+import { storedErrorMessage } from "../../lib/stored-error";
 import { openInNewTab } from "../../lib/upload";
 
 const TABS = ["queue", "shipments", "scanForms", "tracking", "settings"] as const;
@@ -661,7 +662,7 @@ function Shipments() {
                 ? "warning"
                 : "secondary";
         return (
-          <Badge variant={tone} title={p.error ?? undefined}>
+          <Badge variant={tone} title={storedErrorMessage(p.error, t) ?? undefined}>
             {t(`pushStatus.${p.status}`, p.status.replace(/_/g, " "))}
           </Badge>
         );
@@ -1059,9 +1060,9 @@ function TrackingPush() {
               </td>
               <td
                 className="max-w-xs truncate px-3 py-2 text-xs text-danger"
-                title={p.error ?? undefined}
+                title={storedErrorMessage(p.error, t) ?? undefined}
               >
-                {p.error ?? "—"}
+                {storedErrorMessage(p.error, t) ?? "—"}
               </td>
               <td className="px-3 py-2 text-right">
                 {can("shipping.buy") && (

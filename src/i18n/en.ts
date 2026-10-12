@@ -2619,6 +2619,22 @@ export const en = {
     subtitle: "Blank stock by style, color and size, from the movement ledger.",
     when: "When",
   },
+  storedError: {
+    addressInvalid:
+      "The carrier could not deliver to this address. Check the address and try again.",
+    aiInternal: "The AI service could not finish this request. Try again in a minute.",
+    aiServiceName: "The AI service",
+    aiUpstream: "{{name}} could not finish this request. Try again in a minute.",
+    allCancelled: "Every unit was cancelled",
+    cancelledVoiding: "Cancelled: the label is being voided",
+    carrierSilent: "The carrier did not answer. Try again in a minute.",
+    manualUpload: "Upload tracking on the channel by hand",
+    onHold: "On hold: tracking is sent when the hold is released",
+    outsideService: "An outside service could not complete the request. Try again in a minute.",
+    pushRejected:
+      "The channel did not accept the tracking upload. Try again, or add it on the channel by hand.",
+    rateExpired: "The carrier rate expired. Get a new rate.",
+  },
   supplier: {
     other: "Other",
     sanmar: "SanMar",
