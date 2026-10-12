@@ -1,4 +1,4 @@
-import { type Browser, expect, type Page, test } from "@playwright/test";
+import { type Browser, type BrowserContext, expect, type Page, test } from "@playwright/test";
 import {
   describeFound,
   dumpIfAsked,
@@ -35,6 +35,14 @@ type State = Awaited<ReturnType<Page["context"]>["storageState"]>;
 const sessions: Partial<Record<"owner" | "vendor", State>> = {};
 let ids: { orderId: string; sheetId: string } | undefined;
 
+// Every context a test opens is closed after it. A signed-in page left open keeps its live
+// updates and refetches going for the rest of the run, all on Desert Bloom's per-company `reads`
+// budget, which the screens smoke and the floor suite run on right after (gate 429, wave 36).
+const opened: BrowserContext[] = [];
+test.afterEach(async () => {
+  for (const c of opened.splice(0)) await c.close();
+});
+
 async function signedInPage(
   browser: Browser,
   who: "owner" | "vendor",
@@ -53,6 +61,7 @@ async function signedInPage(
     viewport: opts.viewport ?? VIEWPORT,
     storageState: sessions[who],
   });
+  opened.push(context);
   const page = await context.newPage();
   await setLang(page, lang);
   // The app reads its theme from this localStorage key (src/lib/theme.ts).
