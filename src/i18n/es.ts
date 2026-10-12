@@ -137,6 +137,12 @@ export const es: Messages = {
       vendor_sheet_received: "Nuevo gang sheet de una tienda",
     },
     line: {
+      dispatch_overdue:
+        "El pedido {{orderNo}} vencía el {{date}} y aún no tiene escaneo del transportista.",
+      dispatch_overdue_unconfirmed:
+        "El pedido {{orderNo}} vencía el {{date}}. Las actualizaciones del transportista están retrasadas y no podemos confirmar el escaneo. Consulta con el transportista.",
+      dispatch_pickup_missed:
+        "El pedido {{orderNo}} tiene etiqueta pero el transportista aún no lo escaneó. Revisa que lo hayan recogido.",
       label_buy_stuck:
         "No pudimos confirmar la compra de la etiqueta con la paquetería después de varios intentos. Abre el envío y compra la etiqueta de nuevo; no se te cobrará dos veces.",
       label_void_stuck:
@@ -2314,6 +2320,7 @@ export const es: Messages = {
     allPushed: "Todos los números de rastreo llegaron a sus canales.",
     attempts: "{{n}} intentos",
     autoPackage: "Automático",
+    batchFailed: "No se pudo comprar el lote de etiquetas. Vuelve a intentarlo en un minuto.",
     batchDone: "{{n}} etiquetas compradas",
     batchStillBuying:
       "Seguimos comprando las etiquetas en segundo plano. Aparecerán en Envíos cuando terminen.",
@@ -2681,7 +2688,7 @@ export const es: Messages = {
       "El servicio de IA no pudo terminar esta solicitud. Vuelve a intentarlo en un minuto.",
     aiServiceName: "El servicio de IA",
     aiUpstream: "{{name}} no pudo terminar esta solicitud. Vuelve a intentarlo en un minuto.",
-    allCancelled: "Se canceló cada unidad",
+    allCancelled: "Se cancelaron todas las unidades",
     cancelledVoiding: "Cancelado: la etiqueta se está anulando",
     carrierSilent: "La paquetería no respondió. Vuelve a intentarlo en un minuto.",
     manualUpload: "Sube el rastreo en el canal a mano",
@@ -2801,6 +2808,14 @@ export const es: Messages = {
     capacity: "Capacidad de hoy",
     capacityHint: "{{rate}} artículos/hora · quedan {{hours}} h",
     capacityValue: "{{work}} de {{cap}} artículos",
+    dispatch: {
+      row: "{{channel}}: {{count}}",
+      title: "Vencidas sin escaneo del transportista",
+      unconfirmed_one:
+        "Las actualizaciones de escaneo están retrasadas para {{count}} etiqueta. Consulta con el transportista antes de la fecha de envío.",
+      unconfirmed_other:
+        "Las actualizaciones de escaneo están retrasadas para {{count}} etiquetas. Consulta con el transportista antes de la fecha de envío.",
+    },
     done: "listos",
     dueToday: "Vencen hoy",
     evening: "Buenas noches",

@@ -1,4 +1,5 @@
-import type { Alert, AlertMessageCode, AlertParams, TodaySummary } from "@invai/contracts";
+import type { Alert, AlertMessageCode, AlertParams, Channel, TodaySummary } from "@invai/contracts";
+import { CHANNEL_RULES } from "@invai/contracts";
 import { Button, cn, EmptyState, Progress, RelativeTime, Skeleton, StatCard } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -83,6 +84,7 @@ function TodayPage() {
               <div className="flex flex-col gap-4 lg:col-span-3">
                 <StationWork data={summary.data} />
                 <Pipeline data={summary.data} />
+                <DispatchGuard data={summary.data} />
               </div>
               <div className="lg:col-span-2">{can("alerts.read") && <AlertsPanel />}</div>
             </div>
@@ -304,6 +306,62 @@ function Capacity({ data }: { data: TodaySummary }) {
   );
 }
 
+/** One row per channel with labels past ship-by and no carrier scan; none when the API predates 0.16.0. */
+export function dispatchRows(
+  data: Pick<TodaySummary["orders"], "dispatchAtRisk"> | undefined,
+): { channel: Channel; label: string; count: number }[] {
+  return (data?.dispatchAtRisk ?? [])
+    .filter((r) => r.count > 0)
+    .map((r) => ({ channel: r.channel, label: CHANNEL_RULES[r.channel].label, count: r.count }));
+}
+
+/** The "carrier updates are delayed" count, or 0 when missing (old API) or none. */
+export function dispatchUnconfirmedCount(
+  data: Pick<TodaySummary["orders"], "dispatchUnconfirmed"> | undefined,
+): number {
+  return data?.dispatchUnconfirmed ?? 0;
+}
+
+function DispatchGuard({ data }: { data: TodaySummary | undefined }) {
+  const { t } = useTranslation();
+  const rows = dispatchRows(data?.orders);
+  const unconfirmed = dispatchUnconfirmedCount(data?.orders);
+  if (rows.length === 0 && unconfirmed === 0) return null;
+  return (
+    <Section title={t("today.dispatch.title", "Past ship-by, no carrier scan")}>
+      {rows.length > 0 && (
+        <ul className="grid gap-x-6 sm:grid-cols-2">
+          {rows.map((r) => (
+            <li key={r.channel}>
+              <AnyLink
+                to="/shipping"
+                search={{ tab: "shipments" }}
+                className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+              >
+                <span className="tabular-nums">
+                  {t("today.dispatch.row", "{{channel}}: {{count}}", {
+                    channel: r.label,
+                    count: r.count,
+                  })}
+                </span>
+              </AnyLink>
+            </li>
+          ))}
+        </ul>
+      )}
+      {unconfirmed > 0 && (
+        <p className="px-2 pt-2 text-sm text-muted-foreground">
+          {t(
+            "today.dispatch.unconfirmed",
+            "Carrier scan updates are delayed for {{count}} labels. Check with the carrier before ship-by.",
+            { count: unconfirmed },
+          )}
+        </p>
+      )}
+    </Section>
+  );
+}
+
 function Pipeline({ data }: { data: TodaySummary | undefined }) {
   const { t } = useTranslation();
   if (!data) return <Skeleton className="h-28" />;
@@ -462,6 +520,32 @@ const ALERT_LINE_BUILDERS: Partial<
       {
         orderNo: orderLabel(p.orderNo ?? ""),
         date: p.shipBy ? alertDateLabel(p.shipBy, p.timeZone, language) : "",
+      },
+    ),
+  // 0.16.0 dispatch guard (spec dispatch-scan-guard.md). No tracking code in any of these lines.
+  dispatch_pickup_missed: (t, p) =>
+    t(
+      "alerts.line.dispatch_pickup_missed",
+      "Order {{orderNo}} has a label but no carrier scan yet. Check that the carrier picked it up.",
+      { orderNo: orderLabel(p.orderNo ?? "") },
+    ),
+  dispatch_overdue: (t, p, language) =>
+    t(
+      "alerts.line.dispatch_overdue",
+      "Order {{orderNo}} was due {{date}} and still has no carrier scan.",
+      {
+        orderNo: orderLabel(p.orderNo ?? ""),
+        date: p.shipBy ? alertDateLabel(p.shipBy, p.timeZone, language) : "",
+      },
+    ),
+  // The date ends a sentence here: drop its own final period ("p.m.") so we don't print "p.m..".
+  dispatch_overdue_unconfirmed: (t, p, language) =>
+    t(
+      "alerts.line.dispatch_overdue_unconfirmed",
+      "Order {{orderNo}} was due {{date}}. Carrier updates are delayed, so we cannot confirm a scan. Check with the carrier.",
+      {
+        orderNo: orderLabel(p.orderNo ?? ""),
+        date: p.shipBy ? alertDateLabel(p.shipBy, p.timeZone, language).replace(/\.$/, "") : "",
       },
     ),
   sync_broken: (t, p) =>

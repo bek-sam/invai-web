@@ -133,6 +133,11 @@ export const en = {
       vendor_sheet_received: "New gang sheet from a shop",
     },
     line: {
+      dispatch_overdue: "Order {{orderNo}} was due {{date}} and still has no carrier scan.",
+      dispatch_overdue_unconfirmed:
+        "Order {{orderNo}} was due {{date}}. Carrier updates are delayed, so we cannot confirm a scan. Check with the carrier.",
+      dispatch_pickup_missed:
+        "Order {{orderNo}} has a label but no carrier scan yet. Check that the carrier picked it up.",
       label_buy_stuck:
         "We couldn't confirm a label purchase with the carrier after several tries. Open the shipment and buy the label again; you won't be charged twice.",
       label_void_stuck:
@@ -2271,6 +2276,7 @@ export const en = {
     allPushed: "All tracking numbers reached their channels.",
     attempts: "{{n}} attempts",
     autoPackage: "Automatic",
+    batchFailed: "The label batch failed. Try again in a minute.",
     batchDone: "{{n}} labels bought",
     batchStillBuying:
       "Still buying labels in the background. They'll show up under Shipments when they're done.",
@@ -2742,6 +2748,14 @@ export const en = {
     capacity: "Today's capacity",
     capacityHint: "{{rate}} items/hour · {{hours}} h left",
     capacityValue: "{{work}} of {{cap}} items",
+    dispatch: {
+      row: "{{channel}}: {{count}}",
+      title: "Past ship-by, no carrier scan",
+      unconfirmed_one:
+        "Carrier scan updates are delayed for {{count}} label. Check with the carrier before ship-by.",
+      unconfirmed_other:
+        "Carrier scan updates are delayed for {{count}} labels. Check with the carrier before ship-by.",
+    },
     done: "done",
     dueToday: "Due today",
     evening: "Good evening",

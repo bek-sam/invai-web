@@ -71,7 +71,7 @@ describe("storedErrorMessage", () => {
   it("translates the code-less tracking-push sentences", () => {
     expect(storedErrorMessage(SENTENCES[8], tEs)).toBe("Cancelado: la etiqueta se está anulando");
     expect(storedErrorMessage(SENTENCES[9], tEs)).toContain("En espera");
-    expect(storedErrorMessage(SENTENCES[10], tEs)).toBe("Se canceló cada unidad");
+    expect(storedErrorMessage(SENTENCES[10], tEs)).toBe("Se cancelaron todas las unidades");
     expect(storedErrorMessage(SENTENCES[11], tEs)).toBe("Sube el rastreo en el canal a mano");
     expect(storedErrorMessage(SENTENCES[8], tEn)).toBe(SENTENCES[8]);
   });

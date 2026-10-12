@@ -70,6 +70,18 @@ const EXPORT_WHERE: Record<ExportChannel, string> = {
   walmart: "Walmart: Seller Center → Order Management → Bulk Order Update, then upload this file.",
 };
 
+/** The failed-batch text in the active language: stored sentences are mapped, the rest passes through. */
+export function batchFailureMessage(
+  job: { error?: string | null; message?: string | null },
+  t: TFunction,
+): string {
+  return (
+    storedErrorMessage(job.error, t) ??
+    job.message ??
+    t("ship.batchFailed", "The label batch failed. Try again in a minute.")
+  );
+}
+
 export const Route = createFileRoute("/_app/shipping")({
   validateSearch: z.object({ tab: z.enum(TABS).optional().catch(undefined) }),
   component: ShippingPage,
@@ -206,8 +218,7 @@ function Queue() {
       });
       if (out.kind === "aborted") return { kind: "aborted" };
       if (out.kind === "timeout") return { kind: "timeout" };
-      if (out.job.status === "failed")
-        throw new Error(out.job.error ?? out.job.message ?? "The label batch failed");
+      if (out.job.status === "failed") throw new Error(batchFailureMessage(out.job, t));
       const ids = out.job.resultIds;
       // Postage is a nice-to-have: a shipment that can't be read just leaves it out.
       const shipments = await Promise.allSettled(
