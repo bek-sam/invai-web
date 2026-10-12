@@ -2812,9 +2812,9 @@ export const es: Messages = {
       row: "{{channel}}: {{count}}",
       title: "Vencidas sin escaneo del transportista",
       unconfirmed_one:
-        "Las actualizaciones de escaneo están retrasadas para {{count}} etiqueta. Consulta con el transportista antes de la fecha de envío.",
+        "Las actualizaciones de escaneo están retrasadas para {{count}} etiqueta. Consulta hoy con el transportista.",
       unconfirmed_other:
-        "Las actualizaciones de escaneo están retrasadas para {{count}} etiquetas. Consulta con el transportista antes de la fecha de envío.",
+        "Las actualizaciones de escaneo están retrasadas para {{count}} etiquetas. Consulta hoy con el transportista.",
     },
     done: "listos",
     dueToday: "Vencen hoy",

@@ -99,10 +99,10 @@ describe("Today dispatch card rules", () => {
     expect(e("today.dispatch.row", { channel: "Etsy", count: 5 })).toBe("Etsy: 5");
     expect(e("today.dispatch.unconfirmed", { count: 1 })).toContain("for 1 label.");
     expect(e("today.dispatch.unconfirmed", { count: 3 })).toBe(
-      "Carrier scan updates are delayed for 3 labels. Check with the carrier before ship-by.",
+      "Carrier scan updates are delayed for 3 labels. Check with the carrier today.",
     );
     expect(s("today.dispatch.unconfirmed", { count: 3 })).toBe(
-      "Las actualizaciones de escaneo están retrasadas para 3 etiquetas. Consulta con el transportista antes de la fecha de envío.",
+      "Las actualizaciones de escaneo están retrasadas para 3 etiquetas. Consulta hoy con el transportista.",
     );
     expect(s("today.dispatch.unconfirmed", { count: 1 })).toContain("para 1 etiqueta.");
   });

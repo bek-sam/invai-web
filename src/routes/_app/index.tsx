@@ -353,7 +353,7 @@ function DispatchGuard({ data }: { data: TodaySummary | undefined }) {
         <p className="px-2 pt-2 text-sm text-muted-foreground">
           {t(
             "today.dispatch.unconfirmed",
-            "Carrier scan updates are delayed for {{count}} labels. Check with the carrier before ship-by.",
+            "Carrier scan updates are delayed for {{count}} labels. Check with the carrier today.",
             { count: unconfirmed },
           )}
         </p>

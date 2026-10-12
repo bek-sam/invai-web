@@ -2752,9 +2752,9 @@ export const en = {
       row: "{{channel}}: {{count}}",
       title: "Past ship-by, no carrier scan",
       unconfirmed_one:
-        "Carrier scan updates are delayed for {{count}} label. Check with the carrier before ship-by.",
+        "Carrier scan updates are delayed for {{count}} label. Check with the carrier today.",
       unconfirmed_other:
-        "Carrier scan updates are delayed for {{count}} labels. Check with the carrier before ship-by.",
+        "Carrier scan updates are delayed for {{count}} labels. Check with the carrier today.",
     },
     done: "done",
     dueToday: "Due today",
