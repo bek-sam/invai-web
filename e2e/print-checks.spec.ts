@@ -86,19 +86,31 @@ async function makeDesign(s: Session, label: string, bytes: Buffer, stamp: strin
     personalizationTemplateId: null,
     placements: [{ placement: "front", fileKey, widthIn: 2, heightIn: 2 }],
   });
-  // QA runs in the background; wait for it by polling designs.get (card note A18).
-  const done = await poll(
-    () => s.api.designs.get({ id: created.id }),
-    (d) => d.qaStatus !== "pending",
-    { timeoutMs: 90_000, label: `QA of ${label}` },
-  );
+  // QA runs in the background (one turn per company every 20 s once the burst is spent, T-43-3);
+  // wait for it by polling designs.get (card note A18). If the background job has not answered
+  // after 45 s, ask for the check by hand, like a designer pressing Run QA, and wait again.
+  const waitQa = (ms: number) =>
+    poll(
+      () => s.api.designs.get({ id: created.id }),
+      (d) => d.qaStatus !== "pending",
+      { timeoutMs: ms, label: `QA of ${label}` },
+    );
+  let done = await waitQa(45_000).catch(() => null);
+  for (let attempt = 0; !done && attempt < 6; attempt++) {
+    try {
+      done = await s.api.designs.runQa({ id: created.id, cleanAlpha: false });
+    } catch {
+      await new Promise((r) => setTimeout(r, 15_000));
+    }
+  }
+  if (!done || done.qaStatus === "pending") done = await waitQa(60_000);
   return done;
 }
 
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async () => {
-  test.setTimeout(240_000);
+  test.setTimeout(600_000);
   const s = await signIn(DESIGNER.email, DESIGNER.password);
   designer.s = s;
   const stamp = Date.now().toString(36);
