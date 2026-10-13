@@ -95,7 +95,12 @@ const PRESET_MIN_PX: Record<string, number> = {
 };
 const AMAZON_MAIN_MIN_FILL_PCT = 85;
 
-type CheckMsg = (t: TFunction, img: PhotoImage, checks: PhotoChecks) => string;
+type CheckMsg = (
+  t: TFunction,
+  img: PhotoImage,
+  checks: PhotoChecks,
+  failure: PhotoCheckFailure,
+) => string;
 const CHECK_MESSAGES: Partial<Record<string, CheckMsg>> = {
   background_not_white: (t) => t("photoCheck.background_not_white", "Background isn't pure white."),
   fill_below_min: (t, img, checks) => {
@@ -133,8 +138,16 @@ const CHECK_MESSAGES: Partial<Record<string, CheckMsg>> = {
     ),
   design_drift: (t) =>
     t("photoCheck.design_drift", "The photo doesn't match the design closely enough."),
-  region_changed: (t) =>
-    t("photoCheck.region_changed", "The garment outline moved after this scene was generated."),
+  // Coupled to backend `photos/scenes.ts` `regionDetail`: the exact comma-separated part
+  // `placement off` is a de-facto API until contracts add a reasons enum. Every other part
+  // of `detail` is internal numbers and is never shown.
+  region_changed: (t, _img, _checks, failure) =>
+    failure.detail?.split(",").some((part) => part.trim() === "placement off")
+      ? t(
+          "photoCheck.region_changed_placement",
+          "The shirt moved in this photo, so the design may be out of place. Pick another scene or try again.",
+        )
+      : t("photoCheck.region_changed", "The garment outline moved after this scene was generated."),
 };
 
 export function checkFailureMessage(
@@ -145,7 +158,7 @@ export function checkFailureMessage(
   const checks = img.checks;
   if (!checks) return t("photoCheck.unknown", "This photo didn't pass a check.");
   return (
-    CHECK_MESSAGES[failure.code]?.(t, img, checks) ??
+    CHECK_MESSAGES[failure.code]?.(t, img, checks, failure) ??
     t("photoCheck.unknown", "This photo didn't pass a check.")
   );
 }

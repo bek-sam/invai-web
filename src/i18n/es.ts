@@ -1766,6 +1766,8 @@ export const es: Messages = {
     illustration_not_photo:
       "Ilustración dibujada: {{channel}} necesita una foto para la imagen principal.",
     region_changed: "El contorno de la prenda cambió después de generar esta escena.",
+    region_changed_placement:
+      "La camiseta se movió en esta foto, así que el diseño puede estar fuera de lugar. Elige otra escena o inténtalo de nuevo.",
     too_small: "La imagen tiene {{px}} px ({{channel}} necesita al menos {{min}} px).",
     too_small_generic: "La imagen es demasiado pequeña para este canal.",
     unknown: "Esta foto no pasó una revisión.",

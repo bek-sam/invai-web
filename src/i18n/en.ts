@@ -1732,6 +1732,8 @@ export const en = {
     fill_below_min_generic: "Product doesn't fill enough of the frame.",
     illustration_not_photo: "Drawn illustration: {{channel}} wants a photo for the main image.",
     region_changed: "The garment outline moved after this scene was generated.",
+    region_changed_placement:
+      "The shirt moved in this photo, so the design may be out of place. Pick another scene or try again.",
     too_small: "Image is {{px}} px ({{channel}} needs at least {{min}} px).",
     too_small_generic: "Image is too small for this channel.",
     unknown: "This photo didn't pass a check.",

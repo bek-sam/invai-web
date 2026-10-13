@@ -1458,6 +1458,7 @@
  "photoCheck.fill_below_min_generic": "El producto no ocupa suficiente espacio del cuadro.",
  "photoCheck.illustration_not_photo": "Ilustración dibujada: {{channel}} necesita una foto para la imagen principal.",
  "photoCheck.region_changed": "El contorno de la prenda cambió después de generar esta escena.",
+ "photoCheck.region_changed_placement": "La camiseta se movió en esta foto, así que el diseño puede estar fuera de lugar. Elige otra escena o inténtalo de nuevo.",
  "photoCheck.too_small": "La imagen tiene {{px}} px ({{channel}} necesita al menos {{min}} px).",
  "photoCheck.too_small_generic": "La imagen es demasiado pequeña para este canal.",
  "photoCheck.unknown": "Esta foto no pasó una revisión.",
