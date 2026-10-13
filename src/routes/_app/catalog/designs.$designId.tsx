@@ -25,6 +25,7 @@ import { QA_TONE } from "../../../components/badges";
 import { NicheChip } from "../../../components/market/niche-chip";
 import { Field, NativeSelect, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
+import { AiUseControl, useAiUseLabel } from "../../../features/catalog/ai-use-control";
 import {
   classifyRunFailure,
   mergeQa,
@@ -200,6 +201,28 @@ function DesignEditor({ design }: { design: Design | null }) {
       onSuccess: () => {
         toast.success(t("designs.saved", "Design saved"));
         void invalidate();
+      },
+    }),
+  );
+  // The AI-use choice saves on its own and sends only { id, aiUse }; the page's Save never does.
+  // It patches the cached design (keeping updatedAt) so unsaved edits above are not reset.
+  const aiUseLabel = useAiUseLabel();
+  const setAiUse = useMutation(
+    orpc.designs.update.mutationOptions({
+      meta: {
+        errorTitle: t(
+          "designs.aiUse.error",
+          "Could not save. Your answer was not changed. Try again.",
+        ),
+      },
+      onSuccess: (d) => {
+        toast.success(t("designs.aiUse.saved", "Saved: {{value}}", { value: aiUseLabel(d.aiUse) }));
+        queryClient.setQueryData(
+          orpc.designs.get.queryKey({ input: { id: d.id } }),
+          (old: Design | undefined) => (old ? { ...old, aiUse: d.aiUse } : old),
+        );
+        void queryClient.invalidateQueries({ queryKey: orpc.designs.list.key() });
+        void queryClient.invalidateQueries({ queryKey: orpc.ai.listings.key() });
       },
     }),
   );
@@ -397,6 +420,21 @@ function DesignEditor({ design }: { design: Design | null }) {
             </NativeSelect>
           </Field>
         </div>
+        {design && (
+          <div className="mt-4">
+            <AiUseControl
+              value={design.aiUse}
+              canChange={editable && design.status !== "archived"}
+              saving={setAiUse.isPending}
+              error={
+                setAiUse.isError
+                  ? `${t("designs.aiUse.error", "Could not save. Your answer was not changed. Try again.")} ${errorMessage(setAiUse.error)}`
+                  : null
+              }
+              onSelect={(aiUse) => setAiUse.mutate({ id: design.id, aiUse })}
+            />
+          </div>
+        )}
         {design?.ocrText && (
           <p className="mt-3 text-xs text-muted-foreground">
             {t("designs.ocr", "Text found in the artwork")}:{" "}

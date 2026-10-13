@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { createHash } from "node:crypto";
+import { createRequire } from "node:module";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
@@ -47,6 +48,19 @@ const devCsp = [
   "frame-ancestors 'none'",
 ].join("; ");
 
+function reactAliases() {
+  const req = createRequire(import.meta.url);
+  const ids = [
+    "react",
+    "react/jsx-runtime",
+    "react/jsx-dev-runtime",
+    "react-dom",
+    "react-dom/client",
+    "lucide-react",
+  ];
+  return ids.map((id) => ({ find: new RegExp(`^${id}$`), replacement: req.resolve(id) }));
+}
+
 export default defineConfig(({ command, isPreview }) => {
   // Review r1: connect-src was 'https:' (any HTTPS host), not the pinned API origin. `build` and
   // `preview` both serve/produce the real prodCsp, so both must have a real VITE_API_URL -- a
@@ -77,6 +91,9 @@ export default defineConfig(({ command, isPreview }) => {
     // @invai/ui and @invai/contracts are linked sibling repos with their own node_modules;
     // dedupe so there is one React, one i18next singleton and one TanStack Table.
     resolve: {
+      // Vitest only: kit components load through invai-ui's own node_modules, so point React at
+      // this app's copy (dedupe does not reach them there). Dev and build are unchanged.
+      alias: process.env.VITEST ? reactAliases() : undefined,
       dedupe: [
         "react",
         "react-dom",
@@ -129,6 +146,11 @@ export default defineConfig(({ command, isPreview }) => {
     },
     server: { port: 5173, headers: { "Content-Security-Policy": devCsp, ...securityHeaders } },
     preview: { headers: { "Content-Security-Policy": prodCsp, ...securityHeaders } },
-    test: { environment: "node", include: ["src/**/*.test.ts"] },
+    test: {
+      environment: "node",
+      include: ["src/**/*.test.ts"],
+      // Render kit (Radix) components with the app's single React copy, not invai-ui's own.
+      server: { deps: { inline: [/invai-ui/, /@radix-ui/, /radix-ui/, /lucide-react/] } },
+    },
   };
 });

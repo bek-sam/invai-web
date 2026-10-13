@@ -19,6 +19,7 @@ import { ConfirmDialog } from "../../../components/confirm-dialog";
 import { Field, NativeSelect, Section } from "../../../components/page";
 import { SignedImage } from "../../../components/signed-image";
 import { ErrorState, SkeletonRows } from "../../../components/states";
+import { AiUseStatus } from "../../../features/listings/ai-use-status";
 import { DraftStatusBadge, TrademarkResult } from "../../../features/listings/badges";
 import { useDebounced } from "../../../hooks/use-debounced";
 import { errorInfo } from "../../../lib/errors";
@@ -457,11 +458,26 @@ function DraftEditor({ draft }: { draft: ListingDraft }) {
                 />
               </Field>
               <IssueList issues={issuesFor("description")} />
-              {draft.content.disclosures.length > 0 && (
-                <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+              {(draft.content.disclosures.length > 0 || draft.designAiUse) && (
+                <div className="flex flex-col gap-1 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
                   <p className="font-medium text-foreground">
                     {t("listings.disclosures", "Disclosures added automatically")}
                   </p>
+                  <AiUseStatus
+                    designAiUse={draft.designAiUse}
+                    status={draft.status}
+                    designLink={
+                      can("catalog.manage") ? (
+                        <Link
+                          to="/catalog/designs/$designId"
+                          params={{ designId: draft.designId }}
+                          className="font-medium text-foreground underline underline-offset-2"
+                        >
+                          {t("listings.aiUse.unknownLink", "Say how it was made")}
+                        </Link>
+                      ) : null
+                    }
+                  />
                   {draft.content.disclosures.map((d) => (
                     <p key={d}>{d}</p>
                   ))}
