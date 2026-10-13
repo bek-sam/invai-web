@@ -63,6 +63,11 @@ async function newDraft(): Promise<string> {
   return id;
 }
 
+function updateInput(req: { postData(): string | null }): Record<string, unknown> {
+  const body = JSON.parse(req.postData() ?? "{}");
+  return (body.json ?? body) as Record<string, unknown>;
+}
+
 async function pick(page: Page, name: string) {
   await page.getByRole("radio", { name }).click();
 }
@@ -115,9 +120,21 @@ test("choosing 'No' saves, survives a reload, and the next draft has no AI notic
   const issues = watchPage(page);
   await loginAs(page, OWNER);
   await page.goto(`/catalog/designs/${state.designId}`);
+  const isUpdate = (r: { url(): string; method(): string }) =>
+    r.url().includes("/rpc/designs/update") && r.method() === "POST";
+  const aiReq = page.waitForRequest(isUpdate);
   await pick(page, "No, made without AI");
+  expect(Object.keys(updateInput(await aiReq)).sort()).toEqual(["aiUse", "id"]);
   await expect(page.getByText("Saved: No, made without AI")).toBeVisible();
   await expect(page.getByText("This is your statement. InvAI does not check it.")).toBeVisible();
+
+  // The page Save sends the form fields and never aiUse.
+  await page.locator("#name").fill(`AI use e2e renamed ${Date.now().toString(36)}`);
+  const saveReq = page.waitForRequest(isUpdate);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  const saved = updateInput(await saveReq);
+  expect(saved).toHaveProperty("name");
+  expect(Object.keys(saved)).not.toContain("aiUse");
   await page.reload();
   await expect(page.getByRole("radio", { name: "No, made without AI" })).toBeChecked();
 

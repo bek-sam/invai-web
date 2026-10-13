@@ -26,6 +26,7 @@ import { NicheChip } from "../../../components/market/niche-chip";
 import { Field, NativeSelect, Section } from "../../../components/page";
 import { ErrorState, SkeletonRows } from "../../../components/states";
 import { AiUseControl, useAiUseLabel } from "../../../features/catalog/ai-use-control";
+import { chooseAiUse, saveDesignForm } from "../../../features/catalog/design-update-input";
 import {
   classifyRunFailure,
   mergeQa,
@@ -431,7 +432,7 @@ function DesignEditor({ design }: { design: Design | null }) {
                   ? `${t("designs.aiUse.error", "Could not save. Your answer was not changed. Try again.")} ${errorMessage(setAiUse.error)}`
                   : null
               }
-              onSelect={(aiUse) => setAiUse.mutate({ id: design.id, aiUse })}
+              onSelect={(aiUse) => chooseAiUse(setAiUse.mutate, design.id, aiUse)}
             />
           </div>
         )}
@@ -618,7 +619,7 @@ function DesignEditor({ design }: { design: Design | null }) {
           <Button
             disabled={!valid || uploading || pending}
             onClick={() =>
-              design ? save.mutate({ id: design.id, ...payload() }) : create.mutate(payload())
+              design ? saveDesignForm(save.mutate, design.id, payload()) : create.mutate(payload())
             }
           >
             {pending && <Loader2 className="animate-spin" />}
