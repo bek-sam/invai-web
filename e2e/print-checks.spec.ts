@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { crc32, deflateSync } from "node:zlib";
 import { expect, type Page, type Route, test } from "@playwright/test";
-import { poll, type Session, signIn, uploadFile } from "./helpers/api";
+import { poll, type Session, signUpCompany, uploadFile } from "./helpers/api";
 import { loginAs } from "./helpers/ui";
 
 /*
@@ -13,7 +13,14 @@ import { loginAs } from "./helpers/ui";
  * DOM assertions only. Criteria 5, 7 and 8 stub the runQa / accept responses with page.route.
  */
 
-const DESIGNER = { email: "designer@desertbloom.test", password: "demo1234!" };
+/*
+ * The checks run in a brand-new company, not in Desert Bloom: QA turns are limited per company
+ * (T-43-3: 3 at once, then one every 20 s, shared with the order-artwork checks), and by the time
+ * this spec runs the seeded shop's allowance is spent on its imported orders' artwork, so a design
+ * check there waited minutes (gate runs 20261013T041217Z, T042203Z, T043728Z). A new company
+ * owner can do everything the designer can on this page (catalog.manage).
+ */
+let DESIGNER = { email: "", password: "e2e-pass-1234!" };
 const SIZE = 640; // px; 2 in => 320 DPI, above the 300 DPI target
 
 type Px = [number, number, number, number];
@@ -119,7 +126,8 @@ test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async () => {
   test.setTimeout(600_000);
-  const s = await signIn(DESIGNER.email, DESIGNER.password);
+  const { session: s, email } = await signUpCompany(`E2E Print checks ${Date.now()}`);
+  DESIGNER = { email, password: "e2e-pass-1234!" };
   designer.s = s;
   const stamp = Date.now().toString(36);
   const warn = await makeDesign(s, "warn", whiteBox, stamp);
@@ -136,6 +144,8 @@ test.beforeAll(async () => {
     "error",
   );
   expect(ok.placements[0]?.qa.issues).toHaveLength(0);
+  // The three designs spent the burst; let two turns refill for the tests that press Run QA.
+  await new Promise((r) => setTimeout(r, 45_000));
 });
 
 const open = async (page: Page, id: string) => {
