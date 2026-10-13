@@ -95,15 +95,23 @@ async function makeDesign(s: Session, label: string, bytes: Buffer, stamp: strin
       (d) => d.qaStatus !== "pending",
       { timeoutMs: ms, label: `QA of ${label}` },
     );
+  const tried: string[] = [];
   let done = await waitQa(45_000).catch(() => null);
   for (let attempt = 0; !done && attempt < 6; attempt++) {
     try {
       done = await s.api.designs.runQa({ id: created.id, cleanAlpha: false });
-    } catch {
+    } catch (e) {
+      tried.push(
+        `${new Date().toISOString()} ${(e as { code?: string }).code ?? ""} ${String(e).slice(0, 120)}`,
+      );
       await new Promise((r) => setTimeout(r, 15_000));
     }
   }
-  if (!done || done.qaStatus === "pending") done = await waitQa(60_000);
+  if (!done || done.qaStatus === "pending") {
+    done = await waitQa(60_000).catch((e) => {
+      throw new Error(`${e}; manual runQa tries: ${tried.join(" | ")}`);
+    });
+  }
   return done;
 }
 
