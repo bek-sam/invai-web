@@ -2,8 +2,8 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { crc32, deflateSync } from "node:zlib";
-import { expect, type Page, test } from "@playwright/test";
-import { OWNER, type Session, signIn, uploadFile } from "./helpers/api";
+import { type BrowserContext, expect, type Page, test } from "@playwright/test";
+import { API_URL, OWNER, type Session, signIn, uploadFile } from "./helpers/api";
 import { loginAs, watchPage } from "./helpers/ui";
 
 /*
@@ -18,7 +18,21 @@ const AI_SENTENCE_ES = /se creó con el uso de IA/i;
 const RAW_KEY = /\b(designs|listings)\.aiUse\b/;
 
 const OFFICE = { email: "office@desertbloom.test", password: "demo1234!" };
-const state = { s: null as Session | null, designId: "" };
+const state = {
+  s: null as Session | null,
+  designId: "",
+  owner: null as BrowserContext | null,
+  office: null as BrowserContext | null,
+};
+const opened: Page[] = [];
+
+// Sign-in is limited to 20/min per IP (decision 0008), so this file signs in once per role: the
+// owner's API session is handed to a browser context as cookies, and office logs in once in the UI.
+async function openPage(role: "owner" | "office"): Promise<Page> {
+  const page = await (state[role] as BrowserContext).newPage();
+  opened.push(page);
+  return page;
+}
 
 function tinyPng(): Buffer {
   const size = 64;
@@ -74,9 +88,25 @@ async function pick(page: Page, name: string) {
 
 test.describe.configure({ mode: "serial" });
 
-test.beforeAll(async () => {
+test.beforeAll(async ({ browser }) => {
   const s = await signIn(OWNER.email, OWNER.password);
   state.s = s;
+  const baseURL = test.info().project.use.baseURL;
+  const host = new URL(API_URL).hostname;
+  state.owner = await browser.newContext({ baseURL });
+  await state.owner.addCookies(
+    s
+      .cookieHeader()
+      .split("; ")
+      .map((pair) => {
+        const eq = pair.indexOf("=");
+        return { name: pair.slice(0, eq), value: pair.slice(eq + 1), domain: host, path: "/" };
+      }),
+  );
+  state.office = await browser.newContext({ baseURL });
+  const officePage = await state.office.newPage();
+  await loginAs(officePage, OFFICE);
+  await officePage.close();
   const dir = mkdtempSync(path.join(tmpdir(), "invai-w48-ai-use-"));
   const file = path.join(dir, "ai-use.png");
   writeFileSync(file, tinyPng());
@@ -93,16 +123,14 @@ test.beforeAll(async () => {
   expect(created.aiUse).toBe("unknown");
 });
 
-test("a new design reads 'Not set yet' and its draft keeps the notice, with a link to set it", async ({
-  page,
-}) => {
+test("a new design reads 'Not set yet' and its draft keeps the notice, with a link to set it", async () => {
+  const page = await openPage("owner");
   const issues = watchPage(page);
   const draftId = await newDraft();
   const draft = await (state.s as Session).api.ai.listings.get({ id: draftId });
   expect(draft.designAiUse).toBe("unknown");
   expect(JSON.stringify(draft.content)).toMatch(AI_SENTENCE);
 
-  await loginAs(page, OWNER);
   await page.goto(`/listings/drafts/${draftId}`);
   await expect(
     page.getByText("Includes the AI notice because nobody said how this design was made."),
@@ -114,11 +142,9 @@ test("a new design reads 'Not set yet' and its draft keeps the notice, with a li
   expect(issues).toEqual([]);
 });
 
-test("choosing 'No' saves, survives a reload, and the next draft has no AI notice", async ({
-  page,
-}) => {
+test("choosing 'No' saves, survives a reload, and the next draft has no AI notice", async () => {
+  const page = await openPage("owner");
   const issues = watchPage(page);
-  await loginAs(page, OWNER);
   await page.goto(`/catalog/designs/${state.designId}`);
   const isUpdate = (r: { url(): string; method(): string }) =>
     r.url().includes("/rpc/designs/update") && r.method() === "POST";
@@ -150,9 +176,9 @@ test("choosing 'No' saves, survives a reload, and the next draft has no AI notic
   expect(issues).toEqual([]);
 });
 
-test("choosing 'Yes' brings the notice back on a regenerated draft", async ({ page }) => {
+test("choosing 'Yes' brings the notice back on a regenerated draft", async () => {
+  const page = await openPage("owner");
   const issues = watchPage(page);
-  await loginAs(page, OWNER);
   await page.goto(`/catalog/designs/${state.designId}`);
   await pick(page, "Yes, made with AI");
   await expect(page.getByText("Saved: Yes, made with AI")).toBeVisible();
@@ -169,11 +195,11 @@ test("choosing 'Yes' brings the notice back on a regenerated draft", async ({ pa
   expect(issues).toEqual([]);
 });
 
-test("Spanish: control and draft line read in Spanish with no raw keys", async ({ page }) => {
+test("Spanish: control and draft line read in Spanish with no raw keys", async () => {
+  const page = await openPage("owner");
   await page.addInitScript(() => localStorage.setItem("invai.lang", "es"));
   const issues = watchPage(page);
   const draftId = await newDraft();
-  await loginAs(page, OWNER);
   await page.goto(`/catalog/designs/${state.designId}`);
   await expect(page.getByRole("group", { name: "¿Hecho con IA?" })).toBeVisible();
   await expect(page.getByRole("radio", { name: "Sí, hecho con IA" })).toBeChecked();
@@ -194,11 +220,9 @@ test("Spanish: control and draft line read in Spanish with no raw keys", async (
   expect(issues).toEqual([]);
 });
 
-test("office staff (no catalog.manage) see the value as text, with the read-only line", async ({
-  page,
-}) => {
+test("office staff (no catalog.manage) see the value as text, with the read-only line", async () => {
+  const page = await openPage("office");
   const issues = watchPage(page);
-  await loginAs(page, OFFICE);
   await page.goto(`/catalog/designs/${state.designId}`);
   await expect(page.getByText("Only people who manage the catalog can change this.")).toBeVisible();
   await expect(page.getByRole("radio")).toHaveCount(0);
@@ -206,7 +230,15 @@ test("office staff (no catalog.manage) see the value as text, with the read-only
   expect(issues).toEqual([]);
 });
 
+test.afterEach(async () => {
+  // The Spanish test sets the language in localStorage; the contexts are shared, so clear it.
+  for (const page of opened) await page.evaluate(() => localStorage.removeItem("invai.lang"));
+  while (opened.length) await opened.pop()?.close();
+});
+
 test.afterAll(async () => {
+  await state.owner?.close();
+  await state.office?.close();
   // The design stays (designs cannot be deleted); archive it so it does not clutter the catalog.
   if (state.s && state.designId) await state.s.api.designs.archive({ id: state.designId });
 });
