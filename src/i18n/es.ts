@@ -2128,9 +2128,48 @@ export const es: Messages = {
     pushed: "Enviado",
   },
   qa: {
+    accept: "Aceptar esta advertencia",
+    acceptHint: "Solo vale para este archivo. Si lo reemplazas, vuelve a revisarlo.",
+    accepted: "Aceptada por {{name}} el {{date}}",
+    acceptedToast: "Advertencia aceptada. Deshacer",
+    busy: "Demasiadas revisiones ahora. Inténtalo de nuevo en un minuto.",
+    checking: "Revisando tu arte...",
+    error: {
+      QA_ISSUE_NOT_FOUND:
+        "Ese problema ya no está en la lista. Recarga para ver la última revisión.",
+      QA_NOT_WARNING:
+        "Este problema debe corregirse, por lo que no se puede aceptar. Sube un archivo corregido.",
+    },
     failed: "Falló",
+    issue: {
+      low_dpi: {
+        error:
+          "La imagen es muy pequeña para este tamaño de impresión y se verá borrosa. Sube un archivo más grande.",
+        warn: "La imagen es algo pequeña para este tamaño de impresión y puede verse suave.",
+      },
+      no_alpha:
+        "Este archivo no tiene fondo transparente, por lo que puede imprimirse una caja alrededor del diseño. Sube un PNG con fondo transparente.",
+      non_srgb: "Este archivo usa otro perfil de color, por lo que los colores pueden cambiar.",
+      small_text: "El texto pequeño puede llenarse al imprimir. Hazlo más grande si puedes.",
+      soft_alpha: "Los bordes son suaves y pueden imprimirse borrosos. Límpialos si puedes.",
+      thin_line: {
+        error:
+          "Algunas líneas son muy delgadas para imprimir ({{inches}} pulg). Hazlas más gruesas y vuelve a subir el archivo.",
+        warn: "Algunas líneas son muy delgadas ({{inches}} pulg) y pueden no sostenerse.",
+      },
+      tiny_file: "Este archivo es muy pequeño. Puede estar vacío o dañado. Súbelo de nuevo.",
+      unreadable: "No pudimos leer este archivo. Súbelo de nuevo como PNG.",
+      white_box:
+        "Una caja blanca rodea el diseño y se imprimirá en camisetas oscuras. Quita el fondo blanco.",
+    },
+    none: "No encontramos problemas.",
     passed: "Aprobado",
     pending: "Pendiente",
+    regions: "{{count}} lugares",
+    retry: "Revisar de nuevo",
+    showOnDesign: "Mostrar en el diseño",
+    unaccept: "Deshacer aceptación",
+    unavailable: "No pudimos revisar este archivo. Inténtalo de nuevo en un minuto.",
     warn: "Advertencia",
   },
   reorderReason: {

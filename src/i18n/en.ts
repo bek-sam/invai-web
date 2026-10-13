@@ -2085,9 +2085,46 @@ export const en = {
     pushed: "Pushed",
   },
   qa: {
+    accept: "Accept this warning",
+    acceptHint: "Applies to this file only. If you replace the file, check it again.",
+    accepted: "Accepted by {{name}} on {{date}}",
+    acceptedToast: "Warning accepted. Undo",
+    busy: "Too many checks right now. Try again in a minute.",
+    checking: "Checking your art...",
+    error: {
+      QA_ISSUE_NOT_FOUND: "That problem is no longer in the list. Reload to see the latest check.",
+      QA_NOT_WARNING: "This problem must be fixed, so it cannot be accepted. Upload a fixed file.",
+    },
     failed: "Failed",
+    issue: {
+      low_dpi: {
+        error:
+          "The picture is too small for this print size and will look blurry. Upload a bigger file.",
+        warn: "The picture is a little small for this print size and may look soft.",
+      },
+      no_alpha:
+        "This file has no transparent background, so a box may print around the art. Upload a PNG with a transparent background.",
+      non_srgb: "This file uses a different color profile, so colors may shift.",
+      small_text: "Small text may fill in when printed. Make it bigger if you can.",
+      soft_alpha: "The edges are soft and may print fuzzy. Clean up the edges if you can.",
+      thin_line: {
+        error:
+          "Some lines are too thin to print ({{inches}} in). Make them thicker and upload the file again.",
+        warn: "Some lines are very thin ({{inches}} in) and may not hold.",
+      },
+      tiny_file: "This file is very small. It may be empty or damaged. Upload it again.",
+      unreadable: "We could not read this file. Upload it again as a PNG.",
+      white_box:
+        "A white box surrounds the art and will print on dark shirts. Remove the white background.",
+    },
+    none: "No problems found.",
     passed: "Passed",
     pending: "Pending",
+    regions: "{{count}} places",
+    retry: "Check again",
+    showOnDesign: "Show on design",
+    unaccept: "Undo accept",
+    unavailable: "We could not check this file. Try again in a minute.",
     warn: "Warning",
   },
   reorderReason: {

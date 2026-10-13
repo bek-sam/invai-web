@@ -72,5 +72,16 @@
   "opsV2.driverName.channel": "Channel", "opsV2.driverName.personalized": "Personalized", "opsV2.driverName.rush": "Rush", "opsV2.driverName.multiUnit": "Multi-unit", "opsV2.driverName.blockedOver24h": "Blocked over 24h",
   "opsV2.driverValue.personalized.yes": "Personalized", "opsV2.driverValue.personalized.no": "Not personalized", "opsV2.driverValue.rush.yes": "Rush", "opsV2.driverValue.rush.no": "Not rush", "opsV2.driverValue.multiUnit.yes": "More than one unit", "opsV2.driverValue.multiUnit.no": "One unit", "opsV2.driverValue.blockedOver24h.yes": "Waited over 24 h for mapping or artwork", "opsV2.driverValue.blockedOver24h.no": "No wait over 24 h for mapping or artwork",
   "supplier.submitCount": "Submit count",
-  "upgrade.limitShort": "Your plan's limit is reached. Go to Billing to upgrade.", "upgrade.paymentShort": "This needs an active plan. Go to Billing to choose one."
+  "upgrade.limitShort": "Your plan's limit is reached. Go to Billing to upgrade.", "upgrade.paymentShort": "This needs an active plan. Go to Billing to choose one.",
+  "qa.issue.thin_line.error": "Some lines are too thin to print ({{inches}} in). Make them thicker and upload the file again.",
+  "qa.issue.thin_line.warn": "Some lines are very thin ({{inches}} in) and may not hold.",
+  "qa.issue.small_text": "Small text may fill in when printed. Make it bigger if you can.",
+  "qa.issue.white_box": "A white box surrounds the art and will print on dark shirts. Remove the white background.",
+  "qa.issue.non_srgb": "This file uses a different color profile, so colors may shift.",
+  "qa.issue.low_dpi.error": "The picture is too small for this print size and will look blurry. Upload a bigger file.",
+  "qa.issue.low_dpi.warn": "The picture is a little small for this print size and may look soft.",
+  "qa.issue.no_alpha": "This file has no transparent background, so a box may print around the art. Upload a PNG with a transparent background.",
+  "qa.issue.soft_alpha": "The edges are soft and may print fuzzy. Clean up the edges if you can.",
+  "qa.issue.tiny_file": "This file is very small. It may be empty or damaged. Upload it again.",
+  "qa.issue.unreadable": "We could not read this file. Upload it again as a PNG."
 }

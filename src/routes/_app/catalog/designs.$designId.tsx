@@ -1,4 +1,10 @@
-import { type Design, type DesignPlacement, PLACEMENTS, type Placement } from "@invai/contracts";
+import {
+  type Design,
+  type DesignPlacement,
+  PLACEMENTS,
+  type Placement,
+  type QaIssueCode,
+} from "@invai/contracts";
 import { Badge, Button, Checkbox, FileDrop, Input, Progress, Skeleton, toast } from "@invai/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -18,9 +24,17 @@ import { useTranslation } from "react-i18next";
 import { QA_TONE } from "../../../components/badges";
 import { NicheChip } from "../../../components/market/niche-chip";
 import { Field, NativeSelect, Section } from "../../../components/page";
-import { SignedImage } from "../../../components/signed-image";
 import { ErrorState, SkeletonRows } from "../../../components/states";
-import { errorMessage } from "../../../lib/errors";
+import {
+  classifyRunFailure,
+  mergeQa,
+  type QaCode,
+  qaActionErrorCode,
+  type RunFailure,
+  splitToast,
+} from "../../../features/catalog/print-checks";
+import { PlacementPreview, QaPanel } from "../../../features/catalog/qa-panel";
+import { errorInfo, errorMessage } from "../../../lib/errors";
 import { parseTags } from "../../../lib/format";
 import { useCan } from "../../../lib/me";
 import { orpc } from "../../../lib/rpc";
@@ -111,6 +125,14 @@ function DesignEditor({ design }: { design: Design | null }) {
     ],
   );
   const [cleanAlpha, setCleanAlpha] = useState(false);
+  const [shown, setShown] = useState<ReadonlySet<string>>(new Set());
+  const [runFailure, setRunFailure] = useState<RunFailure>(null);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<{
+    key: string;
+    code: QaCode;
+    issue: string;
+  } | null>(null);
   const templates = useQuery(
     orpc.personalization.templates.list.queryOptions({ input: { limit: 200 }, retry: false }),
   );
@@ -181,16 +203,74 @@ function DesignEditor({ design }: { design: Design | null }) {
       },
     }),
   );
+  const applyDesign = (d: Design) => setPlacements((ps) => mergeQa(ps, d));
   const runQa = useMutation(
     orpc.designs.runQa.mutationOptions({
+      meta: { silent: true },
+      onMutate: () => setRunFailure(null),
       onSuccess: (d) => {
+        applyDesign(d);
         toast.success(
           t("designs.qaDone", "QA: {{status}}", { status: t(`qa.${d.qaStatus}`, d.qaStatus) }),
         );
         void invalidate();
       },
+      onError: (e) => {
+        const failure = classifyRunFailure(errorInfo(e));
+        setRunFailure(failure);
+        if (failure === "other") toast.error(errorMessage(e));
+      },
     }),
   );
+  const refetchDesign = async () => {
+    if (!design) return;
+    try {
+      const fresh = await queryClient.fetchQuery(
+        orpc.designs.get.queryOptions({ input: { id: design.id }, staleTime: 0 }),
+      );
+      applyDesign(fresh);
+    } catch {
+      void invalidate();
+    }
+  };
+  const unaccept = useMutation(
+    orpc.designs.unacceptQaWarning.mutationOptions({ meta: { silent: true } }),
+  );
+  const accept = useMutation(
+    orpc.designs.acceptQaWarning.mutationOptions({ meta: { silent: true } }),
+  );
+  async function changeAcceptance(
+    kind: "accept" | "unaccept",
+    p: PlacementDraft,
+    code: QaIssueCode,
+  ) {
+    if (!design) return;
+    setBusyAction(`${kind}:${code}`);
+    setActionError(null);
+    try {
+      const input = { id: design.id, placement: p.placement, code };
+      const d = await (kind === "accept" ? accept : unaccept).mutateAsync(input);
+      applyDesign(d);
+      void invalidate();
+      if (kind === "accept") {
+        const parts = splitToast(t("qa.acceptedToast", "Warning accepted. Undo"));
+        toast.success(parts.message, {
+          duration: 8000,
+          action: {
+            label: parts.action,
+            onClick: () => void changeAcceptance("unaccept", p, code),
+          },
+        });
+      }
+    } catch (e) {
+      const known = qaActionErrorCode(errorInfo(e));
+      if (known) setActionError({ key: p.key, code: known, issue: code });
+      else toast.error(errorMessage(e));
+      await refetchDesign();
+    } finally {
+      setBusyAction(null);
+    }
+  }
   const archive = useMutation(
     (design?.status === "archived" ? orpc.designs.unarchive : orpc.designs.archive).mutationOptions(
       {
@@ -368,10 +448,12 @@ function DesignEditor({ design }: { design: Design | null }) {
                     <img src={p.localUrl} alt="" className="size-full object-contain" />
                   </div>
                 ) : (
-                  <SignedImage
+                  <PlacementPreview
                     fileKey={p.previewKey ?? (p.fileKey || null)}
                     alt={t(`placement.${p.placement}`, p.placement.replace(/_/g, " "))}
-                    className="aspect-square w-full"
+                    regions={(p.qa?.issues ?? [])
+                      .filter((i) => shown.has(`${p.key}:${i.code}`))
+                      .map((i) => i.regions)}
                   />
                 )}
                 {p.uploading !== null && <Progress value={p.uploading * 100} className="h-1.5" />}
@@ -434,32 +516,32 @@ function DesignEditor({ design }: { design: Design | null }) {
                   />
                 )}
                 {p.qa && (
-                  <div className="text-sm">
-                    <p className="flex items-center gap-2">
-                      <Badge variant={QA_TONE[p.qa.status]}>
-                        {t(`qa.${p.qa.status}`, p.qa.status)}
-                      </Badge>
-                      {p.qa.effectiveDpi !== null && (
-                        <span className="text-muted-foreground">
-                          {t("designs.dpi", "{{dpi}} DPI at print size", {
-                            dpi: Math.round(p.qa.effectiveDpi),
-                          })}
-                        </span>
-                      )}
-                    </p>
-                    {p.qa.issues.length > 0 && (
-                      <ul className="mt-1 flex flex-col gap-0.5 text-xs">
-                        {p.qa.issues.map((i) => (
-                          <li
-                            key={i.code}
-                            className={i.severity === "error" ? "text-danger" : "text-warning"}
-                          >
-                            {i.message}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                  <QaPanel
+                    qa={p.qa}
+                    checking={runQa.isPending || p.uploading !== null}
+                    failure={runFailure}
+                    canManage={editable}
+                    shown={
+                      new Set(
+                        [...shown]
+                          .filter((k) => k.startsWith(`${p.key}:`))
+                          .map((k) => k.slice(p.key.length + 1)),
+                      )
+                    }
+                    onToggleShown={(code) =>
+                      setShown((cur) => {
+                        const next = new Set(cur);
+                        const k = `${p.key}:${code}`;
+                        if (!next.delete(k)) next.add(k);
+                        return next;
+                      })
+                    }
+                    onAccept={(code) => void changeAcceptance("accept", p, code)}
+                    onUnaccept={(code) => void changeAcceptance("unaccept", p, code)}
+                    onRetry={() => design && runQa.mutate({ id: design.id, cleanAlpha })}
+                    busyAction={busyAction}
+                    actionError={actionError?.key === p.key ? actionError : null}
+                  />
                 )}
                 {editable && placements.length > 1 && (
                   <Button
