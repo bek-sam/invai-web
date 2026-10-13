@@ -61,6 +61,7 @@ import {
   checkFailureMessage,
   contrastWarningMessage,
   garmentLabel,
+  imagePassesChecks,
   photoErrorMessage,
   pushExclusionReasonLabel,
   sceneKindLabel,
@@ -815,7 +816,7 @@ function SetDetail({ setId }: { setId: string }) {
     .filter((i) => i.status === "approved" && i.channel === "shopify")
     .map((i) => i.id);
   const passingRenderedIds = images
-    .filter((i) => i.status === "rendered" && (!i.checks || i.checks.passes))
+    .filter((i) => i.status === "rendered" && imagePassesChecks(i))
     .map((i) => i.id);
   const shopifyConnections = (connections.data?.items ?? []).filter(
     (c) => c.channel === "shopify" && c.status !== "disconnected",

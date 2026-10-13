@@ -1747,6 +1747,8 @@ export const en = {
   },
   photoCheck: {
     background_not_white: "Background isn't pure white.",
+    blank_color_shift:
+      "This photo may show the shirt color a little off. Check it before you approve it.",
     design_drift: "The photo doesn't match the design closely enough.",
     design_larger_than_print_area: "The design was scaled down to fit the print area.",
     fill_below_min: "Product fills {{pct}}% ({{channel}} needs {{min}}%).",

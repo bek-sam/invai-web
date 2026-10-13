@@ -148,7 +148,18 @@ const CHECK_MESSAGES: Partial<Record<string, CheckMsg>> = {
           "The shirt moved in this photo, so the design may be out of place. Pick another scene or try again.",
         )
       : t("photoCheck.region_changed", "The garment outline moved after this scene was generated."),
+  // Warn-only: shown as a warning, never counted as a failure. `detail` ("delta_e 5.4") is never shown.
+  blank_color_shift: (t) =>
+    t(
+      "photoCheck.blank_color_shift",
+      "This photo may show the shirt color a little off. Check it before you approve it.",
+    ),
 };
+
+/** "Approve all passing" and the Pass badge read `passes` only; a warn never blocks approval. */
+export function imagePassesChecks(img: Pick<PhotoImage, "checks">): boolean {
+  return !img.checks || img.checks.passes;
+}
 
 export function checkFailureMessage(
   t: TFunction,

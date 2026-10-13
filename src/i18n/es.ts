@@ -1780,6 +1780,8 @@ export const es: Messages = {
   },
   photoCheck: {
     background_not_white: "El fondo no es blanco puro.",
+    blank_color_shift:
+      "Es posible que el color de la camiseta se vea un poco distinto en esta foto. Revísala antes de aprobarla.",
     design_drift: "La foto no coincide lo suficiente con el diseño.",
     design_larger_than_print_area: "El diseño se redujo para caber en el área de impresión.",
     fill_below_min: "El producto ocupa el {{pct}}% ({{channel}} necesita el {{min}}%).",

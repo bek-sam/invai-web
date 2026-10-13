@@ -1469,6 +1469,7 @@
  "pers.usedBy": "Usada por {{count}} diseños",
  "pers.w": "An (pulg)",
  "photoCheck.background_not_white": "El fondo no es blanco puro.",
+ "photoCheck.blank_color_shift": "Es posible que el color de la camiseta se vea un poco distinto en esta foto. Revísala antes de aprobarla.",
  "photoCheck.design_drift": "La foto no coincide lo suficiente con el diseño.",
  "photoCheck.design_larger_than_print_area": "El diseño se redujo para caber en el área de impresión.",
  "photoCheck.fill_below_min": "El producto ocupa el {{pct}}% ({{channel}} necesita el {{min}}%).",
