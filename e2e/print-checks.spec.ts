@@ -8,7 +8,7 @@ import { loginAs } from "./helpers/ui";
 
 /*
  * T-43-4 (B-380 C4): print-file check results on the design page. Spec print-file-checks.md,
- * criteria 13, 14, 17, 25-30 (UI side). Preconditions are made through the API as designer@
+ * criteria 13, 14, 17, 25-30 (UI side). Preconditions are made through the API as a new company owner
  * (lesson W26): three generated PNGs at 320 DPI for a 2 x 2 in print, one per outcome.
  * DOM assertions only. Criteria 5, 7 and 8 stub the runQa / accept responses with page.route.
  */
