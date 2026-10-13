@@ -166,7 +166,7 @@ test("a warning: places, overlay, accept, reload, both undos (13, 17, 30)", asyn
   await open(page, ids.warn);
   const issue = page.getByTestId("qa-issue").filter({ hasText: "A white box surrounds the art" });
   await expect(issue).toBeVisible();
-  await expect(issue.getByText(`${warnRegions} places`)).toBeVisible();
+  await expect(issue.getByText(warnRegions === 1 ? "1 place" : `${warnRegions} places`)).toBeVisible();
   await expect(issue.getByText("Applies to this file only")).toBeVisible();
   await expect(page.getByTestId("qa-region")).toHaveCount(0);
 
