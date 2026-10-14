@@ -2453,6 +2453,7 @@ export const es: Messages = {
       "Un código de barras que el transportista escanea al recoger para aceptar todas las etiquetas compradas hoy.",
     service: "Servicio",
     shipments: "Envíos",
+    someSkipped: "{{count}} omitido(s)",
     state: "Estado",
     strategy: {
       cheapest: "Más barato",
@@ -2763,6 +2764,7 @@ export const es: Messages = {
     pushRejected:
       "El canal no aceptó el rastreo. Vuelve a intentarlo o agrégalo en el canal a mano.",
     rateExpired: "La tarifa de la paquetería venció. Pide una tarifa nueva.",
+    shipFromMissing: "Primero agrega la dirección de origen en la configuración de envíos.",
   },
   supplier: {
     other: "Otro",

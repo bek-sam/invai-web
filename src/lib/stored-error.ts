@@ -56,6 +56,8 @@ function fixed(text: string, t: TFunction): string | null {
       return t("storedError.onHold", "On hold: tracking is sent when the hold is released");
     case "Every unit was cancelled":
       return t("storedError.allCancelled", "Every unit was cancelled");
+    case "Set a ship-from address in shipping settings first":
+      return t("storedError.shipFromMissing", "Set a ship-from address in shipping settings first");
     case "Upload tracking on the channel by hand":
       return t("storedError.manualUpload", "Upload tracking on the channel by hand");
     default:

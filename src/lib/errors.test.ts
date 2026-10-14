@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import i18n from "i18next";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { en } from "../i18n/en";
+import { es } from "../i18n/es";
 import { errorInfo, isUnauthorized, shouldRetry, upgradeReason } from "./errors";
 
 describe("errorInfo", () => {
@@ -78,5 +81,33 @@ describe("EMAIL_NOT_VERIFIED", () => {
     expect(errorInfo(err)).toMatchObject({ code: "EMAIL_NOT_VERIFIED", status: 403 });
     expect(errorInfo(err).message).toMatch(/Confirm your email/);
     expect(shouldRetry(0, err)).toBe(false);
+  });
+});
+
+describe("errorInfo stored sentences (B-485)", () => {
+  const SHIP_FROM = "Set a ship-from address in shipping settings first";
+  const bad = (message: string) =>
+    Object.assign(new Error(message), { code: "BAD_REQUEST", status: 400 });
+
+  beforeAll(async () => {
+    await i18n.init({ lng: "es", resources: { en: { translation: en }, es: { translation: es } } });
+  });
+  afterAll(async () => {
+    await i18n.changeLanguage("en");
+  });
+
+  it("shows the ship-from sentence in Spanish", async () => {
+    await i18n.changeLanguage("es");
+    expect(errorInfo(bad(SHIP_FROM)).message).toBe(
+      "Primero agrega la dirección de origen en la configuración de envíos.",
+    );
+  });
+
+  it("keeps English in English and leaves a different sentence unchanged", async () => {
+    await i18n.changeLanguage("en");
+    expect(errorInfo(bad(SHIP_FROM)).message).toBe(SHIP_FROM);
+    await i18n.changeLanguage("es");
+    const other = "Set a ship-from address in the settings first";
+    expect(errorInfo(bad(other)).message).toBe(other);
   });
 });

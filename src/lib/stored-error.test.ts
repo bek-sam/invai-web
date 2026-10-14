@@ -17,6 +17,7 @@ const SENTENCES = [
   "On hold: tracking is sent when the hold is released",
   "Every unit was cancelled",
   "Upload tracking on the channel by hand",
+  "Set a ship-from address in shipping settings first",
 ];
 
 let tEn: typeof i18n.t;
@@ -74,6 +75,15 @@ describe("storedErrorMessage", () => {
     expect(storedErrorMessage(SENTENCES[10], tEs)).toBe("Se cancelaron todas las unidades");
     expect(storedErrorMessage(SENTENCES[11], tEs)).toBe("Sube el rastreo en el canal a mano");
     expect(storedErrorMessage(SENTENCES[8], tEn)).toBe(SENTENCES[8]);
+  });
+
+  it("translates the missing ship-from address sentence and nothing close to it", () => {
+    expect(storedErrorMessage(SENTENCES[12], tEs)).toBe(
+      "Primero agrega la dirección de origen en la configuración de envíos.",
+    );
+    expect(storedErrorMessage(SENTENCES[12], tEn)).toBe(SENTENCES[12]);
+    const near = "Set a ship-from address in shipping settings first.";
+    expect(storedErrorMessage(near, tEs)).toBe(near);
   });
 
   it("never leaves an English sentence or a raw code in Spanish", () => {

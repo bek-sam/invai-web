@@ -2405,6 +2405,7 @@ export const en = {
     scanFormsHint: "One barcode the carrier scans at pickup to accept every label bought today.",
     service: "Service",
     shipments: "Shipments",
+    someSkipped: "{{count}} skipped",
     state: "State",
     strategy: {
       cheapest: "Cheapest",
@@ -2703,6 +2704,7 @@ export const en = {
     pushRejected:
       "The channel did not accept the tracking upload. Try again, or add it on the channel by hand.",
     rateExpired: "The carrier rate expired. Get a new rate.",
+    shipFromMissing: "Set a ship-from address in shipping settings first",
   },
   supplier: {
     other: "Other",

@@ -82,6 +82,50 @@ export function batchFailureMessage(
   );
 }
 
+/** What a label batch did, in orders. `failed` is null when the queued job's message can't be read. */
+export interface BatchCounts {
+  labeled: number;
+  failed: number | null;
+  skipped: number;
+}
+
+/** Mirror of the message `batch.ts` writes for the job: "3 labeled, 1 failed, 2 skipped; postage $9.80". */
+const BATCH_MESSAGE = /^(\d+) labeled, (\d+) failed(?:, (\d+) skipped)?; postage \$\d+\.\d{2}$/;
+
+/** Counts from the per-order results of a batch that finished in the request. */
+export function countBatchResults(results: ReadonlyArray<{ status: string }>): BatchCounts {
+  const n = (status: string) => results.filter((r) => r.status === status).length;
+  return { labeled: n("labeled"), failed: n("failed"), skipped: n("skipped") };
+}
+
+/** Counts from a queued job's message; unreadable text gives only the labels the job returned. */
+export function countBatchMessage(
+  message: string | null | undefined,
+  labeledIds: number,
+): BatchCounts {
+  const m = BATCH_MESSAGE.exec(message ?? "");
+  if (!m) return { labeled: labeledIds, failed: null, skipped: 0 };
+  return { labeled: Number(m[1]), failed: Number(m[2]), skipped: Number(m[3] ?? 0) };
+}
+
+/** The done toast: only skipped orders is calm information, anything failed or bought is a success toast. */
+export function batchSummary(
+  c: BatchCounts,
+  postage: string | null,
+  t: TFunction,
+): { title: string; description: string; tone: "success" | "info" } {
+  const parts = [
+    postage === null ? "" : t("ship.postage", "Postage {{amount}}", { amount: postage }),
+    c.failed ? t("orders.someFailed", "{{count}} failed", { count: c.failed }) : "",
+    c.skipped ? t("ship.someSkipped", "{{count}} skipped", { count: c.skipped }) : "",
+  ];
+  return {
+    title: t("ship.batchDone", "{{n}} labels bought", { n: c.labeled }),
+    description: parts.filter(Boolean).join(" · "),
+    tone: c.labeled === 0 && !c.failed && c.skipped > 0 ? "info" : "success",
+  };
+}
+
 export const Route = createFileRoute("/_app/shipping")({
   validateSearch: z.object({ tab: z.enum(TABS).optional().catch(undefined) }),
   component: ShippingPage,
@@ -167,8 +211,7 @@ type BatchOutcome =
   | {
       kind: "done";
       ids: string[];
-      labeled: number;
-      failed: number;
+      counts: BatchCounts;
       /** null when some bought shipment couldn't be read back for its postage. */
       totalPostage: number | null;
     };
@@ -206,7 +249,12 @@ function Queue() {
         const ids = res.results.flatMap((r) =>
           r.status === "labeled" && r.shipmentId ? [r.shipmentId] : [],
         );
-        return { kind: "done", ids, ...res };
+        return {
+          kind: "done",
+          ids,
+          counts: countBatchResults(res.results),
+          totalPostage: res.totalPostage,
+        };
       }
       // The labels are bought in a background job: follow it (3 min at most), then offer to print.
       pollAbort.current?.abort();
@@ -228,8 +276,7 @@ function Queue() {
       return {
         kind: "done",
         ids,
-        labeled: ids.length,
-        failed: orderIds.length - ids.length,
+        counts: countBatchMessage(out.job.message, ids.length),
         totalPostage:
           read.length === ids.length ? read.reduce((sum, s) => sum + s.postage, 0) : null,
       };
@@ -247,17 +294,13 @@ function Queue() {
         return;
       }
       setToPrint(out.ids);
-      toast.success(t("ship.batchDone", "{{n}} labels bought", { n: out.labeled }), {
-        description: [
-          out.totalPostage === null
-            ? ""
-            : t("ship.postage", "Postage {{amount}}", {
-                amount: `$${(out.totalPostage / 100).toFixed(2)}`,
-              }),
-          out.failed ? t("orders.someFailed", "{{count}} failed", { count: out.failed }) : "",
-        ]
-          .filter(Boolean)
-          .join(" · "),
+      const summary = batchSummary(
+        out.counts,
+        out.totalPostage === null ? null : `$${(out.totalPostage / 100).toFixed(2)}`,
+        t,
+      );
+      (summary.tone === "info" ? toast.info : toast.success)(summary.title, {
+        description: summary.description,
         ...(out.ids.length
           ? {
               duration: 30_000,

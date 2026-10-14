@@ -1,6 +1,7 @@
 import i18n from "i18next";
 import { MFA_REQUIRED_CODE } from "../features/account/mfa";
 import { demoModeMessage } from "../features/demo/demo-mode";
+import { storedErrorMessage } from "./stored-error";
 
 export interface ErrorInfo {
   code: string;
@@ -52,6 +53,8 @@ export function errorInfo(err: unknown): ErrorInfo {
     }
     const upgrade = upgradeReasonOf(code, e.data);
     if (upgrade) return { code, status, message: upgradeMessage(upgrade), data: e.data ?? null };
+    // Backend sentences stored as fixed English text (e.g. no ship-from address) show in the active language.
+    if (i18n.isInitialized) message = storedErrorMessage(message, i18n.t.bind(i18n)) ?? message;
     return { code, status, message, data: e.data ?? null };
   }
   return {
