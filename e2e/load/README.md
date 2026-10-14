@@ -17,7 +17,7 @@ docker run --rm --add-host=host.docker.internal:host-gateway \
 
 Notes: `floor-scan.k6.js` pairs each press-queue transfer with its own blank by default (accepted scans); `SCAN_PATH=blocked` sends no blank (a `blank_required` block). `COOKIE` reuses a session cookie so a run costs no password sign-in. `label-batch.k6.js` needs a ship-from address in the shop's shipping settings and imaging on `IMAGING_URL` started with its dev endpoints on (the mock carrier draws its label there).
 
-Rules: arrival-rate executors only; 429 (`RATE_LIMITED`) is counted in `<name>_429`, never bypassed;
+Rules: arrival-rate executors only, except `label-batch.k6.js`, which is fixed-iteration (it buys a fixed set of packed orders in sequence, so there is no arrival rate to hold) and fails the run on any non-success outcome through `label_batch_ok`; 429 (`RATE_LIMITED`) is counted in `<name>_429`, never bypassed;
 no more than 3 password sign-ins per run (20/min/IP). The creds file is `SEED_OUTPUT_FILE` from
 `pnpm db:seed:scale` (mode 0600, delete it after the run). Point the API at a scratch database only.
 Playwright, Vitest and the Vite build ignore this folder.

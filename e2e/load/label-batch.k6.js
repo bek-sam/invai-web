@@ -3,11 +3,15 @@
 
 import { sleep } from "k6";
 import http from "k6/http";
-import { Trend } from "k6/metrics";
+import { Rate, Trend } from "k6/metrics";
 import { BASE, creds, headers, metricsFor, record, sessionCookie } from "./lib.k6.js";
 
 const m = metricsFor("label");
+// Timing is added only for a real success (job done with at least one label); every other outcome
+// (429/4xx/5xx on batch-buy, poll limit hit, failed job, done with 0 labels, empty slice) is a
+// label_batch_ok failure, so the run cannot pass on a batch that bought nothing.
 const done = new Trend("label_job_seconds", true);
+const ok = new Rate("label_batch_ok");
 const batchSize = Number(__ENV.BATCH_SIZE || 25);
 const batches = Number(__ENV.BATCHES || 4);
 
@@ -22,7 +26,11 @@ export const options = {
       maxDuration: "15m",
     },
   },
-  thresholds: { label_job_seconds: ["p(95)<60000"], label_non5xx: ["rate>0.995"] },
+  thresholds: {
+    label_job_seconds: ["p(95)<60000"],
+    label_batch_ok: ["rate==1"],
+    label_non5xx: ["rate>0.995"],
+  },
 };
 
 export function setup() {
@@ -41,7 +49,10 @@ export function setup() {
 
 export default function (data) {
   const slice = data.ids.slice(__ITER * batchSize, (__ITER + 1) * batchSize);
-  if (slice.length === 0) return;
+  if (slice.length === 0) {
+    ok.add(false);
+    return;
+  }
   const start = Date.now();
   const res = http.post(`${BASE}/api/v1/shipping/batch-buy`, JSON.stringify({ orderIds: slice }), {
     headers: headers({ cookie: data.cookie }),
@@ -49,7 +60,10 @@ export default function (data) {
     tags: { proc: "shipping.batchBuy" },
   });
   record(m, res);
-  if (res.status !== 200) return;
+  if (res.status !== 200) {
+    ok.add(false);
+    return;
+  }
   const jobId = res.json("jobId");
   for (let i = 0; i < 120; i++) {
     const j = http.get(`${BASE}/api/v1/production/jobs/${jobId}`, {
@@ -57,10 +71,14 @@ export default function (data) {
       jar: null,
     });
     const st = j.status === 200 ? j.json("status") : null;
-    if (st === "completed" || st === "done" || st === "failed") {
-      done.add(Date.now() - start);
+    if (st === "done" || st === "failed") {
+      const labels = st === "done" ? j.json("resultIds").length : 0;
+      const good = st === "done" && labels > 0;
+      ok.add(good);
+      if (good) done.add(Date.now() - start);
       return;
     }
     sleep(1);
   }
+  ok.add(false);
 }
