@@ -4,7 +4,7 @@
 import { sleep } from "k6";
 import http from "k6/http";
 import { Trend } from "k6/metrics";
-import { BASE, headers, loadCreds, metricsFor, passwordSignIn, record } from "./lib.k6.js";
+import { BASE, creds, headers, metricsFor, record, sessionCookie } from "./lib.k6.js";
 
 const m = metricsFor("label");
 const done = new Trend("label_job_seconds", true);
@@ -12,6 +12,7 @@ const batchSize = Number(__ENV.BATCH_SIZE || 25);
 const batches = Number(__ENV.BATCHES || 4);
 
 export const options = {
+  summaryTrendStats: ["avg", "med", "p(90)", "p(95)", "p(99)", "max"],
   setupTimeout: "60s",
   scenarios: {
     labels: {
@@ -25,8 +26,10 @@ export const options = {
 };
 
 export function setup() {
-  const creds = loadCreds();
-  const cookie = passwordSignIn(creds.logins.owner, creds.logins.password);
+  const cookie = sessionCookie(
+    creds.logins.owner.replace("owner1", "office1"),
+    creds.logins.password,
+  );
   const q = http.get(`${BASE}/api/v1/shipping/queue?limit=${batchSize * batches}`, {
     headers: headers({ cookie }),
     jar: null,

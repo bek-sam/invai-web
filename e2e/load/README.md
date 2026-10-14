@@ -15,6 +15,8 @@ docker run --rm --add-host=host.docker.internal:host-gateway \
 | `floor-scan.k6.js` | 20 stations x 1 scan / 3 s (`STATIONS`, `STATION_INTERVAL`), station logins once in `setup()` at <= 15/min | p95 < 300 ms, non-5xx > 99.5% |
 | `label-batch.k6.js` | `shipping.batchBuy` on the mock carrier, polls the job | job p95 < 60 s |
 
+Notes: `floor-scan.k6.js` pairs each press-queue transfer with its own blank by default (accepted scans); `SCAN_PATH=blocked` sends no blank (a `blank_required` block). `COOKIE` reuses a session cookie so a run costs no password sign-in. `label-batch.k6.js` needs a ship-from address in the shop's shipping settings and imaging on `IMAGING_URL` started with its dev endpoints on (the mock carrier draws its label there).
+
 Rules: arrival-rate executors only; 429 (`RATE_LIMITED`) is counted in `<name>_429`, never bypassed;
 no more than 3 password sign-ins per run (20/min/IP). The creds file is `SEED_OUTPUT_FILE` from
 `pnpm db:seed:scale` (mode 0600, delete it after the run). Point the API at a scratch database only.

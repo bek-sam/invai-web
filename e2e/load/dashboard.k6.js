@@ -2,7 +2,7 @@
 // Open model. DASH_RATE requests/s for DASH_DURATION (steady), or MODE=breakpoint for a ramp.
 // Thresholds are the SLO table (interactive p95 < 400 ms, availability >= 99.5% non-5xx), on 2xx only.
 import { sleep } from "k6";
-import { BASE, getJson, loadCreds, metricsFor, passwordSignIn, record } from "./lib.k6.js";
+import { creds, getJson, metricsFor, record, sessionCookie } from "./lib.k6.js";
 
 const breakpoint = __ENV.MODE === "breakpoint";
 const rate = Number(__ENV.DASH_RATE || 3);
@@ -10,6 +10,7 @@ const duration = __ENV.DASH_DURATION || "10m";
 const m = metricsFor("dash");
 
 export const options = {
+  summaryTrendStats: ["avg", "med", "p(90)", "p(95)", "p(99)", "max"],
   setupTimeout: "60s",
   scenarios: {
     dashboard: breakpoint
@@ -42,9 +43,8 @@ export const options = {
 };
 
 export function setup() {
-  const creds = loadCreds();
-  const email = __ENV.DASH_EMAIL || creds.logins.office || creds.logins.owner;
-  return { cookie: passwordSignIn(email, creds.logins.password) };
+  const email = __ENV.DASH_EMAIL || creds.logins.owner.replace("owner1", "office1");
+  return { cookie: sessionCookie(email, creds.logins.password) };
 }
 
 let cursor = null;
@@ -55,7 +55,9 @@ export default function (data) {
   let res;
   if (pick < 0.34) {
     res = getJson("/api/v1/today", auth, { proc: "today.summary" });
-  } else if (pick < 0.67 || !cursor) {
+  } else if (pick < 0.5) {
+    res = getJson("/api/v1/orders?limit=50&atRisk=true", auth, { proc: "orders.list.atRisk" });
+  } else if (pick < 0.75 || !cursor) {
     res = getJson("/api/v1/orders?limit=50", auth, { proc: "orders.list" });
     if (res.status === 200) cursor = res.json("nextCursor");
   } else {
@@ -66,16 +68,4 @@ export default function (data) {
   }
   record(m, res);
   sleep(0);
-}
-
-export function handleSummary(data) {
-  return { stdout: JSON.stringify({ base: BASE, metrics: summarize(data) }, null, 2) };
-}
-
-function summarize(data) {
-  const out = {};
-  for (const [k, v] of Object.entries(data.metrics)) {
-    if (k.startsWith("dash_") || k === "http_reqs") out[k] = v.values;
-  }
-  return out;
 }

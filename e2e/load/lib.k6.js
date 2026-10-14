@@ -8,9 +8,7 @@ export const ORIGIN = __ENV.WEB_ORIGIN || "http://localhost:5173";
 export const CONTRACT_VERSION = __ENV.CONTRACT_VERSION || "0.19.0";
 
 /** Creds file written by `pnpm db:seed:scale` (SEED_OUTPUT_FILE), mounted read-only at /creds.json. */
-export function loadCreds() {
-  return JSON.parse(open(__ENV.CREDS_FILE || "/creds.json"));
-}
+export const creds = JSON.parse(open(__ENV.CREDS_FILE || "/creds.json"));
 
 /** Per-scenario metrics: latency only for 2xx, 429 and 5xx counted apart (architect A3.9). */
 export function metricsFor(name) {
@@ -52,6 +50,11 @@ export function passwordSignIn(email, password) {
   for (const name of Object.keys(res.cookies)) pairs.push(`${name}=${res.cookies[name][0].value}`);
   if (pairs.length === 0) throw new Error("sign-in returned no cookie");
   return pairs.join("; ");
+}
+
+/** A cookie from a prior sign-in (COOKIE env) is reused so a run costs no password sign-in. */
+export function sessionCookie(email, password) {
+  return __ENV.COOKIE || passwordSignIn(email, password);
 }
 
 export function getJson(path, authHeaders, tags) {
