@@ -13,21 +13,53 @@ const interval = Number(__ENV.STATION_INTERVAL || 3);
 const duration = __ENV.SCAN_DURATION || "10m";
 const m = metricsFor("scan");
 const accepted = new Counter("scan_accepted");
+// T-56-5 A5.3: per-station admitted (any non-429 answer) and refused (429) counts, so a summary
+// shows each station's min/max. FLOODERS stations scan at FLOOD_RATE per second instead of 1 per
+// STATION_INTERVAL; the rest keep the normal rate (flood run: the per-station bucket must refuse
+// only the flooders).
+const flooders = Number(__ENV.FLOODERS || 0);
+const floodRate = Number(__ENV.FLOOD_RATE || 5);
+const admittedBy = [];
+const limitedBy = [];
+for (let i = 0; i < nStations; i++) {
+  admittedBy.push(new Counter(`scan_st${String(i).padStart(2, "0")}_admitted`));
+  limitedBy.push(new Counter(`scan_st${String(i).padStart(2, "0")}_429`));
+}
 const blocked = new Counter("scan_blocked");
 
 export const options = {
   summaryTrendStats: ["avg", "med", "p(90)", "p(95)", "p(99)", "max"],
   setupTimeout: "10m",
-  scenarios: {
-    storm: {
-      executor: "constant-arrival-rate",
-      rate: nStations,
-      timeUnit: `${interval}s`,
-      duration,
-      preAllocatedVUs: 30,
-      maxVUs: 120,
-    },
-  },
+  scenarios:
+    flooders > 0
+      ? {
+          flood: {
+            executor: "constant-arrival-rate",
+            rate: flooders * floodRate,
+            timeUnit: "1s",
+            duration,
+            preAllocatedVUs: 30,
+            maxVUs: 120,
+          },
+          normal: {
+            executor: "constant-arrival-rate",
+            rate: nStations - flooders,
+            timeUnit: `${interval}s`,
+            duration,
+            preAllocatedVUs: 30,
+            maxVUs: 120,
+          },
+        }
+      : {
+          storm: {
+            executor: "constant-arrival-rate",
+            rate: nStations,
+            timeUnit: `${interval}s`,
+            duration,
+            preAllocatedVUs: 30,
+            maxVUs: 120,
+          },
+        },
   thresholds: {
     scan_latency_2xx: ["p(95)<300", "p(99)<600"],
     scan_non5xx: ["rate>0.995"],
@@ -84,7 +116,8 @@ export function setup() {
   return { sessions, pairs };
 }
 
-const seq = 0;
+// The flood run's "normal" scenario starts half-way into the pool so the two never share a transfer.
+const normalOffset = 2000;
 
 function uuid() {
   const h = "0123456789abcdef";
@@ -99,8 +132,21 @@ function uuid() {
 }
 
 export default function (data) {
-  const s = data.sessions[(__VU + __ITER) % data.sessions.length];
-  const target = data.pairs[(exec.scenario.iterationInTest + seq) % data.pairs.length];
+  // Even spread: the scenario's own iteration counter picks the station (A5.3). Flood run: the
+  // first FLOODERS stations belong to the "flood" scenario, the others to "normal".
+  const n = exec.scenario.iterationInTest;
+  const idx =
+    flooders > 0
+      ? exec.scenario.name === "flood"
+        ? n % flooders
+        : flooders + (n % (data.sessions.length - flooders))
+      : n % data.sessions.length;
+  const s = data.sessions[idx];
+  const target =
+    data.pairs[
+      (exec.scenario.iterationInTest + (exec.scenario.name === "normal" ? normalOffset : 0)) %
+        data.pairs.length
+    ];
   const body = {
     clientScanId: uuid(),
     station: "press",
@@ -115,5 +161,6 @@ export default function (data) {
     tags: { proc: "production.scan" },
   });
   record(m, res);
+  if (idx < nStations) (res.status === 429 ? limitedBy : admittedBy)[idx].add(1);
   if (res.status === 200) (res.json("ok") ? accepted : blocked).add(1);
 }
