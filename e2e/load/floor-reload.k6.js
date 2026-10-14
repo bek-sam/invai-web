@@ -19,7 +19,9 @@ const durationSec = Number(__ENV.RUN_SECONDS || 600);
 const scansPerMin = Number(__ENV.SCANS_PER_MIN || 400);
 const seed = Number(__ENV.SEED || 57);
 const model = __ENV.MODEL || "debounce";
-const reads429Max = __ENV.READS_429_MAX; // unset in phase 1 (reported); set in phase 2
+// MODEL=throttle defaults to 0 (queue reads must never be refused); debounce stays report-only
+// (it is expected to fail there). READS_429_MAX overrides either way.
+const reads429Max = __ENV.READS_429_MAX || (model === "throttle" ? "0" : undefined);
 const scan = metricsFor("scan");
 const reload = metricsFor("reload");
 const reads429 = new Counter("reads_429");
